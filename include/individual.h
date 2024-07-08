@@ -10,6 +10,24 @@ class Map;
 //////////////////// Individual ////////////////////
 
 class Individual {
+	struct ConfigThread {
+		const std::size_t	first;
+		const std::size_t	num_threads;
+		const std::vector<const Individual *>&	mothers;
+		const std::vector<const Individual *>&	fathers;
+		std::size_t	num_inds;
+		const std::string&	name_base;
+		std::vector<const Individual *>& results;
+		
+		ConfigThread(std::size_t i, std::size_t	n,
+						const std::vector<const Individual *>& m,
+						const std::vector<const Individual *>& f,
+						std::size_t ni, const std::string& nam,
+						std::vector<const Individual *>& inds) :
+					first(i), num_threads(n), mothers(m), fathers(f),
+					num_inds(ni), name_base(nam), results(inds) { }
+	};
+	
 	const std::string	name;
 	const Individual	*mother;
 	const Individual	*father;
@@ -24,6 +42,7 @@ public:
 				const std::vector<const Haplotype *>& h2,
 				std::shared_ptr<const Map> m_) :
 			name(name_), mother(m), father(f), haps1(h1), haps2(h2), map(m_) { }
+	~Individual();
 	
 	std::size_t num_chroms() const { return haps1.size(); }
 	
@@ -33,7 +52,8 @@ public:
 								const std::vector<const Individual *>& mothers,
 								const std::vector<const Individual *>& fathers,
 								std::size_t num_inds,
-								const std::string& name_base);
+								const std::string& name_base, int T);
+	static void cross_in_thread(void *config);
 	static const Individual *cross_each(const std::string& name,
 										const Individual *mother,
 										const Individual *father,

@@ -1,32 +1,66 @@
 #include <sstream>
+#include <iostream>
 #include <iomanip>
 #include <algorithm>
 
 #include "../include/individual.h"
 #include "../include/Map.h"
+#include "../include/common.h"
 
 using namespace std;
 
+Individual::~Individual() {
+	Common::delete_all(haps1);
+	Common::delete_all(haps2);
+}
+
 vector<const Individual *> Individual::cross(
-									const vector<const Individual *>& mothers,
-									const vector<const Individual *>& fathers,
-									size_t num_inds, const string& name_base) {
+							const vector<const Individual *>& mothers,
+							const vector<const Individual *>& fathers,
+							size_t num_inds, const string& name_base, int T) {
+	vector<const Individual *>	inds(num_inds);
+	vector<ConfigThread *>	configs(T);
+	for(int i = 0; i < T; ++i)
+		configs[i] = new ConfigThread(i, T, mothers, fathers,
+											num_inds, name_base, inds);
+	
+#ifndef DEBUG
+	vector<pthread_t>	threads_t(T);
+	for(int i = 0; i < T; ++i)
+		pthread_create(&threads_t[i], NULL,
+			(void *(*)(void *))&cross_in_thread, (void *)configs[i]);
+	
+	for(int i = 0; i < T; ++i)
+		pthread_join(threads_t[i], NULL);
+#else
+	for(int i = 0; i < T; ++i)
+		cross_in_thread(configs[i]);
+#endif
+	
+	Common::delete_all(configs);
+	
+	return inds;
+}
+
+void Individual::cross_in_thread(void *config) {
+	auto	*c = (ConfigThread *)config;
+	
 	std::random_device	seed_gen;
 	std::default_random_engine	engine;
+cerr << "a " << c->first << endl;
 	
-	std::uniform_int_distribution<size_t>	dist1(0, mothers.size()-1);
-	std::uniform_int_distribution<size_t>	dist2(0, fathers.size()-1);
+	std::uniform_int_distribution<size_t>	dist1(0, c->mothers.size()-1);
+	std::uniform_int_distribution<size_t>	dist2(0, c->fathers.size()-1);
+cerr << "b " << c->first << endl;
 	
-	vector<const Individual *>	inds(num_inds);
-	for(size_t i = 0; i < num_inds; ++i) {
+	for(size_t i = c->first; i < c->num_inds; i += c->num_threads) {
 		stringstream	ss;
-		ss << setfill('0') << setw(8) << name_base << i + 1;
+		ss << setfill('0') << setw(8) << c->name_base << i + 1;
 		const size_t	mother_index = dist1(engine);
 		const size_t	father_index = dist2(engine);
-		inds[i] = cross_each(ss.str(), mothers[mother_index],
-										fathers[father_index], engine);
+		c->results[i] = cross_each(ss.str(), c->mothers[mother_index],
+										c->fathers[father_index], engine);
 	}
-	return inds;
 }
 
 const Individual *Individual::cross_each(const string& name,
