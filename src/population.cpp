@@ -118,15 +118,28 @@ Population *Population::cross(size_t num_inds,
 						const Map& gmap, const string& name_base, int T) {
 	const auto	pairs = make_pairs(num_inds, mothers, fathers);
 	
-	// prepare space
-	vector<const ChrPopulation *>	chr_pops(gmap.num_chroms());
-	for(size_t i = 0; i < gmap.num_chroms(); ++i) {
-		const auto&	mat = *mothers.get_chrpops(i);
-		const auto&	pat = *fathers.get_chrpops(i);
-		auto	*chr_pop = new ChrPopulation(num_inds, *gmap.get_chr(i));
-		chr_pop->cross(pairs, mat, pat, T);
-		chr_pops[i] = chr_pop;
-	}
+	vector<ConfigThread *>	configs(T);
+	for(int i = 0; i < T; ++i)
+		configs[i] = new ConfigThread(i, T, mothers, fathers, pairs);
+	
+#ifndef DEBUG
+	vector<pthread_t>	threads_t(T);
+	for(int i = 0; i < T; ++i)
+		pthread_create(&threads_t[i], NULL,
+			(void *(*)(void *))&cross_in_thread, (void *)configs[i]);
+	
+	for(int i = 0; i < T; ++i)
+		pthread_join(threads_t[i], NULL);
+#else
+	for(int i = 0; i < T; ++i)
+		cross_in_thread(configs[i]);
+#endif
+	
+	// make them to be const
+	const auto&	cpops = configs[0]->chr_pops;
+	const vector<const ChrPopulation *>	chr_pops(cpops.begin(), cpops.end());
+	
+	Common::delete_all(configs);
 	
 	vector<string>	names(num_inds);
 	for(size_t j = 0; j < num_inds; ++j) {
@@ -137,6 +150,21 @@ Population *Population::cross(size_t num_inds,
 	
 	return new Population(chr_pops, gmap, names);
 }
+
+void Population::cross_in_thread(void *config) {
+	auto	*c = (ConfigThread *)config;
+	
+	for(size_t i = c->first; i < c->num_chroms(); i += c->num_threads) {
+		const auto&	mat = *c->mothers.get_chrpops(i);
+		const auto&	pat = *c->fathers.get_chrpops(i);
+		const ChromMap&	cmap = c->mothers.get_chrmap(i);
+		auto	*chr_pop = new ChrPopulation(c->num_inds(), cmap);
+		chr_pop->cross(c->pairs, mat, pat, 1);
+		c->chr_pops[i] = chr_pop;
+	}
+}
+
+#include <iostream>
 
 vector<Population::Pair> Population::make_pairs(size_t num_inds,
 												const Population& mothers,
@@ -151,6 +179,7 @@ vector<Population::Pair> Population::make_pairs(size_t num_inds,
 	for(size_t i = 0; i < num_inds; ++i) {
 		const size_t	mother_index = dist1(engine);
 		const size_t	father_index = dist2(engine);
+cout << mother_index << " " << father_index << endl;
 		pairs[i] = make_pair(mother_index, father_index);
 	}
 	return pairs;

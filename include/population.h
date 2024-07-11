@@ -72,6 +72,24 @@ public:
 class Population {
 	using Pair = std::pair<std::size_t, std::size_t>;
 	
+	struct ConfigThread {
+		const std::size_t	first;
+		const std::size_t	num_threads;
+		const Population&	mothers;
+		const Population&	fathers;
+		const std::vector<Pair>&	pairs;
+		std::vector<ChrPopulation *>	chr_pops;
+		
+		ConfigThread(std::size_t i, std::size_t	nt,
+						const Population& m, const Population& f,
+						const std::vector<Pair>& ps) :
+					first(i), num_threads(nt), mothers(m), fathers(f),
+					pairs(ps), chr_pops(m.num_chroms()) { }
+		
+		std::size_t num_inds() const { return pairs.size(); }
+		std::size_t num_chroms() const { return chr_pops.size(); }
+	};
+	
 private:
 	std::vector<const ChrPopulation *>	chr_populations;
 	const Map& gmap;
@@ -84,6 +102,8 @@ public:
 	~Population();
 	
 	std::size_t num_inds() const { return names.size(); }
+	std::size_t num_chroms() const { return chr_populations.size(); }
+	const ChromMap&	get_chrmap(std::size_t i) const { return *gmap.get_chr(i); }
 	const ChrPopulation	*get_chrpops(std::size_t i) const {
 		return chr_populations[i];
 	}
@@ -95,6 +115,7 @@ public:
 	static Population *cross(std::size_t num_inds,
 						const Population& mothers, const Population& fathers,
 						const Map& gmap, const std::string& name_base, int T);
+	static void cross_in_thread(void *config);
 	static std::vector<Pair> make_pairs(std::size_t num_inds,
 										const Population& mothers,
 										const Population& fathers);
