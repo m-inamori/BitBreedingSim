@@ -13,7 +13,8 @@ void BreedingSim(const Option *op) {
 	const auto	pat_origins = Population::create_origins(10, *gmap, "pat_");
 auto start = std::chrono::high_resolution_clock::now();
 	const auto	progs = Population::cross(op->num_inds, *mat_origins,
-											*pat_origins, *gmap, "progs_");
+											*pat_origins, *gmap, "progs_",
+											op->num_threads);
 auto end = std::chrono::high_resolution_clock::now();
 std::chrono::duration<double> diff = end-start;
 std::cout << "Time to run function: " << diff.count() << " s\n";

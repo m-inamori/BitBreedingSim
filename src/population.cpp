@@ -1,7 +1,9 @@
 #include <sstream>
 #include "../include/population.h"
+#include "../include/common.h"
 
 using namespace std;
+
 
 //////////////////// ChrPopulation ////////////////////
 
@@ -20,16 +22,49 @@ const ChrPopulation *ChrPopulation::create_origins(size_t num_inds,
 }
 
 void ChrPopulation::cross(const vector<Pair>& pairs,
-							const ChrPopulation& mathers,
-							const ChrPopulation& fathers,
-							ChrPopulation& new_population,
-							std::mt19937 &engine) {
-	for(size_t i = 0; i < new_population.num_inds(); ++i) {
-		const size_t	mat_index = pairs[i].first;
-		const size_t	pat_index = pairs[i].second;
-		mathers.reduce(mat_index, new_population, i, 0, engine);
-		fathers.reduce(pat_index, new_population, i, 1, engine);
+							const ChrPopulation& mothers,
+							const ChrPopulation& fathers, int T) {
+	vector<ConfigThread *>	configs(T);
+	for(int i = 0; i < T; ++i)
+		configs[i] = new ConfigThread(i, T, mothers, fathers, pairs, *this);
+	
+#ifndef DEBUG
+	vector<pthread_t>	threads_t(T);
+	for(int i = 0; i < T; ++i)
+		pthread_create(&threads_t[i], NULL,
+			(void *(*)(void *))&cross_in_thread, (void *)configs[i]);
+	
+	for(int i = 0; i < T; ++i)
+		pthread_join(threads_t[i], NULL);
+#else
+	for(int i = 0; i < T; ++i)
+		cross_in_thread(configs[i]);
+#endif
+	
+	Common::delete_all(configs);
+}
+
+void ChrPopulation::cross_in_thread(void *config) {
+	auto	*c = (ConfigThread *)config;
+	
+	std::random_device	seed_gen;
+	std::mt19937	engine(seed_gen());
+	
+	ChrPopulation&	pops = c->new_population;
+	for(size_t i = c->first; i < pops.num_inds(); i += c->num_threads) {
+		const size_t	mat_index = c->pairs[i].first;
+		const size_t	pat_index = c->pairs[i].second;
+		pops.cross_each(c->mothers, c->fathers,
+									mat_index, pat_index, i, engine);
 	}
+}
+
+void ChrPopulation::cross_each(const ChrPopulation& mathers,
+								const ChrPopulation& fathers,
+								size_t mat_index, size_t pat_index,
+								size_t ind_index, std::mt19937 &engine) {
+	mathers.reduce(mat_index, *this, ind_index, 0, engine);
+	fathers.reduce(pat_index, *this, ind_index, 1, engine);
 }
 
 void ChrPopulation::reduce(size_t parent_index,
@@ -80,11 +115,8 @@ const Population *Population::create_origins(size_t num_inds,
 
 Population *Population::cross(size_t num_inds,
 						const Population& mothers, const Population& fathers,
-						const Map& gmap, const string& name_base) {
+						const Map& gmap, const string& name_base, int T) {
 	const auto	pairs = make_pairs(num_inds, mothers, fathers);
-	
-	std::random_device	seed_gen;
-	std::mt19937	engine(seed_gen());
 	
 	// prepare space
 	vector<const ChrPopulation *>	chr_pops(gmap.num_chroms());
@@ -92,12 +124,7 @@ Population *Population::cross(size_t num_inds,
 		const auto&	mat = *mothers.get_chrpops(i);
 		const auto&	pat = *fathers.get_chrpops(i);
 		auto	*chr_pop = new ChrPopulation(num_inds, *gmap.get_chr(i));
-		for(size_t j = 0; j < num_inds; ++j) {
-			const size_t	mat_index = pairs[j].first;
-			const size_t	pat_index = pairs[j].second;
-			mat.reduce(mat_index, *chr_pop, j, 0, engine);
-			pat.reduce(pat_index, *chr_pop, j, 1, engine);
-		}
+		chr_pop->cross(pairs, mat, pat, T);
 		chr_pops[i] = chr_pop;
 	}
 	

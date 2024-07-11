@@ -13,6 +13,21 @@ class ChrPopulation {
 	using Iter = std::vector<int>::iterator;
 	using Pair = std::pair<std::size_t, std::size_t>;
 	
+	struct ConfigThread {
+		const std::size_t	first;
+		const std::size_t	num_threads;
+		const std::vector<Pair>& pairs;
+		const ChrPopulation&	mothers;
+		const ChrPopulation&	fathers;
+		ChrPopulation&	new_population;
+		
+		ConfigThread(std::size_t i, std::size_t	nt,
+						const ChrPopulation& m, const ChrPopulation& f,
+						const std::vector<Pair>& ps, ChrPopulation& new_pop) :
+					first(i), num_threads(nt), pairs(ps),
+					mothers(m), fathers(f), new_population(new_pop) { }
+	};
+	
 private:
 	std::vector<int>	genos;
 	const ChromMap&	chrmap;
@@ -33,6 +48,12 @@ public:
 		return genos.begin() + num_markers() * (ind_index * 2 + hap_id);
 	}
 	
+	void cross(const std::vector<Pair>& pairs,
+			const ChrPopulation& mothers, const ChrPopulation& fathers, int T);
+	void cross_each(const ChrPopulation& mother,
+					const ChrPopulation& father,
+					std::size_t mat_index, std::size_t pat_index,
+					std::size_t ind_index, std::mt19937 &engine);
 	void reduce(std::size_t parent_index,
 				ChrPopulation& new_population,
 				std::size_t ind_index, std::size_t hap_index,
@@ -41,12 +62,8 @@ public:
 public:
 	static const ChrPopulation *create_origins(std::size_t num_inds,
 												const ChromMap& cmap);
-	static void cross(const std::vector<Pair>& pairs,
-						const ChrPopulation& mathers,
-						const ChrPopulation& fathers,
-						ChrPopulation& new_population,
-						std::mt19937 &engine);
 	static std::vector<int> create_genotypes(std::size_t num_markers);
+	static void cross_in_thread(void *config);
 };
 
 
@@ -77,7 +94,7 @@ public:
 											const std::string& name_base);
 	static Population *cross(std::size_t num_inds,
 						const Population& mothers, const Population& fathers,
-						const Map& gmap, const std::string& name_base);
+						const Map& gmap, const std::string& name_base, int T);
 	static std::vector<Pair> make_pairs(std::size_t num_inds,
 										const Population& mothers,
 										const Population& fathers);
