@@ -1,29 +1,33 @@
 #include <sstream>
+#include <climits>
 #include "../include/population.h"
+#include "../include/bitoperation.h"
 #include "../include/common.h"
 
 using namespace std;
 
 
-//////////////////// ChrPopulation ////////////////////
+//////////////////// BitChrPopulation ////////////////////
 
-const ChrPopulation *ChrPopulation::create_origins(size_t num_inds,
-													const ChromMap& cmap) {
+const BitChrPopulation *BitChrPopulation::create_origins(size_t num_inds,
+														const ChromMap& cmap) {
 	std::random_device	seed_gen;
-	std::mt19937	engine(seed_gen());
+	std::mt19937_64	engine(seed_gen());
+	std::uniform_int_distribution<Int::ull> dist(0, ULLONG_MAX);
 	
 	const size_t	num_markers = cmap.num_markers();
-	vector<int>	genos(num_markers * num_inds * 2);
-	for(size_t i = 0; i < num_markers * num_inds * 2; ++i) {
-		const std::uint32_t	result = engine();
-		genos[i] = (int)(result & 1);
+	const size_t	num_elements = (num_markers + 63) / 64;
+	vector<Int::ull>	genos(num_elements * num_inds * 2);
+	// 端数は気にしなくてもよい
+	for(size_t i = 0; i < num_elements * num_inds * 2; ++i) {
+		genos[i] = dist(engine);
 	}
-	return new ChrPopulation(genos, cmap);
+	return new BitChrPopulation(genos, num_inds, cmap);
 }
 
-void ChrPopulation::cross(const vector<Pair>& pairs,
-							const ChrPopulation& mothers,
-							const ChrPopulation& fathers, int T) {
+void BitChrPopulation::cross(const vector<Pair>& pairs,
+							const BitChrPopulation& mothers,
+							const BitChrPopulation& fathers, int T) {
 	vector<ConfigThread *>	configs(T);
 	for(int i = 0; i < T; ++i)
 		configs[i] = new ConfigThread(i, T, mothers, fathers, pairs, *this);
@@ -44,14 +48,14 @@ void ChrPopulation::cross(const vector<Pair>& pairs,
 	Common::delete_all(configs);
 }
 
-void ChrPopulation::cross_in_thread(void *config) {
+void BitChrPopulation::cross_in_thread(void *config) {
 	auto	*c = (ConfigThread *)config;
 	
 	std::random_device	seed_gen;
 	std::mt19937	engine(seed_gen());
 	
-	ChrPopulation&	pops = c->new_population;
-	for(size_t i = c->first; i < pops.num_inds(); i += c->num_threads) {
+	BitChrPopulation&	pops = c->new_population;
+	for(size_t i = c->first; i < pops.get_num_inds(); i += c->num_threads) {
 		const size_t	mat_index = c->pairs[i].first;
 		const size_t	pat_index = c->pairs[i].second;
 		pops.cross_each(c->mothers, c->fathers,
@@ -59,18 +63,18 @@ void ChrPopulation::cross_in_thread(void *config) {
 	}
 }
 
-void ChrPopulation::cross_each(const ChrPopulation& mathers,
-								const ChrPopulation& fathers,
-								size_t mat_index, size_t pat_index,
-								size_t ind_index, std::mt19937 &engine) {
+void BitChrPopulation::cross_each(const BitChrPopulation& mathers,
+								  const BitChrPopulation& fathers,
+								  size_t mat_index, size_t pat_index,
+								  size_t ind_index, std::mt19937 &engine) {
 	mathers.reduce(mat_index, *this, ind_index, 0, engine);
 	fathers.reduce(pat_index, *this, ind_index, 1, engine);
 }
 
-void ChrPopulation::reduce(size_t parent_index,
-							ChrPopulation& new_population,
-							size_t ind_index, size_t hap_index,
-							std::mt19937 &engine) const {
+void BitChrPopulation::reduce(size_t parent_index,
+							  BitChrPopulation& new_population,
+							  size_t ind_index, size_t hap_index,
+							  std::mt19937 &engine) const {
 	Iter	new_iter = new_population.get_mut_haplotype(ind_index, hap_index);
 	const vector<size_t> pts = chrmap.select_random_crossover_points(engine);
 	
@@ -81,12 +85,29 @@ void ChrPopulation::reduce(size_t parent_index,
 	for(auto p = pts.begin(); p != pts.end(); ++p) {
 		ConstIter	iter = get_haplotype(parent_index, ihap);
 		const size_t	last = *p;
-		std::copy(iter + first, iter + last, new_iter + first);
+		const size_t	first_q = first / 64;
+		const size_t	first_r = first % 64;
+		const size_t	last_q = last / 64;
+		
+		const Int::ull	mask = BitOperation::upper_mask(first_r);
+		*(new_iter + first_q) &= (~0) ^ mask;
+		*(new_iter + first_q) |= (*(iter + first_q)) & mask;
+		if(first_q < last_q) {
+			std::copy(iter + first_q + 1, iter + last_q,
+											new_iter + first_q + 1);
+		}
 		ihap = ihap == 0 ? 1 : 0;
 		first = last;
 	}
 	ConstIter	iter = get_haplotype(parent_index, ihap);
-	std::copy(iter + first, iter + num_markers(), new_iter + first);
+	const size_t	first_q = first / 64;
+	const size_t	first_r = first % 64;
+	
+	const Int::ull	mask = BitOperation::upper_mask(first_r);
+	*(new_iter + first_q) &= (~0) ^ mask;
+	*(new_iter + first_q) |= (*(iter + first_q)) & mask;
+	std::copy(iter + first_q + 1, iter + num_elements(),
+										new_iter + first_q + 1);
 }
 
 
@@ -99,9 +120,10 @@ Population::~Population() {
 
 const Population *Population::create_origins(size_t num_inds,
 									const Map& gmap, const string& name_base) {
-	vector<const ChrPopulation *>	chr_pops(gmap.num_chroms());
+	vector<const BitChrPopulation *>	chr_pops(gmap.num_chroms());
 	for(size_t i = 0; i < gmap.num_chroms(); ++i) {
-		chr_pops[i] = ChrPopulation::create_origins(num_inds, *gmap.get_chr(i));
+		const auto&	cmap = *gmap.get_chr(i);
+		chr_pops[i] = BitChrPopulation::create_origins(num_inds, cmap);
 	}
 	
 	vector<string>	names(num_inds);
@@ -137,7 +159,8 @@ Population *Population::cross(size_t num_inds,
 	
 	// make them to be const
 	const auto&	cpops = configs[0]->chr_pops;
-	const vector<const ChrPopulation *>	chr_pops(cpops.begin(), cpops.end());
+	const vector<const BitChrPopulation *>	chr_pops(cpops.begin(),
+														cpops.end());
 	
 	Common::delete_all(configs);
 	
@@ -151,6 +174,8 @@ Population *Population::cross(size_t num_inds,
 	return new Population(chr_pops, gmap, names);
 }
 
+#include <iostream>
+
 void Population::cross_in_thread(void *config) {
 	auto	*c = (ConfigThread *)config;
 	
@@ -158,13 +183,11 @@ void Population::cross_in_thread(void *config) {
 		const auto&	mat = *c->mothers.get_chrpops(i);
 		const auto&	pat = *c->fathers.get_chrpops(i);
 		const ChromMap&	cmap = c->mothers.get_chrmap(i);
-		auto	*chr_pop = new ChrPopulation(c->num_inds(), cmap);
+		auto	*chr_pop = new BitChrPopulation(c->num_inds(), cmap);
 		chr_pop->cross(c->pairs, mat, pat, 1);
 		c->chr_pops[i] = chr_pop;
 	}
 }
-
-#include <iostream>
 
 vector<Population::Pair> Population::make_pairs(size_t num_inds,
 												const Population& mothers,
@@ -179,7 +202,6 @@ vector<Population::Pair> Population::make_pairs(size_t num_inds,
 	for(size_t i = 0; i < num_inds; ++i) {
 		const size_t	mother_index = dist1(engine);
 		const size_t	father_index = dist2(engine);
-cout << mother_index << " " << father_index << endl;
 		pairs[i] = make_pair(mother_index, father_index);
 	}
 	return pairs;

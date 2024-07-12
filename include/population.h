@@ -4,64 +4,70 @@
 #include <vector>
 #include <random>
 #include "Map.h"
+#include "Int.h"
 
 
-//////////////////// ChrPopulation ////////////////////
+//////////////////// BitChrPopulation ////////////////////
 
-class ChrPopulation {
-	using ConstIter = std::vector<int>::const_iterator;
-	using Iter = std::vector<int>::iterator;
+class BitChrPopulation {
+	using ConstIter = std::vector<Int::ull>::const_iterator;
+	using Iter = std::vector<Int::ull>::iterator;
 	using Pair = std::pair<std::size_t, std::size_t>;
 	
 	struct ConfigThread {
 		const std::size_t	first;
 		const std::size_t	num_threads;
 		const std::vector<Pair>& pairs;
-		const ChrPopulation&	mothers;
-		const ChrPopulation&	fathers;
-		ChrPopulation&	new_population;
+		const BitChrPopulation&	mothers;
+		const BitChrPopulation&	fathers;
+		BitChrPopulation&	new_population;
 		
 		ConfigThread(std::size_t i, std::size_t	nt,
-						const ChrPopulation& m, const ChrPopulation& f,
-						const std::vector<Pair>& ps, ChrPopulation& new_pop) :
+					 const BitChrPopulation& m, const BitChrPopulation& f,
+					 const std::vector<Pair>& ps, BitChrPopulation& new_pop) :
 					first(i), num_threads(nt), pairs(ps),
 					mothers(m), fathers(f), new_population(new_pop) { }
 	};
 	
 private:
-	std::vector<int>	genos;
+	std::vector<Int::ull>	genos;
+	const std::size_t	num_inds;
 	const ChromMap&	chrmap;
 	
 public:
-	ChrPopulation(const std::vector<int>& gs, const ChromMap& cmap) :
-												genos(gs), chrmap(cmap) { }
+	BitChrPopulation(const std::vector<Int::ull>& gs,
+						std::size_t num, const ChromMap& cmap) :
+									genos(gs), num_inds(num), chrmap(cmap) { }
 	
-	ChrPopulation(std::size_t num_inds, const ChromMap& cmap) :
-					genos(num_inds * cmap.num_markers() * 2), chrmap(cmap) { }
+	BitChrPopulation(std::size_t num_inds_, const ChromMap& cmap) :
+								genos(num_inds_*(cmap.num_markers()+63)/64*2),
+								num_inds(num_inds_), chrmap(cmap) { }
 	
 	std::size_t num_markers() const { return chrmap.num_markers(); }
-	std::size_t num_inds() const { return genos.size() / (num_markers() * 2); }
+	std::size_t num_elements() const { return (num_markers()+63)/64; }
+	std::size_t get_num_inds() const { return num_inds; }
 	ConstIter get_haplotype(std::size_t ind_index, std::size_t hap_id) const {
-		return genos.begin() + num_markers() * (ind_index * 2 + hap_id);
+		return genos.begin() + num_elements() * (ind_index * 2 + hap_id);
 	}
 	Iter get_mut_haplotype(std::size_t ind_index, std::size_t hap_id) {
-		return genos.begin() + num_markers() * (ind_index * 2 + hap_id);
+		return genos.begin() + num_elements() * (ind_index * 2 + hap_id);
 	}
 	
 	void cross(const std::vector<Pair>& pairs,
-			const ChrPopulation& mothers, const ChrPopulation& fathers, int T);
-	void cross_each(const ChrPopulation& mother,
-					const ChrPopulation& father,
+				const BitChrPopulation& mothers,
+				const BitChrPopulation& fathers, int T);
+	void cross_each(const BitChrPopulation& mother,
+					const BitChrPopulation& father,
 					std::size_t mat_index, std::size_t pat_index,
 					std::size_t ind_index, std::mt19937 &engine);
 	void reduce(std::size_t parent_index,
-				ChrPopulation& new_population,
+				BitChrPopulation& new_population,
 				std::size_t ind_index, std::size_t hap_index,
 				std::mt19937 &engine) const;
 	
 public:
-	static const ChrPopulation *create_origins(std::size_t num_inds,
-												const ChromMap& cmap);
+	static const BitChrPopulation *create_origins(std::size_t num_inds,
+													const ChromMap& cmap);
 	static std::vector<int> create_genotypes(std::size_t num_markers);
 	static void cross_in_thread(void *config);
 };
@@ -78,7 +84,7 @@ class Population {
 		const Population&	mothers;
 		const Population&	fathers;
 		const std::vector<Pair>&	pairs;
-		std::vector<ChrPopulation *>	chr_pops;
+		std::vector<BitChrPopulation *>	chr_pops;
 		
 		ConfigThread(std::size_t i, std::size_t	nt,
 						const Population& m, const Population& f,
@@ -91,20 +97,20 @@ class Population {
 	};
 	
 private:
-	std::vector<const ChrPopulation *>	chr_populations;
+	std::vector<const BitChrPopulation *>	chr_populations;
 	const Map& gmap;
 	const std::vector<std::string>	names;
 	
 public:
-	Population(const std::vector<const ChrPopulation *>& chr_pops,
-				const Map& m, const std::vector<std::string>& ns) :
+	Population(const std::vector<const BitChrPopulation *>& chr_pops,
+					const Map& m, const std::vector<std::string>& ns) :
 							chr_populations(chr_pops), gmap(m), names(ns) { }
 	~Population();
 	
 	std::size_t num_inds() const { return names.size(); }
 	std::size_t num_chroms() const { return chr_populations.size(); }
 	const ChromMap&	get_chrmap(std::size_t i) const { return *gmap.get_chr(i); }
-	const ChrPopulation	*get_chrpops(std::size_t i) const {
+	const BitChrPopulation	*get_chrpops(std::size_t i) const {
 		return chr_populations[i];
 	}
 	
