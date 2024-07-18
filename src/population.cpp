@@ -85,15 +85,19 @@ void BitChrPopulation::reduce(size_t parent_index,
 	for(auto p = pts.begin(); p != pts.end(); ++p) {
 		ConstIter	iter = get_haplotype(parent_index, ihap);
 		const size_t	last = *p;
+		if(last == 0) {
+			ihap = ihap == 0 ? 1 : 0;
+			continue;
+		}
 		const size_t	first_q = first / 64;
 		const size_t	first_r = first % 64;
-		const size_t	last_q = last / 64;
+		const size_t	last_q = (last - 1) / 64;
 		
 		const Int::ull	mask = BitOperation::upper_mask(first_r);
 		*(new_iter + first_q) &= (~0) ^ mask;
 		*(new_iter + first_q) |= (*(iter + first_q)) & mask;
 		if(first_q < last_q) {
-			std::copy(iter + first_q + 1, iter + last_q,
+			std::copy(iter + first_q + 1, iter + last_q + 1,
 											new_iter + first_q + 1);
 		}
 		ihap = ihap == 0 ? 1 : 0;
@@ -108,6 +112,30 @@ void BitChrPopulation::reduce(size_t parent_index,
 	*(new_iter + first_q) |= (*(iter + first_q)) & mask;
 	std::copy(iter + first_q + 1, iter + num_elements(),
 										new_iter + first_q + 1);
+}
+
+void BitChrPopulation::write(ostream& os) const {
+	// あとでChrの名前もちゃんと入れる
+	for(size_t i = 0; i < num_markers(); ++i) {
+		os << "Chr1" << '\t' << (i+1)*1000 << '\t' << '.' << '\t'
+				<< 'A' << '\t' << 'C' << '\t' << '.' << '\t'
+				<< "PASS" << '\t' << '.' << '\t' << "GT";
+		for(size_t k = 0; k < num_inds; ++k)
+			os << '\t' << get_genotype(k, i);
+		os << "\n";
+	}
+}
+
+string BitChrPopulation::get_genotype(size_t id_ind, size_t id_marker) const {
+	size_t	q = id_marker / 64;
+	size_t	r = id_marker % 64;
+	const size_t	offset1 = id_ind * 2 * num_elements();
+	const size_t	offset2 = offset1 + num_elements();
+	const Int::ull	gt1 = (genos[offset1+q] >> r) & 1;
+	const Int::ull	gt2 = (genos[offset2+q] >> r) & 1;
+	stringstream	ss;
+	ss << gt1 << '|' << gt2;
+	return ss.str();
 }
 
 
@@ -205,4 +233,20 @@ vector<Population::Pair> Population::make_pairs(size_t num_inds,
 		pairs[i] = make_pair(mother_index, father_index);
 	}
 	return pairs;
+}
+
+void Population::write(ostream& os) const {
+	write_header(os);
+	for(auto p = chr_populations.begin(); p != chr_populations.end(); ++p)
+		(*p)->write(os);
+}
+
+void Population::write_header(ostream& os) const {
+	os << "##fileformat=VCFv4.2\n";
+	os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
+	os << "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT";
+	for(auto p = names.begin(); p != names.end(); ++p) {
+		os << '\t' << *p;
+	}
+	os << "\n";
 }

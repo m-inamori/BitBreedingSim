@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <chrono>
 #include "../include/population.h"
 #include "../include/Map.h"
@@ -18,6 +19,12 @@ auto start = std::chrono::high_resolution_clock::now();
 auto end = std::chrono::high_resolution_clock::now();
 std::chrono::duration<double> diff = end-start;
 std::cout << "Time to run function: " << diff.count() << " s\n";
+	if(!op->path_out.empty()) {
+		ofstream	ofs(op->path_out.c_str());
+		if(ofs) {
+			progs->write(ofs);
+		}
+	}
 	
 	delete mat_origins;
 	delete pat_origins;

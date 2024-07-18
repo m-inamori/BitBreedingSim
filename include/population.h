@@ -1,6 +1,7 @@
 #ifndef __POPULATION
 #define __POPULATION
 
+#include <ostream>
 #include <vector>
 #include <random>
 #include "Map.h"
@@ -40,12 +41,13 @@ public:
 									genos(gs), num_inds(num), chrmap(cmap) { }
 	
 	BitChrPopulation(std::size_t num_inds_, const ChromMap& cmap) :
-								genos(num_inds_*(cmap.num_markers()+63)/64*2),
+								genos((cmap.num_markers()+63)/64*num_inds_*2),
 								num_inds(num_inds_), chrmap(cmap) { }
 	
 	std::size_t num_markers() const { return chrmap.num_markers(); }
 	std::size_t num_elements() const { return (num_markers()+63)/64; }
 	std::size_t get_num_inds() const { return num_inds; }
+	std::string get_genotype(std::size_t id_ind, std::size_t id_marker) const;
 	ConstIter get_haplotype(std::size_t ind_index, std::size_t hap_id) const {
 		return genos.begin() + num_elements() * (ind_index * 2 + hap_id);
 	}
@@ -64,6 +66,7 @@ public:
 				BitChrPopulation& new_population,
 				std::size_t ind_index, std::size_t hap_index,
 				std::mt19937 &engine) const;
+	void write(std::ostream& os) const;
 	
 public:
 	static const BitChrPopulation *create_origins(std::size_t num_inds,
@@ -113,6 +116,8 @@ public:
 	const BitChrPopulation	*get_chrpops(std::size_t i) const {
 		return chr_populations[i];
 	}
+	void write(std::ostream& os) const;
+	void write_header(std::ostream& os) const;
 	
 public:
 	static const Population *create_origins(std::size_t num_inds,
