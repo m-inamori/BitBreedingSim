@@ -8,17 +8,19 @@ using namespace std;
 //////////////////// Option ////////////////////
 
 const Option *Option::create(int argc, char **argv) {
-	if(argc != 3 && argc != 5 && argc != 7)
+	if(argc != 3 && argc != 5 && argc != 7 && argc != 9)
 		return nullptr;
 	
 	try {
 		const size_t	ni = std::stoull(argv[1]);
 		const size_t	nc = std::stoull(argv[2]);
+		const int		seed = flag_value_seed("-s", argc, argv);
 		const int		T = flag_value_int("-t", argc, argv, 1);
 		const string	path_out = flag_value("-o", argc, argv);
-		return new Option(ni, nc, T, path_out);
+		return new Option(ni, nc, seed, T, path_out);
 	}
 	catch(const invalid_argument& e) {
+		cerr << e.what() << endl;
 		return nullptr;
 	}
 }
@@ -40,6 +42,20 @@ int Option::flag_value_int(const string& s, int argc, char **argv,
 		return std::stoi(str_value);
 }
 
+int Option::flag_value_seed(const string& s, int argc, char **argv) {
+	const string	str_value = flag_value(s, argc, argv);
+	if(str_value.empty()) {
+		return -1;
+	}
+	else {
+		const int	seed = std::stoi(str_value);
+		if(seed > 0)
+			return seed;
+		else
+			throw std::invalid_argument("seed must be positive");
+	}
+}
+
 void Option::usage() {
-	cerr << "usage : BreedingSim num_inds num_chroms [-t num threads] [-o path out]." << endl;
+	cerr << "usage : BreedingSim num_inds num_chroms [-s seed(> 0)] [-t num threads] [-o path out]." << endl;
 }

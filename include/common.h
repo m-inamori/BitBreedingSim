@@ -54,5 +54,8 @@ namespace Common {
 		for(auto p = v.begin(); p != v.end(); ++p)
 			delete *p;
 	}
+	
+	bool is_int(const std::string& s);
+	bool is_double(const std::string& s);
 }
 #endif

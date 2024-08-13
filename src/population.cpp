@@ -1,6 +1,9 @@
 #include <sstream>
 #include <climits>
+#include "../include/BaseInfo.h"
+#include "../include/trait.h"
 #include "../include/population.h"
+#include "../include/VCF.h"
 #include "../include/bitoperation.h"
 #include "../include/common.h"
 
@@ -10,12 +13,11 @@ using namespace std;
 //////////////////// BitChrPopulation ////////////////////
 
 const BitChrPopulation *BitChrPopulation::create_origins(size_t num_inds,
-														const ChromMap& cmap) {
-	std::random_device	seed_gen;
-	std::mt19937_64	engine(seed_gen());
+													const ChromMap& cmap,
+													std::mt19937_64& engine) {
 	std::uniform_int_distribution<Int::ull> dist(0, ULLONG_MAX);
 	
-	const size_t	num_markers = cmap.num_markers();
+	const size_t	num_markers = cmap.get_num_markers();
 	const size_t	num_elements = (num_markers + 63) / 64;
 	vector<Int::ull>	genos(num_elements * num_inds * 2);
 	// 端数は気にしなくてもよい
@@ -26,49 +28,16 @@ const BitChrPopulation *BitChrPopulation::create_origins(size_t num_inds,
 }
 
 void BitChrPopulation::cross(const vector<Pair>& pairs,
-							const BitChrPopulation& mothers,
-							const BitChrPopulation& fathers, int T) {
-	vector<ConfigThread *>	configs(T);
-	for(int i = 0; i < T; ++i)
-		configs[i] = new ConfigThread(i, T, mothers, fathers, pairs, *this);
-	
-#ifndef DEBUG
-	vector<pthread_t>	threads_t(T);
-	for(int i = 0; i < T; ++i)
-		pthread_create(&threads_t[i], NULL,
-			(void *(*)(void *))&cross_in_thread, (void *)configs[i]);
-	
-	for(int i = 0; i < T; ++i)
-		pthread_join(threads_t[i], NULL);
-#else
-	for(int i = 0; i < T; ++i)
-		cross_in_thread(configs[i]);
-#endif
-	
-	Common::delete_all(configs);
-}
-
-void BitChrPopulation::cross_in_thread(void *config) {
-	auto	*c = (ConfigThread *)config;
-	
-	std::random_device	seed_gen;
-	std::mt19937	engine(seed_gen());
-	
-	BitChrPopulation&	pops = c->new_population;
-	for(size_t i = c->first; i < pops.get_num_inds(); i += c->num_threads) {
-		const size_t	mat_index = c->pairs[i].first;
-		const size_t	pat_index = c->pairs[i].second;
-		pops.cross_each(c->mothers, c->fathers,
-									mat_index, pat_index, i, engine);
+								const BitChrPopulation& mothers,
+								const BitChrPopulation& fathers,
+								std::uint_fast32_t seed0) {
+	std::mt19937	engine(seed0);
+	for(size_t ind_index = 0; ind_index < num_inds; ++ind_index) {
+		const size_t	mat_index = pairs[ind_index].first;
+		const size_t	pat_index = pairs[ind_index].second;
+		mothers.reduce(mat_index, *this, ind_index, 0, engine);
+		fathers.reduce(pat_index, *this, ind_index, 1, engine);
 	}
-}
-
-void BitChrPopulation::cross_each(const BitChrPopulation& mathers,
-								  const BitChrPopulation& fathers,
-								  size_t mat_index, size_t pat_index,
-								  size_t ind_index, std::mt19937 &engine) {
-	mathers.reduce(mat_index, *this, ind_index, 0, engine);
-	fathers.reduce(pat_index, *this, ind_index, 1, engine);
 }
 
 void BitChrPopulation::reduce(size_t parent_index,
@@ -115,14 +84,12 @@ void BitChrPopulation::reduce(size_t parent_index,
 }
 
 void BitChrPopulation::write(ostream& os) const {
-	// あとでChrの名前もちゃんと入れる
 	for(size_t i = 0; i < num_markers(); ++i) {
-		os << "Chr1" << '\t' << (i+1)*1000 << '\t' << '.' << '\t'
-				<< 'A' << '\t' << 'C' << '\t' << '.' << '\t'
-				<< "PASS" << '\t' << '.' << '\t' << "GT";
+		vector<string>	gts(num_inds);
 		for(size_t k = 0; k < num_inds; ++k)
-			os << '\t' << get_genotype(k, i);
-		os << "\n";
+			gts[k] = get_genotype(k, i);
+		VCF::write_data_line(os, chrmap.get_name(), 
+								chrmap.get_position(i), gts);
 	}
 }
 
@@ -138,6 +105,28 @@ string BitChrPopulation::get_genotype(size_t id_ind, size_t id_marker) const {
 	return ss.str();
 }
 
+int BitChrPopulation::get_int_genotype(size_t id_ind, size_t id_marker) const {
+	size_t	q = id_marker / 64;
+	size_t	r = id_marker % 64;
+	const size_t	offset1 = id_ind * 2 * num_elements();
+	const size_t	offset2 = offset1 + num_elements();
+	const Int::ull	gt1 = (genos[offset1+q] >> r) & 1;
+	const Int::ull	gt2 = (genos[offset2+q] >> r) & 1;
+	return static_cast<int>(gt1 + gt2) - 1;
+}
+
+BitChrPopulation *BitChrPopulation::select(
+							const vector<size_t>& indices) const {
+	const size_t	N = num_elements() * 2;		// data per individual
+	vector<Int::ull>	selected_genos(N * indices.size());
+	for(size_t i = 0; i < indices.size(); ++i) {
+		const size_t	ind_id = indices[i];
+		std::copy(genos.begin() + N*ind_id, genos.begin() + N*(ind_id+1),
+											selected_genos.begin() + N*i);
+	}
+	return new BitChrPopulation(selected_genos, indices.size(), chrmap);
+}
+
 
 //////////////////// Population ////////////////////
 
@@ -146,12 +135,36 @@ Population::~Population() {
 		delete *p;
 }
 
+void Population::set_phenotypes(const BaseInfo *info) {
+	for(size_t i = 0; i < info->num_traits(); ++i) {
+		const auto	pheno = info->compute_phenotypes(*this, i);
+		phenotypes.push_back(pheno);
+		traits.push_back(info->get_trait(i));
+	}
+}
+
+vector<vector<double>> Population::compute_phenotypes(const BaseInfo *info,
+														std::mt19937 &engine) {
+	vector<vector<double>>	phenotypes(info->num_traits());
+	for(size_t i = 0; i < info->num_traits(); ++i) {
+		const Trait	*trait = info->get_trait(i);
+		for(size_t k = 0; k < num_inds(); ++k) {
+			phenotypes[i][k] = trait->phenotype(k, *this, engine);
+		}
+	}
+	return phenotypes;
+}
+
 const Population *Population::create_origins(size_t num_inds,
-									const Map& gmap, const string& name_base) {
+							const BaseInfo *info, const string& name_base) {
+	const Map&	gmap = info->get_map();
+	std::mt19937&	engine = info->get_random_engine();
+	std::mt19937_64	engine64(engine());
 	vector<const BitChrPopulation *>	chr_pops(gmap.num_chroms());
 	for(size_t i = 0; i < gmap.num_chroms(); ++i) {
-		const auto&	cmap = *gmap.get_chr(i);
-		chr_pops[i] = BitChrPopulation::create_origins(num_inds, cmap);
+		const auto&	cmap = gmap.get_chr(i);
+		chr_pops[i] = BitChrPopulation::create_origins(num_inds,
+														cmap, engine64);
 	}
 	
 	vector<string>	names(num_inds);
@@ -160,17 +173,24 @@ const Population *Population::create_origins(size_t num_inds,
 		ss << name_base << j + 1;
 		names[j] = ss.str();
 	}
-	return new Population(chr_pops, gmap, names);
+	
+	Population	*pop = new Population(chr_pops, gmap, names);
+	pop->set_phenotypes(info);
+	return pop;
 }
 
 Population *Population::cross(size_t num_inds,
 						const Population& mothers, const Population& fathers,
-						const Map& gmap, const string& name_base, int T) {
-	const auto	pairs = make_pairs(num_inds, mothers, fathers);
-	
+						const BaseInfo *info, const string& name_base, int T) {
+	std::mt19937&	engine = info->get_random_engine();
+	const auto	pairs = make_pairs(num_inds, mothers, fathers, engine);
+for(const auto& p : pairs) cout << p.first << ',' << p.second << endl;
+	const std::uint_fast32_t	seed = engine();
+	vector<BitChrPopulation *>	chr_pops_(info->num_chroms());
 	vector<ConfigThread *>	configs(T);
 	for(int i = 0; i < T; ++i)
-		configs[i] = new ConfigThread(i, T, mothers, fathers, pairs);
+		configs[i] = new ConfigThread(i, T, mothers, fathers,
+												pairs, chr_pops_, seed);
 	
 #ifndef DEBUG
 	vector<pthread_t>	threads_t(T);
@@ -186,9 +206,9 @@ Population *Population::cross(size_t num_inds,
 #endif
 	
 	// make them to be const
-	const auto&	cpops = configs[0]->chr_pops;
-	const vector<const BitChrPopulation *>	chr_pops(cpops.begin(),
-														cpops.end());
+	const vector<BitChrPopulation *>	chr_ps = configs[0]->chr_pops;
+	const vector<const BitChrPopulation *>	chr_pops(chr_ps.begin(),
+															chr_ps.end());
 	
 	Common::delete_all(configs);
 	
@@ -199,10 +219,11 @@ Population *Population::cross(size_t num_inds,
 		names[j] = ss.str();
 	}
 	
-	return new Population(chr_pops, gmap, names);
+	const Map&	gmap = info->get_map();
+	Population	*pop = new Population(chr_pops, gmap, names);
+	pop->set_phenotypes(info);
+	return pop;
 }
-
-#include <iostream>
 
 void Population::cross_in_thread(void *config) {
 	auto	*c = (ConfigThread *)config;
@@ -212,17 +233,15 @@ void Population::cross_in_thread(void *config) {
 		const auto&	pat = *c->fathers.get_chrpops(i);
 		const ChromMap&	cmap = c->mothers.get_chrmap(i);
 		auto	*chr_pop = new BitChrPopulation(c->num_inds(), cmap);
-		chr_pop->cross(c->pairs, mat, pat, 1);
+		chr_pop->cross(c->pairs, mat, pat, c->seed0 + i);
 		c->chr_pops[i] = chr_pop;
 	}
 }
 
 vector<Population::Pair> Population::make_pairs(size_t num_inds,
 												const Population& mothers,
-												const Population& fathers) {
-	std::random_device	seed_gen;
-	std::mt19937	engine(seed_gen());
-	
+												const Population& fathers,
+												std::mt19937& engine) {
 	std::uniform_int_distribution<size_t>	dist1(0, mothers.num_inds()-1);
 	std::uniform_int_distribution<size_t>	dist2(0, fathers.num_inds()-1);
 	
@@ -236,17 +255,98 @@ vector<Population::Pair> Population::make_pairs(size_t num_inds,
 }
 
 void Population::write(ostream& os) const {
-	write_header(os);
+	VCF::write_header(os, names);
 	for(auto p = chr_populations.begin(); p != chr_populations.end(); ++p)
 		(*p)->write(os);
 }
 
-void Population::write_header(ostream& os) const {
-	os << "##fileformat=VCFv4.2\n";
-	os << "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n";
-	os << "#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT";
-	for(auto p = names.begin(); p != names.end(); ++p) {
-		os << '\t' << *p;
+void Population::write_phenotypes(ostream& os) const {
+	os << "name";
+	for(const auto& trait : traits) {
+		os << ',' << trait->get_name();
 	}
 	os << "\n";
+	for(size_t i = 0; i < num_inds(); ++i) {
+		os << names[i];
+		for(size_t k = 0; k < traits.size(); ++k) {
+			os << ',' << phenotypes[k][i];
+		}
+		os << "\n";
+	}
+}
+
+double Population::mean(size_t i) const {
+	return std::accumulate(phenotypes[i].begin(),
+							phenotypes[i].end(), 0.0) / num_inds();
+}
+
+double Population::stddev(std::size_t i) const {
+	const double	m = mean(i);
+	double	s2 = 0;
+	for(const auto& p : phenotypes[i]) {
+		s2 += (p - m) * (p - m);
+	}
+	return sqrt(s2 / num_inds());
+}
+
+void Population::dispay_QTLs(size_t i) const {
+	const Trait	*trait = traits[i];
+	const vector<Trait::Locus>	loci = trait->get_loci();
+	const vector<double>	additives = trait->get_addivtives();
+	const vector<double>	dominants = trait->get_dominants();
+	
+	cout << "Chr";
+	for(size_t i = 0; i < trait->num_QTLs(); ++i)
+		cout << ',' << loci[i].first + 1;
+	cout << endl;
+	cout << "pos";
+	for(size_t i = 0; i < trait->num_QTLs(); ++i)
+		cout << ',' << loci[i].second + 1;
+	cout << endl;
+	cout << "additive";
+	for(size_t i = 0; i < trait->num_QTLs(); ++i)
+		cout << ',' << additives[i];
+	cout << endl;
+	cout << "dominant";
+	for(size_t i = 0; i < trait->num_QTLs(); ++i)
+		cout << ',' << dominants[i];
+	cout << endl;
+	
+	for(size_t k = 0; k < num_inds(); ++k) {
+		cout << names[k];
+		for(size_t i = 0; i < trait->num_QTLs(); ++i)
+			cout << ',' << get_genotype(k, loci[i].first, loci[i].second);
+		cout << endl;
+	}
+}
+
+Population *Population::select(const vector<size_t>& indices) const {
+	vector<const BitChrPopulation *>	selected_chr_pops(num_chroms());
+	for(size_t i = 0; i < num_chroms(); ++i) {
+		selected_chr_pops[i] = chr_populations[i]->select(indices);
+	}
+	
+	vector<string>	selected_names(indices.size());
+	for(size_t i = 0; i < indices.size(); ++i) {
+		selected_names[i] = names[indices[i]];
+	}
+	Population	*selected_pop = new Population(selected_chr_pops,
+														gmap, selected_names);
+	
+	selected_pop->phenotypes.resize(phenotypes.size());
+	for(size_t i = 0; i < phenotypes.size(); ++i) {
+		selected_pop->phenotypes[i] = select_phenotypes(indices, i);
+	}
+	selected_pop->traits = traits;
+	
+	return selected_pop;
+}
+
+vector<double> Population::select_phenotypes(const vector<size_t>& indices,
+															size_t i) const {
+	vector<double>	selected_phenotypes(indices.size());
+	for(size_t k = 0; k < indices.size(); ++k) {
+		selected_phenotypes[k] = phenotypes[i][indices[k]];
+	}
+	return selected_phenotypes;
 }

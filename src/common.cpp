@@ -168,3 +168,17 @@ bool Common::is_all_same(const string& seq) {
 	}
 	return true;
 }
+
+bool Common::is_int(const string& s) {
+	int		n;
+	std::istringstream	iss_int(s);
+	iss_int >> n;
+	return iss_int.eof() && !iss_int.fail();
+}
+
+bool Common::is_double(const string& s) {
+	double	d;
+	std::istringstream	iss_double(s);
+	iss_double >> d;
+	return iss_double.eof() && !iss_double.fail();
+}
