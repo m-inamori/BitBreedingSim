@@ -56,14 +56,15 @@ vector<double> Trait::decide_additives_randomly(size_t num_loci,
 		// generate additive effects according to a gamma distribution
 		// and corrects for heritability
 		// https://cpprefjp.github.io/reference/random/gamma_distribution.html
-		std::gamma_distribution<>	dist(1.0, 1.0);
+		std::gamma_distribution<>	geo_dist(1.0, 1.0);
+		std::uniform_int_distribution<int>	dist_unif(0, 1);
 		vector<double>	additive_effects(num_loci);
 		double	s = 0.0;
 		for(size_t i = 0; i < num_loci; ++i) {
-			additive_effects[i] = dist(engine);
+			additive_effects[i] = geo_dist(engine) * (dist_unif(engine)*2-1);
 			s += additive_effects[i] * additive_effects[i];
 		}
-		const double	c = sd * sqrt(2.0*h2) / s;
+		const double	c = sd * sqrt(2.0*h2/s);
 		for(size_t i = 0; i < num_loci; ++i) {
 			additive_effects[i] *= c;
 		}
@@ -126,22 +127,11 @@ const Trait *Trait::create_AD_randomly(const string& name,
 												a, d, mean, error_std_dev);
 	}
 	else {
-		// use geometic distribution to generate additive effects
-		std::gamma_distribution<>	geo_dist(1.0, 1.0);
-		vector<double>	additive_effects(N);
-		double	sum_a2 = 0.0;
-		for(size_t i = 0; i < N; ++i) {
-			additive_effects[i] = geo_dist(engine);
-			sum_a2 += additive_effects[i] * additive_effects[i];
-		}
-		// scaling for exact variance
-		const double	c = sd * sqrt(2*h2/sum_a2*N);
-		for(size_t i = 0; i < N; ++i) {
-			additive_effects[i] *= c;
-		}
+		const auto	additive_effects = decide_additives_randomly(
+														N, sd, h2, engine);
 		
 		// use normal distribution to generate dominant effects
-		std::normal_distribution<>	norm_dist(0.0, sd * sqrt(H2 - h2) * 2);
+		std::normal_distribution<>	norm_dist(0.0, sd * sqrt((H2 - h2) * 4 / N));
 		vector<double>	dominant_effects(N);
 		double	sum_d = 0.0;
 		double	sum_d2 = 0.0;
@@ -151,12 +141,12 @@ const Trait *Trait::create_AD_randomly(const string& name,
 			sum_d2 += dominant_effects[i] * dominant_effects[i];
 		}
 		// scaling for exact variance
-		const double	c2 = sd * sqrt(4*(H2-h2)/sum_d2*N);
+		const double	c2 = sd * sqrt(4*(H2-h2)/sum_d2);
 		for(size_t i = 0; i < N; ++i) {
 			dominant_effects[i] *= c2;
 		}
 		
-		const double	intercept = mean - sum_d / 2;
+		const double	intercept = mean - c2 * sum_d / (2 * N);
 		const double	error_std_dev = sd * sqrt(1.0 - H2);
 		return new TraitADMulti(name, loci, additive_effects,
 								dominant_effects, intercept, error_std_dev);

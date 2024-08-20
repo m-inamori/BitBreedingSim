@@ -1,5 +1,4 @@
-#ifndef __MAP
-#define __MAP
+#pragma once
 
 #include <vector>
 #include <string>
@@ -134,4 +133,3 @@ public:
 		return message.c_str();
 	}
 };
-#endif

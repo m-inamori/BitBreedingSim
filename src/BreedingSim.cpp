@@ -13,8 +13,8 @@ void BreedingSim(const Option *op) {
 	BaseInfo	*info = BaseInfo::create_default(op->seed);
 	info->set_trait_AD_multi(10, 0.6, 0.7);
 	
-	const auto	mat_origins = Population::create_origins(10, info, "mat_");
-	const auto	pat_origins = Population::create_origins(10, info, "pat_");
+	const auto	mat_origins = Population::create_origins(100, info, "mat_");
+	const auto	pat_origins = Population::create_origins(100, info, "pat_");
 auto start = std::chrono::high_resolution_clock::now();
 	const auto	progs = Population::cross(op->num_inds, *mat_origins,
 											*pat_origins, info, "progs_",
@@ -36,39 +36,40 @@ std::cout << "Time to run function: " << diff.count() << " s\n";
 		selected_indices[i] = sorted_phenos[i+progs->num_inds()-num].second;
 	}
 	const auto	selected_progs = progs->select(selected_indices);
-	cout << "selected mean : " << selected_progs->mean(0)
-				<< " sd : " << selected_progs->stddev(0) << endl;
+	cout << "mat mean : " << mat_origins->mean(0)
+				<< " sd : " << mat_origins->stddev(0) << endl;
+	cout << "pat mean : " << pat_origins->mean(0)
+				<< " sd : " << pat_origins->stddev(0) << endl;
 	
 	// もう一度交配する
 	const auto	progs2 = Population::cross(op->num_inds, *selected_progs,
 											*selected_progs, info, "progs2_",
 											op->num_threads);
 	
-#if 0
-	if(!op->path_out.empty()) {
-		ofstream	ofs(op->path_out.c_str());
+	if(!op->path_geno_out.empty()) {
+		ofstream	ofs(op->path_geno_out.c_str());
 		if(ofs) {
 			progs2->write(ofs);
 		}
 	}
-#else
-	if(!op->path_out.empty()) {
-		ofstream	ofs(op->path_out.c_str());
+	if(!op->path_pheno_out.empty()) {
+		ofstream	ofs(op->path_pheno_out.c_str());
 		if(ofs) {
 			progs2->write_phenotypes(ofs);
 		}
 	}
-#endif
 	cout << "1st mean : " << progs->mean(0)
 				<< " sd : " << progs->stddev(0) << endl;
 	cout << "2nd mean : " << progs2->mean(0)
 				<< " sd : " << progs2->stddev(0) << endl;
 	
+#if 0
 	mat_origins->dispay_QTLs(0);
 	pat_origins->dispay_QTLs(0);
 	progs->dispay_QTLs(0);
 	selected_progs->dispay_QTLs(0);
 	progs2->dispay_QTLs(0);
+#endif
 	
 	delete mat_origins;
 	delete pat_origins;

@@ -1,11 +1,10 @@
-#ifndef __BITOPERATION
-#define __BITOPERATION
+#pragma once
 
 #include "Int.h"
 
 namespace BitOperation {
 	// ex) 3 -> 1...111000
-	Int::ull upper_mask(std::size_t k) {
+	inline Int::ull upper_mask(std::size_t k) {
 		if(k == 0)
 			return ~0;
 		else
@@ -13,13 +12,12 @@ namespace BitOperation {
 	}
 	
 	// ex) 3 -> 0...000111
-	Int::ull lower_mask(std::size_t k) {
+	inline Int::ull lower_mask(std::size_t k) {
 		return (1ULL << k) - 1;
 	}
 	
 	// ex) 3, 5 -> 0...00011000
-	Int::ull middle_mask(std::size_t first, std::size_t last) {
+	inline Int::ull middle_mask(std::size_t first, std::size_t last) {
 		return ((1ULL << (last - first)) - 1) << first;
 	}
 }
-#endif

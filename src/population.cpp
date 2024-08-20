@@ -4,6 +4,7 @@
 #include "../include/trait.h"
 #include "../include/population.h"
 #include "../include/VCF.h"
+#include "../include/bitarray.h"
 #include "../include/bitoperation.h"
 #include "../include/common.h"
 
@@ -58,29 +59,12 @@ void BitChrPopulation::reduce(size_t parent_index,
 			ihap = ihap == 0 ? 1 : 0;
 			continue;
 		}
-		const size_t	first_q = first / 64;
-		const size_t	first_r = first % 64;
-		const size_t	last_q = (last - 1) / 64;
-		
-		const Int::ull	mask = BitOperation::upper_mask(first_r);
-		*(new_iter + first_q) &= (~0) ^ mask;
-		*(new_iter + first_q) |= (*(iter + first_q)) & mask;
-		if(first_q < last_q) {
-			std::copy(iter + first_q + 1, iter + last_q + 1,
-											new_iter + first_q + 1);
-		}
+		BitArray::copy(iter, first, last, new_iter);
 		ihap = ihap == 0 ? 1 : 0;
 		first = last;
 	}
 	ConstIter	iter = get_haplotype(parent_index, ihap);
-	const size_t	first_q = first / 64;
-	const size_t	first_r = first % 64;
-	
-	const Int::ull	mask = BitOperation::upper_mask(first_r);
-	*(new_iter + first_q) &= (~0) ^ mask;
-	*(new_iter + first_q) |= (*(iter + first_q)) & mask;
-	std::copy(iter + first_q + 1, iter + num_elements(),
-										new_iter + first_q + 1);
+	BitArray::copy(iter, first, num_elements() * 64, new_iter);
 }
 
 void BitChrPopulation::write(ostream& os) const {
@@ -94,25 +78,21 @@ void BitChrPopulation::write(ostream& os) const {
 }
 
 string BitChrPopulation::get_genotype(size_t id_ind, size_t id_marker) const {
-	size_t	q = id_marker / 64;
-	size_t	r = id_marker % 64;
-	const size_t	offset1 = id_ind * 2 * num_elements();
-	const size_t	offset2 = offset1 + num_elements();
-	const Int::ull	gt1 = (genos[offset1+q] >> r) & 1;
-	const Int::ull	gt2 = (genos[offset2+q] >> r) & 1;
+	ConstIter	iter1 = get_haplotype(id_ind, 0);
+	ConstIter	iter2 = get_haplotype(id_ind, 1);
+	const int	gt1 = BitArray::get(iter1, id_marker);
+	const int	gt2 = BitArray::get(iter2, id_marker);
 	stringstream	ss;
 	ss << gt1 << '|' << gt2;
 	return ss.str();
 }
 
 int BitChrPopulation::get_int_genotype(size_t id_ind, size_t id_marker) const {
-	size_t	q = id_marker / 64;
-	size_t	r = id_marker % 64;
-	const size_t	offset1 = id_ind * 2 * num_elements();
-	const size_t	offset2 = offset1 + num_elements();
-	const Int::ull	gt1 = (genos[offset1+q] >> r) & 1;
-	const Int::ull	gt2 = (genos[offset2+q] >> r) & 1;
-	return static_cast<int>(gt1 + gt2) - 1;
+	ConstIter	iter1 = get_haplotype(id_ind, 0);
+	ConstIter	iter2 = get_haplotype(id_ind, 1);
+	const int	gt1 = BitArray::get(iter1, id_marker);
+	const int	gt2 = BitArray::get(iter2, id_marker);
+	return gt1 + gt2 - 1;
 }
 
 BitChrPopulation *BitChrPopulation::select(
@@ -184,7 +164,6 @@ Population *Population::cross(size_t num_inds,
 						const BaseInfo *info, const string& name_base, int T) {
 	std::mt19937&	engine = info->get_random_engine();
 	const auto	pairs = make_pairs(num_inds, mothers, fathers, engine);
-for(const auto& p : pairs) cout << p.first << ',' << p.second << endl;
 	const std::uint_fast32_t	seed = engine();
 	vector<BitChrPopulation *>	chr_pops_(info->num_chroms());
 	vector<ConfigThread *>	configs(T);

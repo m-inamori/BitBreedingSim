@@ -8,7 +8,7 @@ using namespace std;
 //////////////////// Option ////////////////////
 
 const Option *Option::create(int argc, char **argv) {
-	if(argc != 3 && argc != 5 && argc != 7 && argc != 9)
+	if(!(argc % 2 == 1 && 3 <= argc && argc <= 11))
 		return nullptr;
 	
 	try {
@@ -17,7 +17,8 @@ const Option *Option::create(int argc, char **argv) {
 		const int		seed = flag_value_seed("-s", argc, argv);
 		const int		T = flag_value_int("-t", argc, argv, 1);
 		const string	path_out = flag_value("-o", argc, argv);
-		return new Option(ni, nc, seed, T, path_out);
+		const string	pheno_out = flag_value("-p", argc, argv);
+		return new Option(ni, nc, seed, T, path_out, pheno_out);
 	}
 	catch(const invalid_argument& e) {
 		cerr << e.what() << endl;
@@ -57,5 +58,6 @@ int Option::flag_value_seed(const string& s, int argc, char **argv) {
 }
 
 void Option::usage() {
-	cerr << "usage : BreedingSim num_inds num_chroms [-s seed(> 0)] [-t num threads] [-o path out]." << endl;
+	cerr << "usage : BreedingSim num_inds num_chroms [-s seed(> 0)]"
+			<< " [-t num threads] [-o path out] [-p path pheno out]." << endl;
 }
