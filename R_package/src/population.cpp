@@ -1,14 +1,16 @@
 #include <sstream>
 #include <climits>
-#include "../include/BaseInfo.h"
-#include "../include/trait.h"
-#include "../include/population.h"
-#include "../include/VCF.h"
-#include "../include/bitarray.h"
-#include "../include/bitoperation.h"
-#include "../include/common.h"
+#include <Rcpp.h>
+#include "BaseInfo.h"
+#include "trait.h"
+#include "population.h"
+#include "VCF.h"
+#include "bitarray.h"
+#include "bitoperation.h"
+#include "common.h"
 
 using namespace std;
+using namespace Rcpp;
 
 
 //////////////////// BitChrPopulation ////////////////////
@@ -328,4 +330,64 @@ vector<double> Population::select_phenotypes(const vector<size_t>& indices,
 		selected_phenotypes[k] = phenotypes[i][indices[k]];
 	}
 	return selected_phenotypes;
+}
+
+
+// [[Rcpp::export]]
+SEXP createOrigins(SEXP num_inds, SEXP info, SEXP name_base) {
+	size_t num_inds_cpp = as<size_t>(num_inds);
+	Rcpp::XPtr<BaseInfo> info_cpp(info);
+	std::string name_base_cpp = as<std::string>(name_base);
+	Rcpp::XPtr<Population> ptr(const_cast<Population*>(
+						Population::create_origins(
+						num_inds_cpp, info_cpp.get(), name_base_cpp)), true);
+	return ptr;
+}
+
+// [[Rcpp::export]]
+SEXP cross(SEXP num_inds, SEXP mothers, SEXP fathers,
+							SEXP info, SEXP name_base, int T) {
+	size_t num_inds_cpp = as<size_t>(num_inds);
+	Rcpp::XPtr<Population> mothers_cpp(mothers);
+	Rcpp::XPtr<Population> fathers_cpp(fathers);
+	Rcpp::XPtr<BaseInfo> info_cpp(info);
+	std::string name_base_cpp = as<std::string>(name_base);
+	Rcpp::XPtr<Population> ptr(const_cast<Population*>(
+								Population::cross(num_inds_cpp, *mothers_cpp,
+													*fathers_cpp, info_cpp,
+													name_base_cpp, T)), true);
+	return ptr;
+}
+
+// [[Rcpp::export]]
+int getNumInds(SEXP ptr) {
+	Rcpp::XPtr<Population> pop(ptr);
+	return pop->num_inds();
+}
+
+// [[Rcpp::export]]
+int getPopNumChroms(SEXP ptr) {
+	Rcpp::XPtr<Population> pop(ptr);
+	return pop->num_chroms();
+}
+
+// [[Rcpp::export]]
+std::vector<double> getPhenotypes(SEXP population, std::size_t i) {
+	Rcpp::XPtr<Population> population_cpp(population);
+	return population_cpp->get_phenotypes(i-1);
+}
+
+// [[Rcpp::export]]
+SEXP selectPop(SEXP population, SEXP indices) {
+	Rcpp::XPtr<Population> population_cpp(population);
+	std::vector<size_t> indices_cpp = as<std::vector<size_t>>(indices);
+	
+	// Convert 1-based R indices to 0-based C++ indices
+	for (size_t& index : indices_cpp) {
+		index -= 1;
+	}
+	
+	Rcpp::XPtr<Population> selected_pop(const_cast<Population*>(
+									population_cpp->select(indices_cpp)), true);
+	return selected_pop;
 }
