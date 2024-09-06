@@ -10,14 +10,30 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// createBaseInfo
-SEXP createBaseInfo(int seed);
-RcppExport SEXP _BitBreedingSim_createBaseInfo(SEXP seedSEXP) {
+// createBaseInfoCpp
+SEXP createBaseInfoCpp(int num_chroms, int num_markers, double cM, int bp, int seed);
+RcppExport SEXP _BitBreedingSim_createBaseInfoCpp(SEXP num_chromsSEXP, SEXP num_markersSEXP, SEXP cMSEXP, SEXP bpSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< int >::type num_chroms(num_chromsSEXP);
+    Rcpp::traits::input_parameter< int >::type num_markers(num_markersSEXP);
+    Rcpp::traits::input_parameter< double >::type cM(cMSEXP);
+    Rcpp::traits::input_parameter< int >::type bp(bpSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(createBaseInfo(seed));
+    rcpp_result_gen = Rcpp::wrap(createBaseInfoCpp(num_chroms, num_markers, cM, bp, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// createBaseInfoWithMap
+SEXP createBaseInfoWithMap(Rcpp::List chrom_maps, std::uint_fast32_t seed);
+RcppExport SEXP _BitBreedingSim_createBaseInfoWithMap(SEXP chrom_mapsSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type chrom_maps(chrom_mapsSEXP);
+    Rcpp::traits::input_parameter< std::uint_fast32_t >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(createBaseInfoWithMap(chrom_maps, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -43,26 +59,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// setTrait
-void setTrait(SEXP ptr);
-RcppExport SEXP _BitBreedingSim_setTrait(SEXP ptrSEXP) {
+// getTraitCpp
+SEXP getTraitCpp(SEXP baseInfoPtr, std::size_t i);
+RcppExport SEXP _BitBreedingSim_getTraitCpp(SEXP baseInfoPtrSEXP, SEXP iSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type baseInfoPtr(baseInfoPtrSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type i(iSEXP);
+    rcpp_result_gen = Rcpp::wrap(getTraitCpp(baseInfoPtr, i));
+    return rcpp_result_gen;
+END_RCPP
+}
+// add_Trait_A_wrapper
+void add_Trait_A_wrapper(SEXP ptr, std::string name, double mean, double h2, Nullable<double> sd_, Nullable<NumericVector> a, Nullable<List> loci, size_t num_loci);
+RcppExport SEXP _BitBreedingSim_add_Trait_A_wrapper(SEXP ptrSEXP, SEXP nameSEXP, SEXP meanSEXP, SEXP h2SEXP, SEXP sd_SEXP, SEXP aSEXP, SEXP lociSEXP, SEXP num_lociSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type ptr(ptrSEXP);
-    setTrait(ptr);
+    Rcpp::traits::input_parameter< std::string >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< double >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< double >::type h2(h2SEXP);
+    Rcpp::traits::input_parameter< Nullable<double> >::type sd_(sd_SEXP);
+    Rcpp::traits::input_parameter< Nullable<NumericVector> >::type a(aSEXP);
+    Rcpp::traits::input_parameter< Nullable<List> >::type loci(lociSEXP);
+    Rcpp::traits::input_parameter< size_t >::type num_loci(num_lociSEXP);
+    add_Trait_A_wrapper(ptr, name, mean, h2, sd_, a, loci, num_loci);
     return R_NilValue;
 END_RCPP
 }
-// setTraitADMulti
-void setTraitADMulti(SEXP ptr, int num_loci, double h2, double H2);
-RcppExport SEXP _BitBreedingSim_setTraitADMulti(SEXP ptrSEXP, SEXP num_lociSEXP, SEXP h2SEXP, SEXP H2SEXP) {
+// add_Trait_AD_wrapper
+void add_Trait_AD_wrapper(SEXP baseInfoPtr, std::string name, double mean, Nullable<double> sd_, Nullable<double> h2_, Nullable<double> H2_, Nullable<NumericVector> a, Nullable<NumericVector> ds, Nullable<List> loci, std::size_t num_loci);
+RcppExport SEXP _BitBreedingSim_add_Trait_AD_wrapper(SEXP baseInfoPtrSEXP, SEXP nameSEXP, SEXP meanSEXP, SEXP sd_SEXP, SEXP h2_SEXP, SEXP H2_SEXP, SEXP aSEXP, SEXP dsSEXP, SEXP lociSEXP, SEXP num_lociSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type ptr(ptrSEXP);
-    Rcpp::traits::input_parameter< int >::type num_loci(num_lociSEXP);
-    Rcpp::traits::input_parameter< double >::type h2(h2SEXP);
-    Rcpp::traits::input_parameter< double >::type H2(H2SEXP);
-    setTraitADMulti(ptr, num_loci, h2, H2);
+    Rcpp::traits::input_parameter< SEXP >::type baseInfoPtr(baseInfoPtrSEXP);
+    Rcpp::traits::input_parameter< std::string >::type name(nameSEXP);
+    Rcpp::traits::input_parameter< double >::type mean(meanSEXP);
+    Rcpp::traits::input_parameter< Nullable<double> >::type sd_(sd_SEXP);
+    Rcpp::traits::input_parameter< Nullable<double> >::type h2_(h2_SEXP);
+    Rcpp::traits::input_parameter< Nullable<double> >::type H2_(H2_SEXP);
+    Rcpp::traits::input_parameter< Nullable<NumericVector> >::type a(aSEXP);
+    Rcpp::traits::input_parameter< Nullable<NumericVector> >::type ds(dsSEXP);
+    Rcpp::traits::input_parameter< Nullable<List> >::type loci(lociSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type num_loci(num_lociSEXP);
+    add_Trait_AD_wrapper(baseInfoPtr, name, mean, sd_, h2_, H2_, a, ds, loci, num_loci);
     return R_NilValue;
 END_RCPP
 }
@@ -79,81 +120,142 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// cross
-SEXP cross(SEXP num_inds, SEXP mothers, SEXP fathers, SEXP info, SEXP name_base, int T);
-RcppExport SEXP _BitBreedingSim_cross(SEXP num_indsSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP infoSEXP, SEXP name_baseSEXP, SEXP TSEXP) {
+// crossPops
+SEXP crossPops(SEXP num_inds, SEXP mothers, SEXP fathers, SEXP name_base, int T);
+RcppExport SEXP _BitBreedingSim_crossPops(SEXP num_indsSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP name_baseSEXP, SEXP TSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type num_inds(num_indsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type mothers(mothersSEXP);
     Rcpp::traits::input_parameter< SEXP >::type fathers(fathersSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type info(infoSEXP);
     Rcpp::traits::input_parameter< SEXP >::type name_base(name_baseSEXP);
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
-    rcpp_result_gen = Rcpp::wrap(cross(num_inds, mothers, fathers, info, name_base, T));
+    rcpp_result_gen = Rcpp::wrap(crossPops(num_inds, mothers, fathers, name_base, T));
     return rcpp_result_gen;
 END_RCPP
 }
 // getNumInds
-int getNumInds(SEXP ptr);
-RcppExport SEXP _BitBreedingSim_getNumInds(SEXP ptrSEXP) {
+int getNumInds(SEXP pop);
+RcppExport SEXP _BitBreedingSim_getNumInds(SEXP popSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type ptr(ptrSEXP);
-    rcpp_result_gen = Rcpp::wrap(getNumInds(ptr));
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(getNumInds(pop));
     return rcpp_result_gen;
 END_RCPP
 }
-// getPopNumChroms
-int getPopNumChroms(SEXP ptr);
-RcppExport SEXP _BitBreedingSim_getPopNumChroms(SEXP ptrSEXP) {
+// getNumChromsPop
+int getNumChromsPop(SEXP pop);
+RcppExport SEXP _BitBreedingSim_getNumChromsPop(SEXP popSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type ptr(ptrSEXP);
-    rcpp_result_gen = Rcpp::wrap(getPopNumChroms(ptr));
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(getNumChromsPop(pop));
     return rcpp_result_gen;
 END_RCPP
 }
 // getPhenotypes
-std::vector<double> getPhenotypes(SEXP population, std::size_t i);
-RcppExport SEXP _BitBreedingSim_getPhenotypes(SEXP populationSEXP, SEXP iSEXP) {
+SEXP getPhenotypes(SEXP pop, int i);
+RcppExport SEXP _BitBreedingSim_getPhenotypes(SEXP popSEXP, SEXP iSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type population(populationSEXP);
-    Rcpp::traits::input_parameter< std::size_t >::type i(iSEXP);
-    rcpp_result_gen = Rcpp::wrap(getPhenotypes(population, i));
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type i(iSEXP);
+    rcpp_result_gen = Rcpp::wrap(getPhenotypes(pop, i));
     return rcpp_result_gen;
 END_RCPP
 }
 // selectPop
-SEXP selectPop(SEXP population, SEXP indices);
-RcppExport SEXP _BitBreedingSim_selectPop(SEXP populationSEXP, SEXP indicesSEXP) {
+SEXP selectPop(SEXP pop, NumericVector indices_R);
+RcppExport SEXP _BitBreedingSim_selectPop(SEXP popSEXP, SEXP indices_RSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type population(populationSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type indices(indicesSEXP);
-    rcpp_result_gen = Rcpp::wrap(selectPop(population, indices));
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type indices_R(indices_RSEXP);
+    rcpp_result_gen = Rcpp::wrap(selectPop(pop, indices_R));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getGenotypes
+NumericMatrix getGenotypes(SEXP pop);
+RcppExport SEXP _BitBreedingSim_getGenotypes(SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(getGenotypes(pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getGenotypes_naive
+NumericMatrix getGenotypes_naive(SEXP pop);
+RcppExport SEXP _BitBreedingSim_getGenotypes_naive(SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(getGenotypes_naive(pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getPhasedGenotypes
+CharacterMatrix getPhasedGenotypes(SEXP pop);
+RcppExport SEXP _BitBreedingSim_getPhasedGenotypes(SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(getPhasedGenotypes(pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getPhasedIntGenotypes
+NumericMatrix getPhasedIntGenotypes(SEXP pop);
+RcppExport SEXP _BitBreedingSim_getPhasedIntGenotypes(SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(getPhasedIntGenotypes(pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getPopulationInfo
+SEXP getPopulationInfo(SEXP popPtr);
+RcppExport SEXP _BitBreedingSim_getPopulationInfo(SEXP popPtrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type popPtr(popPtrSEXP);
+    rcpp_result_gen = Rcpp::wrap(getPopulationInfo(popPtr));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_BitBreedingSim_createBaseInfo", (DL_FUNC) &_BitBreedingSim_createBaseInfo, 1},
+    {"_BitBreedingSim_createBaseInfoCpp", (DL_FUNC) &_BitBreedingSim_createBaseInfoCpp, 5},
+    {"_BitBreedingSim_createBaseInfoWithMap", (DL_FUNC) &_BitBreedingSim_createBaseInfoWithMap, 2},
     {"_BitBreedingSim_getNumChroms", (DL_FUNC) &_BitBreedingSim_getNumChroms, 1},
     {"_BitBreedingSim_getNumTraits", (DL_FUNC) &_BitBreedingSim_getNumTraits, 1},
-    {"_BitBreedingSim_setTrait", (DL_FUNC) &_BitBreedingSim_setTrait, 1},
-    {"_BitBreedingSim_setTraitADMulti", (DL_FUNC) &_BitBreedingSim_setTraitADMulti, 4},
+    {"_BitBreedingSim_getTraitCpp", (DL_FUNC) &_BitBreedingSim_getTraitCpp, 2},
+    {"_BitBreedingSim_add_Trait_A_wrapper", (DL_FUNC) &_BitBreedingSim_add_Trait_A_wrapper, 8},
+    {"_BitBreedingSim_add_Trait_AD_wrapper", (DL_FUNC) &_BitBreedingSim_add_Trait_AD_wrapper, 10},
     {"_BitBreedingSim_createOrigins", (DL_FUNC) &_BitBreedingSim_createOrigins, 3},
-    {"_BitBreedingSim_cross", (DL_FUNC) &_BitBreedingSim_cross, 6},
+    {"_BitBreedingSim_crossPops", (DL_FUNC) &_BitBreedingSim_crossPops, 5},
     {"_BitBreedingSim_getNumInds", (DL_FUNC) &_BitBreedingSim_getNumInds, 1},
-    {"_BitBreedingSim_getPopNumChroms", (DL_FUNC) &_BitBreedingSim_getPopNumChroms, 1},
+    {"_BitBreedingSim_getNumChromsPop", (DL_FUNC) &_BitBreedingSim_getNumChromsPop, 1},
     {"_BitBreedingSim_getPhenotypes", (DL_FUNC) &_BitBreedingSim_getPhenotypes, 2},
     {"_BitBreedingSim_selectPop", (DL_FUNC) &_BitBreedingSim_selectPop, 2},
+    {"_BitBreedingSim_getGenotypes", (DL_FUNC) &_BitBreedingSim_getGenotypes, 1},
+    {"_BitBreedingSim_getGenotypes_naive", (DL_FUNC) &_BitBreedingSim_getGenotypes_naive, 1},
+    {"_BitBreedingSim_getPhasedGenotypes", (DL_FUNC) &_BitBreedingSim_getPhasedGenotypes, 1},
+    {"_BitBreedingSim_getPhasedIntGenotypes", (DL_FUNC) &_BitBreedingSim_getPhasedIntGenotypes, 1},
+    {"_BitBreedingSim_getPopulationInfo", (DL_FUNC) &_BitBreedingSim_getPopulationInfo, 1},
     {NULL, NULL, 0}
 };
 

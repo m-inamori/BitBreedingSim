@@ -50,6 +50,15 @@ namespace Common {
 	}
 	
 	template<typename T>
+	T dot_product(const std::vector<T>& v, const std::vector<T>& w) {
+		T	s = 0;
+		for(size_t i = 0; i < v.size(); ++i) {
+			s += v[i] * w[i];
+		}
+		return s;
+	}
+	
+	template<typename T>
 	void delete_all(const std::vector<T *>& v) {
 		for(auto p = v.begin(); p != v.end(); ++p)
 			delete *p;

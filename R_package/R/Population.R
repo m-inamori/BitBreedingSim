@@ -14,10 +14,22 @@ createOrigins <- function(num_inds, info, name_base) {
 #' @param num_inds An integer. The number of individuals.
 #' @param mothers An external pointer to a Population object.
 #' @param fathers An external pointer to a Population object.
+#' @param name_base A string. The base name for individuals.
+#' @param num_threads optional An integer. The number of threads to be used.
+#'                             If not specified, the function will use
+#'                             the maximum number of available threads.
 #' @return An external pointer to a Population object.
 #' @export
-cross <- function(num_inds, mothers, fathers) {
-	.Call('_BitBreedingSim_cross', num_inds, mothers, fathers)
+#' @examples
+#' # Assuming 'mothers' and 'fathers' are valid Population objects
+#' new_population <- cross(100, mothers, fathers, "prog_")
+#' summary(new_population)
+cross <- function(num_inds, mothers, fathers, name_base, num_threads = 0) {
+	if(num_threads < 1) {
+		num_threads <- parallel::detectCores()
+	}
+	cat("num_threads :", num_threads, "\n")
+	.Call('_BitBreedingSim_crossPops', num_inds, mothers, fathers, name_base, num_threads)
 }
 
 #' Get information for a Population object
@@ -29,7 +41,7 @@ cross <- function(num_inds, mothers, fathers) {
 #' @export
 getPopInfo <- function(ptr) {
 	num_inds <- .Call('_BitBreedingSim_getNumInds', ptr)
-	num_chroms <- .Call('_BitBreedingSim_getPopNumChroms', ptr)
+	num_chroms <- .Call('_BitBreedingSim_getNumChromsPop', ptr)
 	
 	return(list(num_individuals = num_inds, num_chromosomes = num_chroms))
 }
@@ -37,19 +49,119 @@ getPopInfo <- function(ptr) {
 #' Get phenotypes from a Population object
 #'
 #' @param population An external pointer to a Population object.
-#' @param i An integer index.
+#' @param i An integer index representing the trait for which phenotypes are to
+#'        be retrieved. The index should be between 1
+#'        and the total number of traits available in the Population object.
 #' @return A vector of phenotypes.
 #' @export
+#' @examples
+#' # Assuming 'pop' is a valid Population object and trait index 1 is valid
+#' phenotypes <- getPhenotypes(pop, 1)
+#' print(phenotypes)
 getPhenotypes <- function(population, i) {
+	num_traits <- .Call('_BitBreedingSim_getNumTraits', baseInfo)
+	if(i < 1 || i > num_traits) {
+		stop(paste("Index out of bounds: i should be between 1 and", num_traits, "but got", i))
+	}
 	.Call('_BitBreedingSim_getPhenotypes', population, i)
+}
+
+#' Get genotypes from a Population object
+#'
+#' This function retrieves the genotypes from a given Population object.
+#' The genotypes are represented in a matrix format where rows correspond to samples
+#' and columns correspond to markers.
+#'
+#' Genotype encoding:
+#' - 0/0 is encoded as -1
+#' - 0/1 is encoded as 0
+#' - 1/1 is encoded as 1
+#'
+#' @param population An external pointer to a Population object.
+#' @return A matrix of genotypes where rows are samples and columns are markers.
+#' @export
+getGenotypes <- function(population) {
+	.Call('_BitBreedingSim_getGenotypes', population)
+}
+
+#' Get genotypes from a Population object
+#'
+#' This function retrieves the genotypes from a given Population object.
+#' The genotypes are represented in a matrix format where rows correspond to samples
+#' and columns correspond to markers.
+#'
+#' Genotype encoding:
+#' - 0/0 is encoded as -1
+#' - 0/1 is encoded as 0
+#' - 1/1 is encoded as 1
+#'
+#' @param population An external pointer to a Population object.
+#' @return A matrix of genotypes where rows are samples and columns are markers.
+#' @export
+getGenotypesNaive <- function(population) {
+	.Call('_BitBreedingSim_getGenotypes_naive', population)
+}
+
+#' Get phased genotypes from a Population object
+#'
+#' This function retrieves the genotypes from a given Population object.
+#' The genotypes are represented in a matrix format where rows correspond to markers
+#' and columns correspond to samples.
+#'
+#' Genotype is 0|0, 0|1, 1|0, or 1|1
+#'
+#' @param population An external pointer to a Population object.
+#' @return A matrix of genotypes where rows are samples and columns are markers.
+#' @export
+getPhasedGenotypes <- function(population) {
+	.Call('_BitBreedingSim_getPhasedGenotypes', population)
+}
+
+#' Get phased integer genotypes from a Population object
+#'
+#' This function retrieves the genotypes from a given Population object.
+#' The genotypes are represented in a matrix format where rows correspond to samples
+#' and columns correspond to markers. Each sample has two rows: the first row
+#' represents the maternal allele and the second row represents the paternal allele.
+#'
+#' Genotype is represented as integers: 0 or 1
+#'
+#' @param population An external pointer to a Population object.
+#' @return A matrix of genotypes where rows are samples and columns are markers.
+#'         Each sample has two rows: the first row is the maternal allele and the
+#'         second row is the paternal allele.
+#' @export
+getPhasedIntGenotypes <- function(population) {
+	.Call('_BitBreedingSim_getPhasedGenotypes', population)
 }
 
 #' Select individuals from a Population object
 #'
 #' @param population An external pointer to a Population object.
-#' @param indices A vector of indices to select.
-#' @return An external pointer to a new Population object containing the selected individuals.
+#' @param indices A vector of integer indices representing the individuals
+#'        to be selected.
+#' @return An external pointer to a new Population object
+#'        containing the selected individuals.
 #' @export
+#' @examples
+#' # Assuming 'pop' is a valid Population object and indices are valid
+#' selected_pop <- selectPop(pop, c(1, 2, 3))
+#' print(selected_pop)
 selectPop <- function(population, indices) {
-  .Call('_BitBreedingSim_selectPop', population, indices)
+	num_inds <- .Call('_BitBreedingSim_getNumInds', population)
+	if(any(indices < 1) || any(indices > num_inds)) {
+		error_indices <- indices[indices < 1 | indices > num_inds]
+		stop(paste("Index out of bounds: indices should be between 1 and",
+					num_inds, "but got", paste(error_indices, collapse = ", ")))
+    }
+    .Call('_BitBreedingSim_selectPop', population, indices)
+}
+
+#' @export
+summary.Population <- function(pop, ...) {
+	pop_list <- .Call('_BitBreedingSim_getPopulationInfo', pop)
+	cat("Population Summary:\n")
+	cat("Num individuals: ", pop_list$num_inds, "\n")
+	cat("Num chromomoses: ", pop_list$num_chroms, "\n")
+	cat("Num markers: ", pop_list$num_markers, "\n")
 }

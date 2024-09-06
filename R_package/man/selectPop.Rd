@@ -4,16 +4,23 @@
 \alias{selectPop}
 \title{Select individuals from a Population object}
 \usage{
-selectPop(population, indices)
+selectPop(pop, indices_R)
 }
 \arguments{
 \item{population}{An external pointer to a Population object.}
 
-\item{indices}{A vector of indices to select.}
+\item{indices}{A vector of integer indices representing the individuals
+to be selected.}
 }
 \value{
-An external pointer to a new Population object containing the selected individuals.
+An external pointer to a new Population object
+       containing the selected individuals.
 }
 \description{
 Select individuals from a Population object
+}
+\examples{
+# Assuming 'pop' is a valid Population object and indices are valid
+selected_pop <- selectPop(pop, c(1, 2, 3))
+print(selected_pop)
 }

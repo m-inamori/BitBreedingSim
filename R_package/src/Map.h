@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <random>
+#include <Rcpp.h>
 #include "exception_with_code.h"
 
 
@@ -105,6 +106,7 @@ public:
 										double L, std::size_t bps);
 	static const Map *read(const std::string& path,
 							const std::vector<int>& marker_positions);
+	static Map *create_map_from_list(Rcpp::List chrom_maps);
 
 private:
 	static std::vector<std::vector<std::string>>
@@ -113,6 +115,8 @@ private:
 	static std::vector<std::pair<std::string, std::vector<std::pair<int, double>>>>
 						divide_into_chromosomes(
 							const std::vector<std::vector<std::string>>& table);
+	static const ChromMap *create_chrom_map_lines_from_df(Rcpp::DataFrame df,
+													const std::string& name);
 };
 
 

@@ -3,10 +3,10 @@
 #include <vector>
 #include <string>
 #include <random>
+#include "trait.h"
 
 class Map;
 class ChromMap;
-class Trait;
 class Population;
 
 
@@ -33,9 +33,50 @@ public:
 	std::vector<double> compute_phenotypes(const Population& pop,
 											std::size_t trait_index) const;
 	
-	void set_trait();
-	void set_trait_AD_multi(std::size_t num_loci, double h2, double H2);
+	///// add A Trait /////
+	void add_A_a_randomly(const std::string& name,
+										const std::vector<Trait::Locus>& loci,
+										double mean, double sd, double h2);
+	void add_A_l_randomly(const std::string& name,
+										const std::vector<double>& a,
+										double mean, double h2);
+	void add_A_al_randomly(const std::string& name,
+										std::size_t num_loci,
+										double mean, double sd, double h2);
+	void add_A(const std::string& name, double mean, double h2,
+										const std::vector<double>& a,
+										const std::vector<Trait::Locus>& loci);
+	
+	///// add AD Trait /////
+	void add_AD_a_randomly(const std::string& name,
+										double mean, double h2, double H2,
+										const std::vector<double>& ds,
+										const std::vector<Trait::Locus>& loci);
+	void add_AD_d_randomly(const std::string& name,
+										double mean, double h2, double H2,
+										const std::vector<double>& as,
+										const std::vector<Trait::Locus>& loci);
+	void add_AD_l_randomly(const std::string& name, double mean, double h2,
+										const std::vector<double>& as,
+										const std::vector<double>& ds);
+	void add_AD_ad_randomly(const std::string& name, double mean, double sd,
+										double h2, double H2,
+										const std::vector<Trait::Locus>& loci);
+	void add_AD_al_randomly(const std::string& name, double mean,
+										double h2, double H2,
+										const std::vector<double>& ds);
+	void add_AD_dl_randomly(const std::string& name,
+										double mean, double h2, double H2,
+										const std::vector<double>& as);
+	void add_AD_adl_randomly(const std::string& name, std::size_t num_loci,
+										double mean, double sd,
+										double h2, double H2);
+	void add_AD(const std::string& name, double mean, double h2,
+										const std::vector<double>& as,
+										const std::vector<double>& ds,
+										const std::vector<Trait::Locus>& loci);
 	
 public:
-	static BaseInfo *create_default(int seed);
+	static BaseInfo *create_default(int num_chroms, int num_markers,
+										double cM, int bp, int seed);
 };

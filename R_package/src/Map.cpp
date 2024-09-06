@@ -192,6 +192,34 @@ const Map *Map::read(const string& path, const vector<int>& marker_positions) {
 	return new Map(chr_maps);
 }
 
+const ChromMap *Map::create_chrom_map_lines_from_df(Rcpp::DataFrame df,
+													const string& name) {
+	const vector<double>	cMs = Rcpp::as<vector<double>>(df["cM"]);
+	const vector<int>	positions = Rcpp::as<vector<int>>(df["position"]);
+	
+	vector<double> morgans(cMs.size());
+	std::transform(cMs.begin(), cMs.end(), morgans.begin(),
+									[](double cm) { return cm / 100; });
+	
+	ChromMapLines* chrom_map = new ChromMapLines(name, morgans, positions);
+	Rcpp::XPtr<ChromMapLines>	ptr(chrom_map, true);
+	return ptr;
+}
+
+Map *Map::create_map_from_list(Rcpp::List chrom_maps) {
+	std::vector<const ChromMap*> maps;
+	Rcpp::CharacterVector names = chrom_maps.names();
+	for(int i = 0; i < chrom_maps.size(); ++i) {
+//		Rcpp::DataFrame	df = chrom_maps[i];
+		Rcpp::DataFrame df = Rcpp::as<Rcpp::DataFrame>(chrom_maps[i]);
+		const string	name = Rcpp::as<string>(names[i]);
+		const ChromMap	*chr_map = create_chrom_map_lines_from_df(df, name);
+		maps.push_back(chr_map);
+	}
+	Map*	gmap = new Map(maps);
+	return gmap;
+}
+
 
 //////////////////// MapFormatException ////////////////////
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/BaseInfo.R
 \name{getInfo}
 \alias{getInfo}
-\title{Get the information of a BaseInfo object}
+\title{Get the values of a BaseInfo object}
 \usage{
 getInfo(ptr)
 }
@@ -13,5 +13,5 @@ getInfo(ptr)
 The list of the values of a BaseInfo object
 }
 \description{
-Get the information of a BaseInfo object
+Get the values of a BaseInfo object
 }

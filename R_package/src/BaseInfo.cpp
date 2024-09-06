@@ -1,9 +1,7 @@
 #include <sstream>
-#include <Rcpp.h>
 
 #include "BaseInfo.h"
 #include "Map.h"
-#include "trait.h"
 #include "population.h"
 #include "common.h"
 
@@ -34,8 +32,10 @@ const string& BaseInfo::get_trait_name(size_t i) const {
 	return traits[i]->get_name();
 }
 
-BaseInfo *BaseInfo::create_default(int seed) {
-	const Map	*gmap = Map::create_default(10, 1000, 1.0, 1000000);
+BaseInfo *BaseInfo::create_default(int num_chroms, int num_markers,
+										double cM, int bp, int seed) {
+	const Map	*gmap = Map::create_default(num_chroms, num_markers,
+															cM / 100, bp);
 	if(seed == -1) {
 		std::random_device	seed_gen;
 		return new BaseInfo(gmap, vector<const Trait *>(), seed_gen());
@@ -46,21 +46,102 @@ BaseInfo *BaseInfo::create_default(int seed) {
 	}
 }
 
-void BaseInfo::set_trait() {
-	stringstream	ss;
-	ss << "Trait" << num_traits() + 1;
-	const Trait	*trait = Trait::create_A_randomly(ss.str(), 1, 0.0,
-													1.0, 0.7, gmap, engine);
+///// add A Trait /////
+void BaseInfo::add_A_a_randomly(const string& name,
+										const vector<Trait::Locus>& loci,
+										double mean, double sd, double h2) {
+	const Trait	*trait = Trait::create_A_a_randomly(name, loci,
+													mean, sd, h2, engine);
 	traits.push_back(trait);
 }
 
-void BaseInfo::set_trait_AD_multi(size_t num_loci, double h2, double H2) {
-	stringstream	ss;
-	ss << "Trait" << num_traits() + 1;
-	const vector<Trait::Locus>	loci = Trait::decide_loci_randomly(
-														num_loci, gmap, engine);
-	const Trait	*trait = Trait::create_AD_randomly(ss.str(), 0.0, 1.0,
-														h2, H2, loci, engine);
+void BaseInfo::add_A_l_randomly(const string& name,
+										const vector<double>& a,
+										double mean, double h2) {
+	const Trait	*trait = Trait::create_A_l_randomly(name, a, mean, h2,
+																gmap, engine);
+	traits.push_back(trait);
+}
+
+void BaseInfo::add_A_al_randomly(const string& name, size_t num_loci,
+										double mean, double sd, double h2) {
+	const Trait	*trait = Trait::create_A_al_randomly(name, num_loci, mean,
+														sd, h2, gmap, engine);
+	traits.push_back(trait);
+}
+
+void BaseInfo::add_A(const string& name, double mean, double h2,
+										const vector<double>& a,
+										const vector<Trait::Locus>& loci) {
+	const Trait	*trait = Trait::create_A(name, mean, h2, a, loci);
+	traits.push_back(trait);
+}
+
+///// add AD Trait /////
+
+void BaseInfo::add_AD_a_randomly(const string& name,
+										double mean, double h2, double H2,
+										const vector<double>& ds,
+										const vector<Trait::Locus>& loci) {
+	const Trait	*trait = Trait::create_AD_a_randomly(name, mean, h2, H2,
+															ds, loci, engine);
+	traits.push_back(trait);
+}
+
+void BaseInfo::add_AD_d_randomly(const string& name,
+										double mean, double h2, double H2,
+										const vector<double>& as,
+										const vector<Trait::Locus>& loci) {
+	const Trait	*trait = Trait::create_AD_d_randomly(name, mean, h2, H2,
+															as, loci, engine);
+	traits.push_back(trait);
+}
+
+void BaseInfo::add_AD_l_randomly(const string& name, double mean, double h2,
+										const vector<double>& as,
+										const vector<double>& ds) {
+	const Trait	*trait = Trait::create_AD_l_randomly(name, mean, h2,
+														as, ds, gmap, engine);
+	traits.push_back(trait);
+}
+
+void BaseInfo::add_AD_ad_randomly(const std::string& name, double mean,
+										double sd, double h2, double H2,
+										const vector<Trait::Locus>& loci) {
+	const Trait	*trait = Trait::create_AD_ad_randomly(name, mean, sd, h2, H2,
+																loci, engine);
+	traits.push_back(trait);
+}
+
+void BaseInfo::add_AD_al_randomly(const std::string& name, double mean,
+										double h2, double H2,
+										const std::vector<double>& ds) {
+	const Trait	*trait = Trait::create_AD_al_randomly(name, mean, h2, H2,
+															ds, gmap, engine);
+	traits.push_back(trait);
+}
+
+void BaseInfo::add_AD_dl_randomly(const std::string& name,
+										double mean, double h2, double H2,
+										const std::vector<double>& as) {
+	const Trait	*trait = Trait::create_AD_dl_randomly(name, mean, h2, H2,
+															as, gmap, engine);
+	traits.push_back(trait);
+}
+
+void BaseInfo::add_AD_adl_randomly(const std::string& name,
+										std::size_t num_loci, double mean,
+										double sd, double h2, double H2) {
+	const Trait	*trait = Trait::create_AD_adl_randomly(name, num_loci, mean,
+													sd, h2, H2, gmap, engine);
+	traits.push_back(trait);
+}
+
+void BaseInfo::add_AD(const std::string& name, double mean, double H2,
+										const std::vector<double>& as,
+										const std::vector<double>& ds,
+										const std::vector<Trait::Locus>& loci) {
+	const Trait	*trait = Trait::create_AD(name, mean, H2, as, ds, loci);
 	traits.push_back(trait);
 }
 
@@ -74,9 +155,31 @@ vector<double> BaseInfo::compute_phenotypes(const Population& pop,
 	return phenotypes;
 }
 
+// Rのデータフレームからstd::vector<Trait::Locus>に変換する関数
+vector<Trait::Locus> dataframe_to_loci(const DataFrame& df) {
+	vector<Trait::Locus> loci;
+	IntegerVector chrom = df["chrom"];
+	IntegerVector marker = df["marker"];
+	for(int i = 0; i < chrom.size(); ++i) {
+		loci.push_back(make_pair(chrom[i]-1, marker[i]-1));
+	}
+	return loci;
+}
+
 // [[Rcpp::export]]
-SEXP createBaseInfo(int seed) {
-	Rcpp::XPtr<BaseInfo> ptr(BaseInfo::create_default(seed), true);
+SEXP createBaseInfoCpp(int num_chroms, int num_markers,
+								double cM, int bp, int seed) {
+	Rcpp::XPtr<BaseInfo> ptr(BaseInfo::create_default(num_chroms, num_markers,
+														cM, bp, seed), true);
+	return ptr;
+}
+
+// [[Rcpp::export]]
+SEXP createBaseInfoWithMap(Rcpp::List chrom_maps, std::uint_fast32_t seed) {
+	const Map	*gmap = Map::create_map_from_list(chrom_maps);
+	vector<const Trait*> traits;
+	BaseInfo* base_info = new BaseInfo(gmap, traits, seed);
+	Rcpp::XPtr<BaseInfo> ptr(base_info, true);
 	return ptr;
 }
 
@@ -92,14 +195,125 @@ int getNumTraits(SEXP ptr) {
 	return baseInfo->num_traits();
 }
 
-// [[Rcpp::export]]
-void setTrait(SEXP ptr) {
-	Rcpp::XPtr<BaseInfo> baseInfo(ptr);
-	baseInfo->set_trait();
+// std::pairをRcppのリストに変換する関数
+List wrap_pair(const Trait::Locus& p) {
+	return List::create(_["first"] = p.first, _["second"] = p.second);
 }
 
 // [[Rcpp::export]]
-void setTraitADMulti(SEXP ptr, int num_loci, double h2, double H2) {
+SEXP getTraitCpp(SEXP baseInfoPtr, std::size_t i) {
+	Rcpp::XPtr<BaseInfo>	ptr_info(baseInfoPtr);
+	const Trait	*trait = ptr_info->get_trait(i);
+	
+	// Convert Locus vector to Rcpp lists
+	std::vector<Trait::Locus> loci = trait->get_loci();
+	List	loci_list(loci.size());
+	for (std::size_t j = 0; j < loci.size(); ++j) {
+		loci_list[j] = wrap_pair(loci[j]);
+	}
+	
+	Rcpp::List	trait_list = Rcpp::List::create(
+		_["name"] = trait->get_name(),
+		_["type"] = trait->get_type(),
+		_["mean"] = trait->get_mean(),
+		_["sd"] = trait->get_sd(),
+		_["h2"] = trait->h2(),
+		_["H2"] = trait->H2(),
+		_["loci"] = loci_list,
+		_["additives"] = trait->get_addivtives(),
+		_["dominants"] = trait->get_dominants(),
+		_["hasdominants"] = trait->has_dominants()
+	);
+	trait_list.attr("class") = "Trait";
+	return trait_list;
+}
+
+// [[Rcpp::export]]
+void add_Trait_A_wrapper(SEXP ptr, std::string name, double mean, double h2,
+						Nullable<double> sd_ = R_NilValue,
+						Nullable<NumericVector> a = R_NilValue,
+						Nullable<List> loci = R_NilValue, size_t num_loci = 1) {
 	Rcpp::XPtr<BaseInfo> baseInfo(ptr);
-	baseInfo->set_trait_AD_multi(num_loci, h2, H2);
+	
+	if(a.isNotNull() && loci.isNotNull()) {
+		vector<double> a_vec = as<vector<double>>(a);
+		vector<Trait::Locus> loci_vec = dataframe_to_loci(as<DataFrame>(loci));
+		baseInfo->add_A(name, mean, h2, a_vec, loci_vec);
+	}
+	else if(a.isNotNull()) {
+		vector<double> a_vec = as<vector<double>>(a);
+		baseInfo->add_A_l_randomly(name, a_vec, mean, h2);
+	}
+	else if(loci.isNotNull()) {
+		const double	sd = as<double>(sd_);
+		vector<Trait::Locus> loci_vec = dataframe_to_loci(as<DataFrame>(loci));
+		baseInfo->add_A_a_randomly(name, loci_vec, mean, sd, h2);
+	}
+	else {
+		const double	sd = as<double>(sd_);
+		baseInfo->add_A_al_randomly(name, num_loci, mean, sd, h2);
+	}
+}
+
+// [[Rcpp::export]]
+void add_Trait_AD_wrapper(SEXP baseInfoPtr, std::string name, double mean,
+									Nullable<double> sd_ = R_NilValue,
+									Nullable<double> h2_ = R_NilValue,
+									Nullable<double> H2_ = R_NilValue,
+									Nullable<NumericVector> a = R_NilValue,
+									Nullable<NumericVector> ds = R_NilValue,
+									Nullable<List> loci = R_NilValue,
+									std::size_t num_loci = 1) {
+	Rcpp::XPtr<BaseInfo> baseInfo(baseInfoPtr);
+	
+	if(loci.isNotNull()) {
+		const double	H2 = as<double>(H2_);
+		vector<Trait::Locus> loci_vec = dataframe_to_loci(as<DataFrame>(loci));
+		if(a.isNotNull() && ds.isNotNull()) {
+			std::vector<double> as_vec = as<std::vector<double>>(a);
+			std::vector<double> ds_vec = as<std::vector<double>>(ds);
+			baseInfo->add_AD(name, mean, H2, as_vec, ds_vec, loci_vec);
+		}
+		else if(a.isNotNull()) {
+			const double	h2 = as<double>(h2_);
+			std::vector<double> as_vec = as<std::vector<double>>(a);
+			baseInfo->add_AD_d_randomly(name, mean, h2, H2, as_vec, loci_vec);
+		}
+		else if(ds.isNotNull()) {
+			const double	h2 = as<double>(h2_);
+			std::vector<double> ds_vec = as<std::vector<double>>(ds);
+			baseInfo->add_AD_a_randomly(name, mean, h2, H2, ds_vec, loci_vec);
+		}
+		else {
+			const double	sd = as<double>(sd_);
+			const double	h2 = as<double>(h2_);
+			baseInfo->add_AD_ad_randomly(name, mean, sd, h2, H2, loci_vec);
+		}
+	}
+	else {
+		if(a.isNotNull() && ds.isNotNull()) {
+			const double	h2 = as<double>(h2_);
+			std::vector<double> as_vec = as<std::vector<double>>(a);
+			std::vector<double> ds_vec = as<std::vector<double>>(ds);
+			baseInfo->add_AD_l_randomly(name, mean, h2, as_vec, ds_vec);
+		}
+		else if(ds.isNotNull()) {
+			const double	h2 = as<double>(h2_);
+			const double	H2 = as<double>(H2_);
+			std::vector<double> ds_vec = as<std::vector<double>>(ds);
+			baseInfo->add_AD_al_randomly(name, mean, h2, H2, ds_vec);
+		}
+		else if(a.isNotNull()) {
+			const double	h2 = as<double>(h2_);
+			const double	H2 = as<double>(H2_);
+			std::vector<double> as_vec = as<std::vector<double>>(a);
+			baseInfo->add_AD_dl_randomly(name, mean, h2, H2, as_vec);
+		}
+		else {
+			const double	sd = as<double>(sd_);
+			const double	h2 = as<double>(h2_);
+			const double	H2 = as<double>(H2_);
+			baseInfo->add_AD_adl_randomly(name, num_loci, mean, sd, h2, H2);
+		}
+	}
 }

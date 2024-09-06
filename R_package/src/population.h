@@ -34,6 +34,7 @@ public:
 	std::size_t num_markers() const { return chrmap.get_num_markers(); }
 	std::size_t num_elements() const { return (num_markers()+63)/64; }
 	std::size_t get_num_inds() const { return num_inds; }
+	std::vector<Int::ull> get_genos() const { return genos; }
 	std::string get_genotype(std::size_t id_ind, std::size_t id_marker) const;
 	int get_int_genotype(std::size_t id_ind, std::size_t id_marker) const;
 	ConstIter get_haplotype(std::size_t ind_index, std::size_t hap_id) const {
@@ -89,21 +90,24 @@ class Population {
 	
 private:
 	std::vector<const BitChrPopulation *>	chr_populations;
-	const Map& gmap;
+	const BaseInfo	*info;
 	const std::vector<std::string>	names;
 	std::vector<std::vector<double>>	phenotypes;
 	std::vector<const Trait *>	traits;
 	
 public:
 	Population(const std::vector<const BitChrPopulation *>& chr_pops,
-					const Map& m, const std::vector<std::string>& ns) :
-							chr_populations(chr_pops), gmap(m), names(ns) { }
+					const BaseInfo *bi, const std::vector<std::string>& ns) :
+							chr_populations(chr_pops), info(bi), names(ns) { }
 	~Population();
 	
+	const std::vector<std::string>& get_names() const { return names; }
 	std::size_t num_inds() const { return names.size(); }
 	std::size_t num_chroms() const { return chr_populations.size(); }
-	const ChromMap&	get_chrmap(std::size_t i) const { return gmap.get_chr(i); }
-	const BitChrPopulation	*get_chrpops(std::size_t i) const {
+	std::size_t num_markers() const;
+	const BaseInfo *get_info() const { return info; }
+	const ChromMap&	get_chrmap(std::size_t i) const;
+	const BitChrPopulation	*get_chrpop(std::size_t i) const {
 		return chr_populations[i];
 	}
 	std::string get_genotype(std::size_t ind_index, std::size_t chr_index,
@@ -127,7 +131,7 @@ public:
 	void write_phenotypes(std::ostream& os) const;
 	double mean(std::size_t i) const;
 	double stddev(std::size_t i) const;
-	void display_QTLs(std::size_t i) const;
+	void dispay_QTLs(std::size_t i) const;
 	
 	Population *select(const std::vector<std::size_t>& indices) const;
 	

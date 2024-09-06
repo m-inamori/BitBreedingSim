@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <random>
+
 #include "exception_with_code.h"
 
 class Population;
@@ -23,40 +24,96 @@ public:
 	virtual ~Trait() { }
 	
 	const std::string& get_name() const { return name; }
+	virtual const std::string get_type() const = 0;
 	virtual double phenotype(std::size_t ind_index, const Population& pop,
 											std::mt19937& engine) const = 0;
+	virtual double get_mean() const = 0;
+	virtual double get_sd() const = 0;
+	virtual double h2() const = 0;
+	virtual double H2() const = 0;
 	virtual std::size_t num_QTLs() const = 0;
 	virtual std::vector<Locus> get_loci() const = 0;
 	virtual std::vector<double> get_addivtives() const = 0;
 	virtual std::vector<double> get_dominants() const = 0;
+	virtual bool has_dominants() const = 0;
 	
 public:
+	///// helper /////
+	static std::vector<double> decide_additives_randomly(
+											std::size_t num_loci, double sd,
+											double h2, std::mt19937& engine);
+	static std::vector<double> decide_dominants_randomly(std::size_t num_loci,
+												double sd, double h2, double H2,
+												std::mt19937 &engine);
+	static std::vector<Locus> decide_loci_randomly(std::size_t num_loci,
+											const Map *gmap,
+											std::mt19937 &engine);
+	static double determine_sd_from_additives(const std::vector<double>& as,
+														double h2);
+	static double determine_sd_from_dominants(const std::vector<double>& ds,
+														double h2, double H2);
+	
+	///// create A Trait /////
+	static const Trait *create_A_a_randomly(const std::string& name,
+										const std::vector<Trait::Locus>& loci,
+										double mean, double sd, double h2,
+										std::mt19937 &engine);
+	static const Trait *create_A_l_randomly(const std::string& name,
+										const std::vector<double>& a,
+										double mean, double h2,
+										const Map *gmap, std::mt19937 &engine);
+	static const Trait *create_A_al_randomly(const std::string& name,
+										std::size_t num_loci,
+										double mean, double sd, double h2,
+										const Map *gmap, std::mt19937 &engine);
 	static const Trait *create_A(const std::string& name,
 									double mean, double h2,
 									const std::vector<double>& a,
 									const std::vector<Locus>& loci);
-	static const Trait *create_A_randomly(std::size_t num_markers, double h2);
-	static const Trait *create_A_randomly(const std::string& name,
-											std::size_t num_loci,
-											double mean, double sd,
-											double h2, const Map *gmap,
+	
+	///// create AD Trait /////
+	static const Trait *create_AD_a_randomly(const std::string& name,
+											double mean, double h2, double H2,
+											const std::vector<double>& ds,
+											const std::vector<Locus>& loci,
 											std::mt19937 &engine);
-	static const Trait *create_AD(const std::string& name,
-									double mean, double h2,
-									const std::vector<double>& as,
-									const std::vector<double>& ds,
-									const std::vector<Locus>& loci);
-	static const Trait *create_AD_randomly(const std::string& name,
+	static const Trait *create_AD_d_randomly(const std::string& name,
+											double mean, double h2, double H2,
+											const std::vector<double>& as,
+											const std::vector<Locus>& loci,
+											std::mt19937 &engine);
+	static const Trait *create_AD_l_randomly(const std::string& name,
+											double mean, double h2,
+											const std::vector<double>& as,
+											const std::vector<double>& ds,
+											const Map *gmap,
+											std::mt19937 &engine);
+	static const Trait *create_AD_ad_randomly(const std::string& name,
 											double mean, double sd,
 											double h2, double H2,
 											const std::vector<Locus>& loci,
 											std::mt19937 &engine);
-	static std::vector<Locus> decide_loci_randomly(std::size_t num_loci,
+	static const Trait *create_AD_al_randomly(const std::string& name,
+											double mean, double h2, double H2,
+											const std::vector<double>& ds,
 											const Map *gmap,
 											std::mt19937 &engine);
-	static std::vector<double> decide_additives_randomly(
-											std::size_t num_loci, double sd,
-											double h2, std::mt19937& engine);
+	static const Trait *create_AD_dl_randomly(const std::string& name,
+											double mean, double sd, double H2,
+											const std::vector<double>& as,
+											const Map *gmap,
+											std::mt19937 &engine);
+	static const Trait *create_AD_adl_randomly(const std::string& name,
+											std::size_t num_loci,
+											double mean, double sd,
+											double h2, double H2,
+											const Map *gmap,
+											std::mt19937 &engine);
+	static const Trait *create_AD(const std::string& name,
+											double mean, double H2,
+											const std::vector<double>& as,
+											const std::vector<double>& ds,
+											const std::vector<Locus>& loci);
 };
 
 
@@ -78,12 +135,18 @@ public:
 											error_std_dev(esd) { }
 	~TraitAOne() { }
 	
+	const std::string get_type() const { return "Additive Effect Only"; }
 	double phenotype(std::size_t ind_index, const Population& pop,
 											std::mt19937& engine) const;
+	double get_mean() const { return mean; }
+	double get_sd() const;
+	double h2() const;
+	double H2() const { return h2(); }
 	std::size_t num_QTLs() const { return 1; }
 	std::vector<Locus> get_loci() const;
 	std::vector<double> get_addivtives() const;
 	std::vector<double> get_dominants() const;
+	bool has_dominants() const { return false; }
 };
 
 
@@ -107,12 +170,20 @@ public:
 											error_std_dev(esd) { }
 	~TraitADOne() { }
 	
+	const std::string get_type() const {
+		return "Additive and Dominant Effect";
+	}
 	double phenotype(std::size_t ind_index, const Population& pop,
 												std::mt19937& engine) const;
+	double get_mean() const { return mean; }
+	double get_sd() const;
+	double h2() const;
+	double H2() const;
 	std::size_t num_QTLs() const { return 1; }
 	std::vector<Locus> get_loci() const;
 	std::vector<double> get_addivtives() const;
 	std::vector<double> get_dominants() const;
+	bool has_dominants() const { return true; }
 };
 
 
@@ -132,13 +203,19 @@ public:
 					additive_effects(ae), mean(m), error_std_dev(esd) { }
 	~TraitAMulti() { }
 	
-	std::size_t num_loci() const { return loci.size(); }
+	const std::string get_type() const { return "Additive Effect Only"; }
 	double phenotype(std::size_t ind_index, const Population& pop,
 												std::mt19937& engine) const;
+	double get_mean() const { return mean; }
+	double get_sd() const;
+	double h2() const;
+	double H2() const { return h2(); }
+	std::size_t num_loci() const { return loci.size(); }
 	std::size_t num_QTLs() const { return loci.size(); }
 	std::vector<Locus> get_loci() const;
 	std::vector<double> get_addivtives() const;
 	std::vector<double> get_dominants() const;
+	bool has_dominants() const { return false; }
 };
 
 
@@ -161,11 +238,19 @@ public:
 								intercept(int_), error_std_dev(esd) { }
 	~TraitADMulti() { }
 	
-	std::size_t num_loci() const { return loci.size(); }
+	const std::string get_type() const {
+		return "Additive and Dominant Effect";
+	}
 	double phenotype(std::size_t ind_index, const Population& pop,
 												std::mt19937& engine) const;
+	double get_mean() const;
+	double get_sd() const;
+	double h2() const;
+	double H2() const;
+	std::size_t num_loci() const { return loci.size(); }
 	std::size_t num_QTLs() const { return loci.size(); }
 	std::vector<Locus> get_loci() const;
 	std::vector<double> get_addivtives() const;
 	std::vector<double> get_dominants() const;
+	bool has_dominants() const { return true; }
 };

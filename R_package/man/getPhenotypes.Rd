@@ -4,16 +4,23 @@
 \alias{getPhenotypes}
 \title{Get phenotypes from a Population object}
 \usage{
-getPhenotypes(population, i)
+getPhenotypes(pop, i)
 }
 \arguments{
-\item{population}{An external pointer to a Population object.}
+\item{i}{An integer index representing the trait for which phenotypes are to
+be retrieved. The index should be between 1
+and the total number of traits available in the Population object.}
 
-\item{i}{An integer index.}
+\item{population}{An external pointer to a Population object.}
 }
 \value{
 A vector of phenotypes.
 }
 \description{
 Get phenotypes from a Population object
+}
+\examples{
+# Assuming 'pop' is a valid Population object and trait index 1 is valid
+phenotypes <- getPhenotypes(pop, 1)
+print(phenotypes)
 }

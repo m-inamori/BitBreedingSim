@@ -4,7 +4,7 @@
 \alias{cross}
 \title{Cross two Population}
 \usage{
-cross(num_inds, mothers, fathers, info, name_base, T)
+cross(num_inds, mothers, fathers, name_base, num_threads = 0)
 }
 \arguments{
 \item{num_inds}{An integer. The number of individuals.}
@@ -12,10 +12,21 @@ cross(num_inds, mothers, fathers, info, name_base, T)
 \item{mothers}{An external pointer to a Population object.}
 
 \item{fathers}{An external pointer to a Population object.}
+
+\item{name_base}{A string. The base name for individuals.}
+
+\item{num_threads}{optional An integer. The number of threads to be used.
+If not specified, the function will use
+the maximum number of available threads.}
 }
 \value{
 An external pointer to a Population object.
 }
 \description{
 Cross two Population
+}
+\examples{
+# Assuming 'mothers' and 'fathers' are valid Population objects
+new_population <- cross(100, mothers, fathers, "prog_")
+summary(new_population)
 }

@@ -4,14 +4,66 @@
 \alias{createBaseInfo}
 \title{Create a BaseInfo object}
 \usage{
-createBaseInfo(seed)
+createBaseInfo(
+  chrom_maps = NULL,
+  num_chroms = 10,
+  num_markers = 1000,
+  cM = 100,
+  bp = 1e+06,
+  seed = -1
+)
 }
 \arguments{
-\item{seed}{An integer. A seed for random number generation.}
+\item{chrom_maps}{A list of data.frames, each representing a chromosome map.
+Each data.frame should have two columns: 'cM' for centiMorgans and
+'position' for base pair positions.
+The list should be named, with each name corresponding to
+a chromosome identifier (e.g., "chr1", "chr2", etc.).
+If chrom_maps is provided,
+the parameters num_chroms, num_markers, cM, and bp are ignored.}
+
+\item{num_chroms}{An integer. Number of chromosomes.
+Ignored if chrom_maps is provided. Default is 10.}
+
+\item{num_markers}{An integer. Number of markers per chromosome.
+Ignored if chrom_maps is provided. Default is 1000.}
+
+\item{cM}{A numeric. Length of each chromosome in centiMorgans.
+Ignored if chrom_maps is provided. Default is 100.}
+
+\item{bp}{An integer. Length of each chromosome in base pairs.
+Ignored if chrom_maps is provided. Default is 1000000.}
+
+\item{seed}{An integer. A seed for random number generation.
+Default is -1, which generates a random seed.}
 }
 \value{
 An external pointer to a BaseInfo object.
 }
 \description{
-Create a BaseInfo object
+This function creates a BaseInfo object.
+     If the seed is set to -1, a random seed is generated,
+     resulting in different outcomes each time the function is called.
+     If a specific seed is provided,
+     the random number generation will be based on that seed,
+     ensuring reproducible results.
+}
+\examples{
+# Create a BaseInfo object with a random seed
+base_info_random <- createBaseInfo()
+getInfo(base_info_random)
+
+# Create a BaseInfo object with a specific seed for reproducible results
+base_info_reproducible <- createBaseInfo(seed = 123)
+getInfo(base_info_reproducible)
+
+# Create a chromosome map with 100 cM and 1 Mbp, containing 1000 markers
+f <- function(x) { (x^3 / (1 + x^2) + 8/5) * 500 / 16 }
+cM <- sapply(1:1000, function(i) f(i/250 - 2))
+position <- sapply(1:1000, function(i) i * 1000)
+chrom_map <- data.frame(cM, position)
+chrom_maps <- replicate(10, chrom_map, simplify = FALSE)
+names(chrom_maps) <- paste0("chr", 1:10)
+info <- createBaseInfo(chrom_maps, seed = 123)
+getInfo(info)
 }
