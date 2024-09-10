@@ -4,17 +4,14 @@
 \alias{getPopInfo}
 \title{Get information for a Population object}
 \usage{
-getPopInfo(ptr)
+getPopInfo(pop)
 }
 \arguments{
-\item{num_inds}{An integer. The number of individuals.}
-
-\item{info}{An external pointer to a BaseInfo object.}
-
-\item{name_base}{A string. The base name for individuals.}
+\item{pop}{An external pointer to a BaseInfo object.}
 }
 \value{
-An external pointer to a Population object.
+A list containing the number of individuals
+        and the number of chromosomes in the population.
 }
 \description{
 Get information for a Population object

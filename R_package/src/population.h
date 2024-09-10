@@ -105,6 +105,7 @@ public:
 	std::size_t num_inds() const { return names.size(); }
 	std::size_t num_chroms() const { return chr_populations.size(); }
 	std::size_t num_markers() const;
+	std::size_t num_traits() const;
 	const BaseInfo *get_info() const { return info; }
 	const ChromMap&	get_chrmap(std::size_t i) const;
 	const BitChrPopulation	*get_chrpop(std::size_t i) const {

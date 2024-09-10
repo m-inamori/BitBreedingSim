@@ -45,8 +45,8 @@ getNumChromsPop <- function(pop) {
     .Call(`_BitBreedingSim_getNumChromsPop`, pop)
 }
 
-getPhenotypes <- function(pop, i) {
-    .Call(`_BitBreedingSim_getPhenotypes`, pop, i)
+getPhenotypesCpp <- function(pop, i) {
+    .Call(`_BitBreedingSim_getPhenotypesCpp`, pop, i)
 }
 
 selectPop <- function(pop, indices_R) {

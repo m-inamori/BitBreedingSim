@@ -1,3 +1,5 @@
 debug/
 depend/
 obj/
+R_package/src/*.o
+R_package/src/*.so

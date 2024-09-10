@@ -7,7 +7,7 @@
 getGenotypes(pop)
 }
 \arguments{
-\item{population}{An external pointer to a Population object.}
+\item{pop}{An external pointer to a Population object.}
 }
 \value{
 A matrix of genotypes where rows are samples and columns are markers.
@@ -18,8 +18,8 @@ The genotypes are represented in a matrix format where rows correspond to sample
 and columns correspond to markers.
 }
 \details{
-Genotype encoding:
-- 0/0 is encoded as -1
-- 0/1 is encoded as 0
+Genotype encoding:\cr
+- 0/0 is encoded as -1\cr
+- 0/1 is encoded as 0\cr
 - 1/1 is encoded as 1
 }

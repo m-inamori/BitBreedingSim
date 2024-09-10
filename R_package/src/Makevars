@@ -1,2 +1,3 @@
 # src/Makevars
-PKG_CXXFLAGS = -std=gnu++17 -I/usr/share/R/include -I/home/inamori/R/x86_64-pc-linux-gnu-library/4.4/Rcpp/include -O3 -fpic
+CXX_STD = CXX17
+CXX17 = g++ -std=gnu++17 -I/usr/share/R/include -I/home/inamori/R/x86_64-pc-linux-gnu-library/4.4/Rcpp/include -O3 -fpic

@@ -125,6 +125,10 @@ size_t Population::num_markers() const {
 	return num;
 }
 
+size_t Population::num_traits() const {
+	return info->num_traits();
+}
+
 const ChromMap&	Population::get_chrmap(std::size_t i) const {
 	return info->get_chrom_map(i);
 }
@@ -385,7 +389,7 @@ int getNumChromsPop(SEXP pop) {
 }
 
 // [[Rcpp::export]]
-SEXP getPhenotypes(SEXP pop, int i) {
+SEXP getPhenotypesCpp(SEXP pop, int i) {
 	Rcpp::XPtr<Population> pop_cpp(pop);
 	const auto	phenos = pop_cpp.get()->get_phenotypes(i-1);
 	NumericVector rphenos(phenos.begin(), phenos.end());
@@ -547,7 +551,8 @@ SEXP getPopulationInfo(SEXP popPtr) {
 	Rcpp::List	pop_list = Rcpp::List::create(
 		_["num_inds"] = ptr_pop->num_inds(),
 		_["num_chroms"] = ptr_pop->num_chroms(),
-		_["num_markers"] = ptr_pop->num_markers()
+		_["num_markers"] = ptr_pop->num_markers(),
+		_["num_traits"] = ptr_pop->num_traits()
 	);
 	return pop_list;
 }

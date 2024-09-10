@@ -7,7 +7,7 @@
 selectPop(pop, indices_R)
 }
 \arguments{
-\item{population}{An external pointer to a Population object.}
+\item{pop}{An external pointer to a Population object.}
 
 \item{indices}{A vector of integer indices representing the individuals
 to be selected.}

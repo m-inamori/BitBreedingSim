@@ -4,10 +4,10 @@
 \alias{getTrait}
 \title{Get a trait from a BaseInfo object}
 \usage{
-getTrait(baseInfo, i)
+getTrait(info, i)
 }
 \arguments{
-\item{baseInfo}{An external pointer to a BaseInfo object.}
+\item{info}{An external pointer to a BaseInfo object.}
 
 \item{i}{An integer. The index of the trait to retrieve.}
 }

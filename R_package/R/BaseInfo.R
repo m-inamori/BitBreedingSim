@@ -46,38 +46,67 @@
 #' getInfo(info)
 createBaseInfo <- function(chrom_maps=NULL, num_chroms=10, num_markers=1000,
 													cM=100, bp=1000000, seed=-1) {
-	if (is.null(chrom_maps)) {
-		.Call('_BitBreedingSim_createBaseInfoCpp', num_chroms, num_markers, cM, bp, seed)
+	if(!is.null(chrom_maps) && !is.list(chrom_maps)) {
+		stop("Error: chrom_maps must be a list of data.frames.")
+	}
+	if(!is.numeric(num_chroms) || num_chroms <= 0) {
+		stop("Error: num_chroms must be a positive integer.")
+	}
+	if(!is.numeric(num_markers) || num_markers <= 0) {
+		stop("Error: num_markers must be a positive integer.")
+	}
+	if(!is.numeric(cM) || cM <= 0) {
+		stop("Error: cM must be a positive number.")
+	}
+	if(!is.numeric(bp) || bp <= 0) {
+		stop("Error: bp must be a positive integer.")
+	}
+	if(!is.numeric(seed)) {
+		stop("Error: seed must be an integer.")
+	}
+	if(is.null(chrom_maps)) {
+		info <- .Call('_BitBreedingSim_createBaseInfoCpp', num_chroms,
+													num_markers, cM, bp, seed)
 	}
 	else {
-		.Call('_BitBreedingSim_createBaseInfoWithMap', chrom_maps, seed)
+		info <- .Call('_BitBreedingSim_createBaseInfoWithMap', chrom_maps, seed)
 	}
+	class(info) <- "BaseInfo"
+	return(info)
 }
 
 #' Get the values of a BaseInfo object
 #'
-#' @param ptr An external pointer to a BaseInfo object
+#' @param info An external pointer to a BaseInfo object
 #' @return The list of the values of a BaseInfo object
 #' @export
-getInfo <- function(ptr) {
-	num_chroms <- .Call('_BitBreedingSim_getNumChroms', ptr)
-	num_traits <- .Call('_BitBreedingSim_getNumTraits', ptr)
+getInfo <- function(info) {
+	if(!inherits(info, "BaseInfo")) {
+		stop("Error: info is not a BaseInfo object.")
+	}
+	
+	num_chroms <- .Call('_BitBreedingSim_getNumChroms', info)
+	num_traits <- .Call('_BitBreedingSim_getNumTraits', info)
 	
 	return(list(num_chroms = num_chroms, num_traits = num_traits))
 }
 
 #' Get a trait from a BaseInfo object
 #'
-#' @param baseInfo An external pointer to a BaseInfo object.
+#' @param info An external pointer to a BaseInfo object.
 #' @param i An integer. The index of the trait to retrieve.
 #' @return The trait at the specified index.
 #' @export
-getTrait <- function(baseInfo, i) {
-	num_traits <- .Call('_BitBreedingSim_getNumTraits', baseInfo)
+getTrait <- function(info, i) {
+	if(!inherits(info, "BaseInfo")) {
+		stop("Error: info is not a BaseInfo object.")
+	}
+	
+	num_traits <- .Call('_BitBreedingSim_getNumTraits', info)
 	if(i < 1 || i > num_traits) {
 		stop(paste("Index out of bounds: i should be between 1 and", num_traits, "but got", i))
 	}
-	trait <- .Call('_BitBreedingSim_getTraitCpp', baseInfo, i - 1)
+	trait <- .Call('_BitBreedingSim_getTraitCpp', info, i - 1)
 	return(trait)
 }
 
@@ -96,7 +125,10 @@ getTrait <- function(baseInfo, i) {
 #' @export
 addTraitA <- function(info, name, mean, h2, sd = NULL, a = NULL,
 												loci = NULL, num_loci = 1) {
-	if(is.null(sd) && is.null(a)) {
+	if(!inherits(info, "BaseInfo")) {
+		stop("Error: info is not a BaseInfo object.")
+	}
+	else if(is.null(sd) && is.null(a)) {
 		stop("Error: Both 'sd' and 'a' cannot be NULL at the same time.")
 	}
 	else if(!is.null(a) && !is.null(loci) && length(a) != dim(loci)[1]) {
@@ -142,7 +174,10 @@ addTraitA <- function(info, name, mean, h2, sd = NULL, a = NULL,
 #' @export
 addTraitAD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
 								a = NULL, d = NULL, loci = NULL, num_loci = 1) {
-	if(!is.null(a) && !is.null(d)) {
+	if(!inherits(info, "BaseInfo")) {
+		stop("Error: info is not a BaseInfo object.")
+	}
+	else if(!is.null(a) && !is.null(d)) {
 		if(is.null(sd) && is.null(h2) && is.null(H2)) {
 			message <- "Error: When 'a' and 'd' are provided, at least one of"
 			message <- paste(message, "'sd', 'h2', or 'H2' must be provided.")

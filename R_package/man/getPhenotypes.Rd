@@ -7,11 +7,11 @@
 getPhenotypes(pop, i)
 }
 \arguments{
+\item{pop}{An external pointer to a Population object.}
+
 \item{i}{An integer index representing the trait for which phenotypes are to
 be retrieved. The index should be between 1
 and the total number of traits available in the Population object.}
-
-\item{population}{An external pointer to a Population object.}
 }
 \value{
 A vector of phenotypes.

@@ -7,7 +7,7 @@
 getPhasedIntGenotypes(pop)
 }
 \arguments{
-\item{population}{An external pointer to a Population object.}
+\item{pop}{An external pointer to a Population object.}
 }
 \value{
 A matrix of genotypes where rows are samples and columns are markers.

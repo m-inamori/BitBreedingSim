@@ -4,10 +4,10 @@
 \alias{getInfo}
 \title{Get the values of a BaseInfo object}
 \usage{
-getInfo(ptr)
+getInfo(info)
 }
 \arguments{
-\item{ptr}{An external pointer to a BaseInfo object}
+\item{info}{An external pointer to a BaseInfo object}
 }
 \value{
 The list of the values of a BaseInfo object
