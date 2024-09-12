@@ -194,8 +194,20 @@ selectPop <- function(pop, indices) {
     return (new_pop)
 }
 
+getPopNames <- function(pop) {
+	if(!inherits(pop, "Population")) {
+		stop("Error: pop is not a Population object.")
+	}
+	
+	.Call('_BitBreedingSim_createNameDataFromPop', pop)
+}
+
 #' @export
 summary.Population <- function(pop, ...) {
+	if(!inherits(pop, "Population")) {
+		stop("Error: pop is not a Population object.")
+	}
+	
 	pop_list <- .Call('_BitBreedingSim_getPopulationInfo', pop)
 	cat("Population Summary:\n")
 	cat("Num individuals: ", pop_list$num_inds, "\n")

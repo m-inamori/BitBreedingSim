@@ -226,13 +226,24 @@ BEGIN_RCPP
 END_RCPP
 }
 // getPopulationInfo
-SEXP getPopulationInfo(SEXP popPtr);
-RcppExport SEXP _BitBreedingSim_getPopulationInfo(SEXP popPtrSEXP) {
+SEXP getPopulationInfo(SEXP pop);
+RcppExport SEXP _BitBreedingSim_getPopulationInfo(SEXP popSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type popPtr(popPtrSEXP);
-    rcpp_result_gen = Rcpp::wrap(getPopulationInfo(popPtr));
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(getPopulationInfo(pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// createNameDataFromPop
+Rcpp::DataFrame createNameDataFromPop(SEXP pop);
+RcppExport SEXP _BitBreedingSim_createNameDataFromPop(SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(createNameDataFromPop(pop));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -256,6 +267,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getPhasedGenotypes", (DL_FUNC) &_BitBreedingSim_getPhasedGenotypes, 1},
     {"_BitBreedingSim_getPhasedIntGenotypes", (DL_FUNC) &_BitBreedingSim_getPhasedIntGenotypes, 1},
     {"_BitBreedingSim_getPopulationInfo", (DL_FUNC) &_BitBreedingSim_getPopulationInfo, 1},
+    {"_BitBreedingSim_createNameDataFromPop", (DL_FUNC) &_BitBreedingSim_createNameDataFromPop, 1},
     {NULL, NULL, 0}
 };
 

@@ -172,7 +172,10 @@ const Population *Population::create_origins(size_t num_inds,
 		names[j] = ss.str();
 	}
 	
-	Population	*pop = new Population(chr_pops, info, names);
+	vector<string>	mats(num_inds, "0");
+	vector<string>	pats(num_inds, "0");
+	
+	Population	*pop = new Population(chr_pops, info, names, mats, pats);
 	pop->set_phenotypes(info);
 	return pop;
 }
@@ -216,7 +219,14 @@ Population *Population::cross(size_t num_inds,
 		names[j] = ss.str();
 	}
 	
-	Population	*pop = new Population(chr_pops, info, names);
+	vector<string>	mats(num_inds);
+	vector<string>	pats(num_inds);
+	std::transform(pairs.begin(), pairs.end(), mats.begin(),
+			[&mothers](const Pair& e) { return mothers.get_name(e.first); });
+	std::transform(pairs.begin(), pairs.end(), pats.begin(),
+			[&fathers](const Pair& e) { return fathers.get_name(e.second); });
+	
+	Population	*pop = new Population(chr_pops, info, names, mats, pats);
 	pop->set_phenotypes(info);
 	return pop;
 }
@@ -317,25 +327,32 @@ void Population::dispay_QTLs(size_t i) const {
 }
 
 Population *Population::select(const vector<size_t>& indices) const {
-	vector<const BitChrPopulation *>	selected_chr_pops(num_chroms());
+	vector<const BitChrPopulation *>	new_chr_pops(num_chroms());
 	for(size_t i = 0; i < num_chroms(); ++i) {
-		selected_chr_pops[i] = chr_populations[i]->select(indices);
+		new_chr_pops[i] = chr_populations[i]->select(indices);
 	}
 	
-	vector<string>	selected_names(indices.size());
+	vector<string>	new_names(indices.size());
 	for(size_t i = 0; i < indices.size(); ++i) {
-		selected_names[i] = names[indices[i]];
+		new_names[i] = names[indices[i]];
 	}
-	Population	*selected_pop = new Population(selected_chr_pops,
-													info, selected_names);
+	vector<string>	new_mats(indices.size());
+	vector<string>	new_pats(indices.size());
+	std::transform(indices.begin(), indices.end(), new_mats.begin(),
+							[this](const size_t& i) { return this->mats[i]; });
+	std::transform(indices.begin(), indices.end(), new_mats.begin(),
+							[this](const size_t& i) { return this->pats[i]; });
 	
-	selected_pop->phenotypes.resize(phenotypes.size());
+	Population	*new_pop = new Population(new_chr_pops, info,
+												new_names, new_mats, new_pats);
+	
+	new_pop->phenotypes.resize(phenotypes.size());
 	for(size_t i = 0; i < phenotypes.size(); ++i) {
-		selected_pop->phenotypes[i] = select_phenotypes(indices, i);
+		new_pop->phenotypes[i] = select_phenotypes(indices, i);
 	}
-	selected_pop->traits = traits;
+	new_pop->traits = traits;
 	
-	return selected_pop;
+	return new_pop;
 }
 
 vector<double> Population::select_phenotypes(const vector<size_t>& indices,
@@ -545,8 +562,8 @@ NumericMatrix getPhasedIntGenotypes(SEXP pop) {
 }
 
 // [[Rcpp::export]]
-SEXP getPopulationInfo(SEXP popPtr) {
-	Rcpp::XPtr<Population>	ptr_pop(popPtr);
+SEXP getPopulationInfo(SEXP pop) {
+	Rcpp::XPtr<Population>	ptr_pop(pop);
 	
 	Rcpp::List	pop_list = Rcpp::List::create(
 		_["num_inds"] = ptr_pop->num_inds(),
@@ -555,4 +572,13 @@ SEXP getPopulationInfo(SEXP popPtr) {
 		_["num_traits"] = ptr_pop->num_traits()
 	);
 	return pop_list;
+}
+
+// [[Rcpp::export]]
+Rcpp::DataFrame createNameDataFromPop(SEXP pop) {
+	Rcpp::XPtr<Population>	ptr_pop(pop);
+	const auto	*p = ptr_pop.get();
+    return Rcpp::DataFrame::create(Rcpp::Named("name") = p->get_names(),
+                                   Rcpp::Named("mat") = p->get_mats(),
+                                   Rcpp::Named("pat") = p->get_pats());
 }

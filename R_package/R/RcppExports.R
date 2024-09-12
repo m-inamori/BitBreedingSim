@@ -69,7 +69,11 @@ getPhasedIntGenotypes <- function(pop) {
     .Call(`_BitBreedingSim_getPhasedIntGenotypes`, pop)
 }
 
-getPopulationInfo <- function(popPtr) {
-    .Call(`_BitBreedingSim_getPopulationInfo`, popPtr)
+getPopulationInfo <- function(pop) {
+    .Call(`_BitBreedingSim_getPopulationInfo`, pop)
+}
+
+createNameDataFromPop <- function(pop) {
+    .Call(`_BitBreedingSim_createNameDataFromPop`, pop)
 }
 

@@ -92,16 +92,27 @@ private:
 	std::vector<const BitChrPopulation *>	chr_populations;
 	const BaseInfo	*info;
 	const std::vector<std::string>	names;
+	const std::vector<std::string>	mats;
+	const std::vector<std::string>	pats;
 	std::vector<std::vector<double>>	phenotypes;
 	std::vector<const Trait *>	traits;
 	
 public:
 	Population(const std::vector<const BitChrPopulation *>& chr_pops,
-					const BaseInfo *bi, const std::vector<std::string>& ns) :
-							chr_populations(chr_pops), info(bi), names(ns) { }
+										const BaseInfo *bi,
+										const std::vector<std::string>& ns,
+										const std::vector<std::string>& ms,
+										const std::vector<std::string>& ps) :
+										chr_populations(chr_pops), info(bi),
+										names(ns), mats(ms), pats(ps) { }
 	~Population();
 	
 	const std::vector<std::string>& get_names() const { return names; }
+	const std::vector<std::string>& get_mats() const { return mats; }
+	const std::vector<std::string>& get_pats() const { return pats; }
+	const std::string& get_name(std::size_t i) const { return names[i]; }
+	const std::string& get_mat(std::size_t i) const { return mats[i]; }
+	const std::string& get_pat(std::size_t i) const { return pats[i]; }
 	std::size_t num_inds() const { return names.size(); }
 	std::size_t num_chroms() const { return chr_populations.size(); }
 	std::size_t num_markers() const;
