@@ -21,12 +21,24 @@ getTraitCpp <- function(baseInfoPtr, i) {
     .Call(`_BitBreedingSim_getTraitCpp`, baseInfoPtr, i)
 }
 
+getMapfromInfo <- function(baseInfoPtr) {
+    .Call(`_BitBreedingSim_getMapfromInfo`, baseInfoPtr)
+}
+
 add_Trait_A_wrapper <- function(ptr, name, mean, h2, sd_ = NULL, a = NULL, loci = NULL, num_loci = 1L) {
     invisible(.Call(`_BitBreedingSim_add_Trait_A_wrapper`, ptr, name, mean, h2, sd_, a, loci, num_loci))
 }
 
 add_Trait_AD_wrapper <- function(baseInfoPtr, name, mean, sd_ = NULL, h2_ = NULL, H2_ = NULL, a = NULL, ds = NULL, loci = NULL, num_loci = 1L) {
     invisible(.Call(`_BitBreedingSim_add_Trait_AD_wrapper`, baseInfoPtr, name, mean, sd_, h2_, H2_, a, ds, loci, num_loci))
+}
+
+getMapInfo <- function(mapPtr) {
+    .Call(`_BitBreedingSim_getMapInfo`, mapPtr)
+}
+
+getMapCpp <- function(mapPtr) {
+    .Call(`_BitBreedingSim_getMapCpp`, mapPtr)
 }
 
 createOrigins <- function(num_inds, info, name_base) {

@@ -19,6 +19,7 @@ public:
 	virtual std::size_t get_num_markers() const = 0;
 	virtual double get_length() const = 0;
 	virtual int get_position(std::size_t i) const = 0;
+	virtual double get_cM(std::size_t i) const = 0;
 	virtual std::size_t Morgan_to_index(double M) const = 0;
 	
 	const std::string& get_name() const { return chr_name; }
@@ -51,6 +52,9 @@ public:
 	int get_position(std::size_t i) const {
 		return static_cast<int>(bps * (i + 1) / num_markers);
 	}
+	double get_cM(std::size_t i) const {
+		return length * (i + 1) / num_markers;
+	}
 	std::size_t Morgan_to_index(double M) const {
 		return std::min(num_markers - 1,
 						static_cast<std::size_t>(M / length * num_markers));
@@ -74,6 +78,7 @@ public:
 	std::size_t get_num_markers() const { return Morgans.size(); }
 	double get_length() const { return Morgans.back(); }
 	int get_position(std::size_t i) const { return positions[i]; }
+	double get_cM(std::size_t i) const { return Morgans[i] / 100; }
 	std::size_t Morgan_to_index(double M) const;
 	
 public:

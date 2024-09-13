@@ -42,11 +42,11 @@ An external pointer to a BaseInfo object.
 }
 \description{
 This function creates a BaseInfo object.
-     If the seed is set to -1, a random seed is generated,
-     resulting in different outcomes each time the function is called.
-     If a specific seed is provided,
-     the random number generation will be based on that seed,
-     ensuring reproducible results.
+If the seed is set to -1, a random seed is generated,
+resulting in different outcomes each time the function is called.
+If a specific seed is provided,
+the random number generation will be based on that seed,
+ensuring reproducible results.
 }
 \examples{
 # Create a BaseInfo object with a random seed

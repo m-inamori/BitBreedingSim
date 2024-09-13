@@ -11,7 +11,7 @@ getPopInfo(pop)
 }
 \value{
 A list containing the number of individuals
-        and the number of chromosomes in the population.
+and the number of chromosomes in the population.
 }
 \description{
 Get information for a Population object

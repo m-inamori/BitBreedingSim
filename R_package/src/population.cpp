@@ -554,8 +554,8 @@ NumericMatrix getPhasedIntGenotypes(SEXP pop) {
 	const vector<string>&	names = ptr_pop->get_names();
 	CharacterVector rownames(names.size()*2);
 	for(size_t i = 0; i < names.size(); ++i) {
-		colnames[i*2]   = names[i] + "_mat";
-		colnames[i*2+1] = names[i] + "_pat";
+		rownames[i*2]   = names[i] + "_mat";
+		rownames[i*2+1] = names[i] + "_pat";
 	}
 	mat.attr("dimnames") = List::create(rownames, colnames);
 	return mat;

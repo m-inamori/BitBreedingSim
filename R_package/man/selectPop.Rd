@@ -14,7 +14,7 @@ to be selected.}
 }
 \value{
 An external pointer to a new Population object
-       containing the selected individuals.
+containing the selected individuals.
 }
 \description{
 Select individuals from a Population object

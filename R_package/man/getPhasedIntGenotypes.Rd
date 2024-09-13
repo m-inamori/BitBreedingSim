@@ -11,8 +11,8 @@ getPhasedIntGenotypes(pop)
 }
 \value{
 A matrix of genotypes where rows are samples and columns are markers.
-        Each sample has two rows: the first row is the maternal allele and the
-        second row is the paternal allele.
+Each sample has two rows: the first row is the maternal allele and the
+second row is the paternal allele.
 }
 \description{
 This function retrieves the genotypes from a given Population object.

@@ -229,6 +229,33 @@ SEXP getTraitCpp(SEXP baseInfoPtr, std::size_t i) {
 }
 
 // [[Rcpp::export]]
+List getMapfromInfo(SEXP baseInfoPtr) {
+	Rcpp::XPtr<BaseInfo>	ptr_info(baseInfoPtr);
+	const Map&	gmap = ptr_info->get_map();
+	
+	// Convert Map to Rcpp List
+	List	map_list(gmap.num_chroms());
+	CharacterVector	names(gmap.num_chroms());
+	for(size_t i = 0; i < gmap.num_chroms(); ++i) {
+		const ChromMap&	cmap = gmap.get_chr(i);
+		const size_t	N = cmap.get_num_markers();
+		NumericVector	cMs(N);
+		IntegerVector	bps(N);
+		for(size_t k = 0; k < N; ++k) {
+			cMs[k] = cmap.get_cM(k);
+			bps[k] = cmap.get_position(k);
+		}
+		DataFrame	df = DataFrame::create(Named("cM") = cMs,
+										   Named("position") = bps);
+		
+		map_list[i] = df;
+		names[i] = cmap.get_name();
+	}
+	map_list.attr("names") = names;
+	return map_list;
+}
+
+// [[Rcpp::export]]
 void add_Trait_A_wrapper(SEXP ptr, std::string name, double mean, double h2,
 						Nullable<double> sd_ = R_NilValue,
 						Nullable<NumericVector> a = R_NilValue,

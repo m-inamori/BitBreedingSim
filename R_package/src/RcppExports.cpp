@@ -71,6 +71,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getMapfromInfo
+List getMapfromInfo(SEXP baseInfoPtr);
+RcppExport SEXP _BitBreedingSim_getMapfromInfo(SEXP baseInfoPtrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type baseInfoPtr(baseInfoPtrSEXP);
+    rcpp_result_gen = Rcpp::wrap(getMapfromInfo(baseInfoPtr));
+    return rcpp_result_gen;
+END_RCPP
+}
 // add_Trait_A_wrapper
 void add_Trait_A_wrapper(SEXP ptr, std::string name, double mean, double h2, Nullable<double> sd_, Nullable<NumericVector> a, Nullable<List> loci, size_t num_loci);
 RcppExport SEXP _BitBreedingSim_add_Trait_A_wrapper(SEXP ptrSEXP, SEXP nameSEXP, SEXP meanSEXP, SEXP h2SEXP, SEXP sd_SEXP, SEXP aSEXP, SEXP lociSEXP, SEXP num_lociSEXP) {
@@ -105,6 +116,28 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< std::size_t >::type num_loci(num_lociSEXP);
     add_Trait_AD_wrapper(baseInfoPtr, name, mean, sd_, h2_, H2_, a, ds, loci, num_loci);
     return R_NilValue;
+END_RCPP
+}
+// getMapInfo
+SEXP getMapInfo(SEXP mapPtr);
+RcppExport SEXP _BitBreedingSim_getMapInfo(SEXP mapPtrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type mapPtr(mapPtrSEXP);
+    rcpp_result_gen = Rcpp::wrap(getMapInfo(mapPtr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getMapCpp
+SEXP getMapCpp(SEXP mapPtr);
+RcppExport SEXP _BitBreedingSim_getMapCpp(SEXP mapPtrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type mapPtr(mapPtrSEXP);
+    rcpp_result_gen = Rcpp::wrap(getMapCpp(mapPtr));
+    return rcpp_result_gen;
 END_RCPP
 }
 // createOrigins
@@ -254,8 +287,11 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getNumChroms", (DL_FUNC) &_BitBreedingSim_getNumChroms, 1},
     {"_BitBreedingSim_getNumTraits", (DL_FUNC) &_BitBreedingSim_getNumTraits, 1},
     {"_BitBreedingSim_getTraitCpp", (DL_FUNC) &_BitBreedingSim_getTraitCpp, 2},
+    {"_BitBreedingSim_getMapfromInfo", (DL_FUNC) &_BitBreedingSim_getMapfromInfo, 1},
     {"_BitBreedingSim_add_Trait_A_wrapper", (DL_FUNC) &_BitBreedingSim_add_Trait_A_wrapper, 8},
     {"_BitBreedingSim_add_Trait_AD_wrapper", (DL_FUNC) &_BitBreedingSim_add_Trait_AD_wrapper, 10},
+    {"_BitBreedingSim_getMapInfo", (DL_FUNC) &_BitBreedingSim_getMapInfo, 1},
+    {"_BitBreedingSim_getMapCpp", (DL_FUNC) &_BitBreedingSim_getMapCpp, 1},
     {"_BitBreedingSim_createOrigins", (DL_FUNC) &_BitBreedingSim_createOrigins, 3},
     {"_BitBreedingSim_crossPops", (DL_FUNC) &_BitBreedingSim_crossPops, 5},
     {"_BitBreedingSim_getNumInds", (DL_FUNC) &_BitBreedingSim_getNumInds, 1},

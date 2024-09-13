@@ -194,6 +194,16 @@ selectPop <- function(pop, indices) {
     return (new_pop)
 }
 
+#' Get name data from a Population object
+#'
+#' @param pop An external pointer to a Population object.
+#' @return A data.frame containing the names, maternal names,
+#'         and paternal names from the Population object.
+#' @export
+#' @examples
+#' # Assuming 'pop' is a valid Population object
+#' name_data <- getPopNames(pop)
+#' print(name_data)
 getPopNames <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: pop is not a Population object.")

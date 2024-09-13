@@ -19,7 +19,9 @@ and columns correspond to markers.
 }
 \details{
 Genotype encoding:\cr
-- 0/0 is encoded as -1\cr
-- 0/1 is encoded as 0\cr
-- 1/1 is encoded as 1
+\itemize{
+\item 0/0 is encoded as -1\cr
+\item 0/1 is encoded as 0\cr
+\item 1/1 is encoded as 1
+}
 }

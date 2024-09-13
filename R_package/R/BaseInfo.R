@@ -110,6 +110,29 @@ getTrait <- function(info, i) {
 	return(trait)
 }
 
+#' Retrieve Genetic Map Information
+#'
+#' This function retrieves the genetic map information from a `BaseInfo` object.
+#'
+#' @param info An object of class `BaseInfo`. This object contains the genetic map information.
+#' @return A list of data frames, each representing a chromosome. Each data frame contains two columns:
+#'   - `cM`: The centiMorgan positions of the markers.
+#'   - `position`: The base pair positions of the markers.
+#' @examples
+#' \dontrun{
+#'   # Assuming `info` is a valid BaseInfo object
+#'   map <- getMap(info)
+#'   print(map)
+#' }
+#' @export
+getMap <- function(info) {
+	if(!inherits(info, "BaseInfo")) {
+		stop("Error: info is not a BaseInfo object.")
+	}
+	
+	.Call('_BitBreedingSim_getMapfromInfo', info)
+}
+
 #' Add Trait with Additive Effects to BaseInfo
 #'
 #' This function adds a trait with additive effects to the BaseInfo object.

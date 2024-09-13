@@ -6,6 +6,7 @@
 #include "common.h"
 
 using namespace std;
+using namespace Rcpp;
 
 
 //////////////////// ChromMap ////////////////////
@@ -234,4 +235,37 @@ MapFormatException::MapFormatException(const vector<string>& lines) {
 		ss << '\n' << line;
 	
 	message = ss.str();
+}
+
+
+//////////////////// Export ////////////////////
+
+// [[Rcpp::export]]
+SEXP getMapInfo(SEXP mapPtr) {
+	Rcpp::XPtr<Map>	ptr_map(mapPtr);
+	IntegerVector	num_markers(ptr_map->num_chroms());
+	for(size_t i = 0; i < ptr_map->num_chroms(); ++i) {
+		num_markers[i] = ptr_map->num_markers(i);
+	}
+	
+	Rcpp::List	pop_list = Rcpp::List::create(
+		_["num_chroms"] = ptr_map->num_chroms(),
+		_["num_markers"] = num_markers
+	);
+	return pop_list;
+}
+
+// [[Rcpp::export]]
+SEXP getMapCpp(SEXP mapPtr) {
+	Rcpp::XPtr<Map>	ptr_map(mapPtr);
+	IntegerVector	num_markers(ptr_map->num_chroms());
+	for(size_t i = 0; i < ptr_map->num_chroms(); ++i) {
+		num_markers[i] = ptr_map->num_markers(i);
+	}
+	
+	Rcpp::List	pop_list = Rcpp::List::create(
+		_["num_chroms"] = ptr_map->num_chroms(),
+		_["num_markers"] = num_markers
+	);
+	return pop_list;
 }
