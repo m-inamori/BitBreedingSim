@@ -4,18 +4,18 @@ Fast breeding simulator package for R
 
 ## Install
 
-\\\
+```
 $ R  
 \> library(devtools)  
 \> Rcpp::compileAttributes()  
 \> devtools::document()  
 $ make  
 $ make install
-\\\
+```
 
 ## Usage
 
-\\\
+```
 \> library(BitBreedingSim)  
 \> info <- createBaseInfo(seed=2)  
 \> addTraitA(info, name="Trait1", mean=100, h2=0.6, sd=20, num_loci=10)  
@@ -33,7 +33,7 @@ i : 1 num_traits : 1
 \> pheno[1:10]  
  [1] 116.26303  81.35491  80.49995 138.49164 141.23155 127.53185 128.23878  
  [8]  95.75027  98.02536 110.55966
-\\\
+```
 
 ## License
 MIT License
