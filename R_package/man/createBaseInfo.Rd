@@ -16,37 +16,34 @@ createBaseInfo(
 \arguments{
 \item{chrom_maps}{A list of data.frames, each representing a chromosome map.
 Each data.frame should have two columns: 'cM' for centiMorgans and
-'position' for base pair positions.
-The list should be named, with each name corresponding to
-a chromosome identifier (e.g., "chr1", "chr2", etc.).
-If chrom_maps is provided,
-the parameters num_chroms, num_markers, cM, and bp are ignored.}
+'position' for base pair positions. The list should be named, with each name
+corresponding to a chromosome identifier (e.g., "chr1", "chr2", etc.).
+If chrom_maps is provided, the parameters num_chroms, num_markers, cM, and
+bp are ignored.}
 
-\item{num_chroms}{An integer. Number of chromosomes.
-Ignored if chrom_maps is provided. Default is 10.}
+\item{num_chroms}{An integer. Number of chromosomes. Ignored if chrom_maps
+is provided. Default is 10.}
 
-\item{num_markers}{An integer. Number of markers per chromosome.
-Ignored if chrom_maps is provided. Default is 1000.}
+\item{num_markers}{An integer. Number of markers per chromosome. Ignored if
+chrom_maps is provided. Default is 1000.}
 
-\item{cM}{A numeric. Length of each chromosome in centiMorgans.
-Ignored if chrom_maps is provided. Default is 100.}
+\item{cM}{A numeric. Length of each chromosome in centiMorgans. Ignored if
+chrom_maps is provided. Default is 100.}
 
-\item{bp}{An integer. Length of each chromosome in base pairs.
-Ignored if chrom_maps is provided. Default is 1000000.}
+\item{bp}{An integer. Length of each chromosome in base pairs. Ignored if
+chrom_maps is provided. Default is 1000000.}
 
-\item{seed}{An integer. A seed for random number generation.
-Default is -1, which generates a random seed.}
+\item{seed}{An integer. A seed for random number generation. Default is -1,
+which generates a random seed.}
 }
 \value{
 An external pointer to a BaseInfo object.
 }
 \description{
-This function creates a BaseInfo object.
-If the seed is set to -1, a random seed is generated,
-resulting in different outcomes each time the function is called.
-If a specific seed is provided,
-the random number generation will be based on that seed,
-ensuring reproducible results.
+This function creates a BaseInfo object. If the seed is set to -1, a random
+seed is generated, resulting in different outcomes each time the function
+is called. If a specific seed is provided, the random number generation will
+be based on that seed, ensuring reproducible results.
 }
 \examples{
 # Create a BaseInfo object with a random seed

@@ -14,5 +14,8 @@ $(TARGET): $(OBJECTS)
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
+install:
+	R CMD INSTALL .
+
 clean:
 	rm -f $(OBJECTS) $(TARGET)

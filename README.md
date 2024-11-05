@@ -1,53 +1,40 @@
-# Graphite
+# BitBreedingSim
 
-GRAPHITE
-GRAph used tool to correct, PHase, and ImpuTE VCF
+Fast breeding simulator package for R
 
+## Install
+
+$ R
+> library(devtools)
+> Rcpp::compileAttributes()
+> devtools::document()
+$ make
+$ make install
 
 ## Usage
 
-graphite  -i VCF [--ref ref VCF] -p ped [-m map] [-t num_threads] [-f family indices] [-c chrom indices] [--lower-progs lower num progenies] [--large-only] [--not-impute-isolated [--out-isolated]] [--not-correct-isolated] -o out.
-family indices: (index|first:last)[,(index|first:last)[,..]]
-chrom indices: same as family indices.
-
-*VCF*			  : input VCF
-
-*ped*			  : pedigree file
-					A text file with 4 columns and without header.
-					Its delimiter is a space.
-					Its columns are family name, sample name, a parent name, and other parent name.
-					Parent order is reflected in the VCF's Genotype.
-
-*out*			  : output VCF
-
-### optional
-
-*ref VCF*		  : reference VCF
-
-*map*			  : genetic map file
-					A CSV file with 3 columns and without header.
-					Its deliimiter is a comma.
-					Its columns are scaffold name, cM, and Mbp.
-					If not specified, 1cM = 1Mbp.
-
-*chrom indices*   : output scaffolds' indices
-
-*lower num progenies* : the lower limit on the number of progeny that can be regarded as large families.
-
---large-only	  : output large families only
-
---not-impute-isolated : not impute isolated samples
-
---out-isolated	  : output not imputed isolated samples
-
---not-correct-isolated : impute and phase, but not correct isolated samples
-
-#### 
+> library(BitBreedingSim)
+> info <- createBaseInfo(seed=2)
+> addTraitA(info, name="Trait1", mean=100, h2=0.6, sd=20, num_loci=10)
+> origins <- createOrigins(10, info, "orig_")
+> prog <- cross(1000, origins, origins, "prog_")
+> geno <- getGenotypes(prog)
+> geno[1:4, 1:4]
+       marker00000001 marker00000002 marker00000003 marker00000004
+prog_1              0              0              0              0
+prog_2              1             -1              0              0
+prog_3              1              0              1              1
+prog_4             -1              1              1              1
+> pheno <- getPhenotypes(prog, 1)
+i : 1 num_traits : 1
+> pheno[1:10]
+ [1] 116.26303  81.35491  80.49995 138.49164 141.23155 127.53185 128.23878
+ [8]  95.75027  98.02536 110.55966
 
 ## License
 MIT License
 
-Copyright (c) 2023 Minoru Inamori
+Copyright (c) 2024 Minoru Inamori
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
