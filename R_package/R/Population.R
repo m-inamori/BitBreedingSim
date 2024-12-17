@@ -37,6 +37,23 @@ cross <- function(num_inds, mothers, fathers, name_base, num_threads = 0) {
 	return(pop)
 }
 
+#' Write Population to VCF file
+#'
+#' This function writes a Population object to a VCF file.
+#'
+#' @param pop An external pointer to a Population object.
+#' @param filename A string specifying the path to the output VCF file.
+#' @export
+#' @examples
+#' # Assuming 'pop' is a valid Population object
+#' writeVCF(pop, "output.vcf")
+writeVCF <- function(pop, filename) {
+    if (!inherits(pop, "Population")) {
+        stop("Error: pop is not a Population object.")
+    }
+    .Call('_BitBreedingSim_writeVCF', pop, filename)
+}
+
 #' Get information for a Population object
 #'
 #' @param pop An external pointer to a BaseInfo object.

@@ -49,6 +49,10 @@ crossPops <- function(num_inds, mothers, fathers, name_base, T) {
     .Call(`_BitBreedingSim_crossPops`, num_inds, mothers, fathers, name_base, T)
 }
 
+writeVCF <- function(pop, filename) {
+    invisible(.Call(`_BitBreedingSim_writeVCF`, pop, filename))
+}
+
 getNumInds <- function(pop) {
     .Call(`_BitBreedingSim_getNumInds`, pop)
 }

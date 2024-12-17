@@ -134,7 +134,7 @@ public:
 		return chr_populations[chr_index]->get_int_genotype(ind_index,
 																marker_id);
 	}
-	void write(std::ostream& os) const;
+	void write_VCF(std::ostream& os) const;
 	
 	void set_phenotypes(const BaseInfo *info);
 	std::vector<std::vector<double>> compute_phenotypes(const BaseInfo *ifno,

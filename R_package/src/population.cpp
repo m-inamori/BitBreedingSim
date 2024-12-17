@@ -1,3 +1,4 @@
+#include <fstream>
 #include <sstream>
 #include <climits>
 #include <Rcpp.h>
@@ -268,7 +269,7 @@ vector<Population::Pair> Population::make_pairs(size_t num_inds,
 	return pairs;
 }
 
-void Population::write(ostream& os) const {
+void Population::write_VCF(ostream& os) const {
 	VCF::write_header(os, names);
 	for(auto p = chr_populations.begin(); p != chr_populations.end(); ++p)
 		(*p)->write(os);
@@ -425,6 +426,17 @@ SEXP crossPops(SEXP num_inds, SEXP mothers, SEXP fathers,
 											name_base_cpp, T)), true);
 	ptr.attr("class") = "Population";
 	return ptr;
+}
+
+// [[Rcpp::export]]
+void writeVCF(SEXP pop, const std::string& filename) {
+	Rcpp::XPtr<Population> popCpp(pop);
+	std::ofstream	ofs(filename);
+	if(!ofs.is_open()) {
+		Rcpp::stop("Failed to open file: " + filename);
+	}
+	popCpp.get()->write_VCF(ofs);
+	ofs.close();
 }
 
 // [[Rcpp::export]]
