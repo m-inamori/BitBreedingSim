@@ -89,3 +89,7 @@ createNameDataFromPop <- function(pop) {
     .Call(`_BitBreedingSim_createNameDataFromPop`, pop)
 }
 
+joinPop <- function(pop1, pop2) {
+    .Call(`_BitBreedingSim_joinPop`, pop1, pop2)
+}
+

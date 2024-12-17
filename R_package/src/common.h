@@ -59,6 +59,14 @@ namespace Common {
 	}
 	
 	template<typename T>
+	void connect_vector(const std::vector<T>& v, const std::vector<T>& w,
+													std::vector<T>& dest) {
+		dest.reserve(v.size() + w.size());
+		dest.insert(dest.end(), v.begin(), v.end());
+		dest.insert(dest.end(), w.begin(), w.end());
+	}
+	
+	template<typename T>
 	void delete_all(const std::vector<T *>& v) {
 		for(auto p = v.begin(); p != v.end(); ++p)
 			delete *p;

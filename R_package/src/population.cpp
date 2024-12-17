@@ -109,6 +109,14 @@ BitChrPopulation *BitChrPopulation::select(
 	return new BitChrPopulation(selected_genos, indices.size(), chrmap);
 }
 
+const BitChrPopulation *BitChrPopulation::join(const BitChrPopulation *pop1,
+											   const BitChrPopulation *pop2) {
+	vector<Int::ull>	genos;
+	Common::connect_vector(pop1->genos, pop2->genos, genos);
+	const size_t	num_inds = pop1->num_inds + pop2->num_inds;
+	return new BitChrPopulation(genos, num_inds, pop1->chrmap);
+}
+
 
 //////////////////// Population ////////////////////
 
@@ -355,6 +363,32 @@ Population *Population::select(const vector<size_t>& indices) const {
 	return new_pop;
 }
 
+const Population *Population::join(const Population *pop1,
+								   const Population *pop2) {
+	vector<const BitChrPopulation *>	chr_pops(pop1->num_chroms());
+	for(size_t i = 0; i < pop1->num_chroms(); ++i) {
+		chr_pops[i] = BitChrPopulation::join(pop1->chr_populations[i],
+											 pop2->chr_populations[i]);
+	}
+	vector<string>	names;
+	Common::connect_vector(pop1->names, pop2->names, names);
+	vector<string>	mats;
+	Common::connect_vector(pop1->mats, pop2->mats, mats);
+	vector<string>	pats;
+	Common::connect_vector(pop1->pats, pop2->pats, pats);
+	auto	*new_pop = new Population(chr_pops, pop1->info, names, mats, pats);
+	
+	const size_t	N = pop1->traits.size();
+	vector<vector<double>>	phenos(N);
+	for(size_t i = 0; i < N; ++i) {
+		Common::connect_vector(pop1->phenotypes[i],
+							   pop2->phenotypes[i], phenos[i]);
+	}
+	new_pop->phenotypes = phenos;
+	new_pop->traits = pop1->traits;
+	return new_pop;
+}
+
 vector<double> Population::select_phenotypes(const vector<size_t>& indices,
 															size_t i) const {
 	vector<double>	selected_phenotypes(indices.size());
@@ -581,4 +615,13 @@ Rcpp::DataFrame createNameDataFromPop(SEXP pop) {
     return Rcpp::DataFrame::create(Rcpp::Named("name") = p->get_names(),
                                    Rcpp::Named("mat") = p->get_mats(),
                                    Rcpp::Named("pat") = p->get_pats());
+}
+
+// [[Rcpp::export]]
+SEXP joinPop(SEXP pop1, SEXP pop2) {
+	Rcpp::XPtr<Population> pop1_cpp(pop1);
+	Rcpp::XPtr<Population> pop2_cpp(pop2);
+	Rcpp::XPtr<Population> ptr(const_cast<Population *>(
+							Population::join(pop1_cpp.get(), pop2_cpp.get())));
+	return ptr;
 }

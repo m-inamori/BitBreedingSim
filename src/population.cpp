@@ -329,3 +329,31 @@ vector<double> Population::select_phenotypes(const vector<size_t>& indices,
 	}
 	return selected_phenotypes;
 }
+
+const BitChrPopulation *BitChrPopulation::join(const BitChrPopulation *pop1,
+											   const BitChrPopulation *pop2) {
+const Population *Population::join(const Population *pop1,
+								   const Population *pop2) {
+	vector<const BitChrPopulation *>	chr_pops(num_chroms());
+	for(size_t i = 0; i < num_chroms(); ++i) {
+		chr_pops[i] = BitChrPopulation::join(pop1->chr_populations[i],
+											 pop2->chr_populations[i]);
+	}
+	vector<string>	names(pop1->names.size() + pop2->names.size());
+	std::copy(pop1->names.begin(), pop1->names.end(), names.begin());
+	std::copy(pop2->names.begin(), pop2->names.end(),
+								names.begin() + pop1->names.size());
+	auto	*new_pop = new Population(chr_pops, pop1->gmap, names);
+	
+	const size_t	N = pop1->traits.size();
+	const size_t	L = pop1->phenotypes[0].size();
+	vector<vector<double>>	phenos(N, vector<double>(L));
+	for(size_t i = 0; i < N; ++i) {
+		std::copy(pop1->phenos[i].begin(), pop1->phenos[i], phenos.begin());
+		std::copy(pop2->phenos[i].begin(), pop2->phenos[i],
+									phenos.begin() + pop1->phenos[i].size());
+	}
+	new_pop->phenotypes = phenos;
+	new_pop->traits = pop1->traits;
+	return new_pop;
+}

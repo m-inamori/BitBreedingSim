@@ -280,6 +280,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// joinPop
+SEXP joinPop(SEXP pop1, SEXP pop2);
+RcppExport SEXP _BitBreedingSim_joinPop(SEXP pop1SEXP, SEXP pop2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop1(pop1SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type pop2(pop2SEXP);
+    rcpp_result_gen = Rcpp::wrap(joinPop(pop1, pop2));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_createBaseInfoCpp", (DL_FUNC) &_BitBreedingSim_createBaseInfoCpp, 5},
@@ -304,6 +316,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getPhasedIntGenotypes", (DL_FUNC) &_BitBreedingSim_getPhasedIntGenotypes, 1},
     {"_BitBreedingSim_getPopulationInfo", (DL_FUNC) &_BitBreedingSim_getPopulationInfo, 1},
     {"_BitBreedingSim_createNameDataFromPop", (DL_FUNC) &_BitBreedingSim_createNameDataFromPop, 1},
+    {"_BitBreedingSim_joinPop", (DL_FUNC) &_BitBreedingSim_joinPop, 2},
     {NULL, NULL, 0}
 };
 

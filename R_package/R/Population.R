@@ -194,6 +194,34 @@ selectPop <- function(pop, indices) {
     return (new_pop)
 }
 
+#' Join multiple Population objects
+#'
+#' @param ... External pointers to Population objects.
+#' @return An external pointer to a new Population object
+#'         containing the combined individuals.
+#' @export
+#' @examples
+#' # Assuming 'pop1', 'pop2', and 'pop3' are valid Population objects
+#' combined_pop <- joinPops(pop1, pop2, pop3)
+#' print(combined_pop)
+joinPops <- function(...) {
+	pops <- list(...)
+	if(length(pops) < 2) {
+		stop("Error: At least two Population objects are required.")
+	}
+	
+	# 最初のPopulationオブジェクトを取得
+	combined_pop <- pops[[1]]
+	
+	# 残りのPopulationオブジェクトを順番に結合
+	for(i in 2:length(pops)) {
+		combined_pop <- .Call('_BitBreedingSim_joinPop', combined_pop, pops[[i]])
+	}
+	
+	class(combined_pop) <- "Population"
+	return(combined_pop)
+}
+
 #' Get name data from a Population object
 #'
 #' @param pop An external pointer to a Population object.

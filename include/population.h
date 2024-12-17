@@ -148,6 +148,8 @@ public:
 										const Population& mothers,
 										const Population& fathers,
 										std::mt19937& engine);
+	static const BitChrPopulation *join(const BitChrPopulation *pop1,
+										const BitChrPopulation *pop2);
 };
 
 #endif

@@ -59,6 +59,8 @@ public:
 													const ChromMap& cmap,
 													std::mt19937_64& engine);
 	static std::vector<int> create_genotypes(std::size_t num_markers);
+	static const BitChrPopulation *join(const BitChrPopulation *pop1,
+										const BitChrPopulation *pop2);
 };
 
 
@@ -164,6 +166,8 @@ public:
 										const Population& mothers,
 										const Population& fathers,
 										std::mt19937& engine);
+	static const Population *join(const Population *pop1,
+								  const Population *pop2);
 };
 
 #endif
