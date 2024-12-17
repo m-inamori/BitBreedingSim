@@ -17,7 +17,7 @@ createOrigins <- function(num_inds, info, name_base) {
 #' @param mothers An external pointer to a Population object.
 #' @param fathers An external pointer to a Population object.
 #' @param name_base A string. The base name for individuals.
-#' @param num_threads optional An integer. The number of threads to be used.
+#' @param num_threads Optional. An integer. The number of threads to be used.
 #'                             If not specified, the function will use
 #'                             the maximum number of available threads.
 #' @return An external pointer to a Population object.
@@ -117,6 +117,7 @@ getGenotypes <- function(pop) {
 #' @param pop An external pointer to a Population object.
 #' @return A matrix of genotypes where rows are samples and columns are markers.
 #' @export
+#' @noRd
 getGenotypesNaive <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: info is not a BaseInfo object.")
@@ -210,10 +211,8 @@ joinPops <- function(...) {
 		stop("Error: At least two Population objects are required.")
 	}
 	
-	# 最初のPopulationオブジェクトを取得
 	combined_pop <- pops[[1]]
 	
-	# 残りのPopulationオブジェクトを順番に結合
 	for(i in 2:length(pops)) {
 		combined_pop <- .Call('_BitBreedingSim_joinPop', combined_pop, pops[[i]])
 	}

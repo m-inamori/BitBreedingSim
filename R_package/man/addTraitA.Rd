@@ -15,13 +15,18 @@ addTraitA(info, name, mean, h2, sd = NULL, a = NULL, loci = NULL, num_loci = 1)
 
 \item{h2}{Heritability}
 
-\item{sd}{Optional Phenotype standard deviation}
+\item{sd}{Optional. Phenotype standard deviation}
 
-\item{a}{Optional numeric vector of additive effects}
+\item{a}{Optional. Numeric vector of additive effects}
 
-\item{loci}{Optional list of loci}
+\item{loci}{Optional. List of loci in the form of a data frame with two columns: 'chrom' and 'marker'. For example:
+\preformatted{
+chrom <- c(3, 5, 10)
+marker <- c(1, 2, 1000)
+loci <- data.frame(chrom, marker)
+}}
 
-\item{num_loci}{Number of loci (default is 1)}
+\item{num_loci}{Optional. Number of loci (default is 1)}
 }
 \description{
 This function adds a trait with additive effects to the BaseInfo object.

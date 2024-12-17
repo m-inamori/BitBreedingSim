@@ -15,7 +15,7 @@ cross(num_inds, mothers, fathers, name_base, num_threads = 0)
 
 \item{name_base}{A string. The base name for individuals.}
 
-\item{num_threads}{optional An integer. The number of threads to be used.
+\item{num_threads}{Optional. An integer. The number of threads to be used.
 If not specified, the function will use
 the maximum number of available threads.}
 }

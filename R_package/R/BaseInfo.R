@@ -13,15 +13,15 @@
 #' corresponding to a chromosome identifier (e.g., "chr1", "chr2", etc.).
 #' If chrom_maps is provided, the parameters num_chroms, num_markers, cM, and 
 #' bp are ignored.
-#' @param num_chroms An integer. Number of chromosomes. Ignored if chrom_maps 
+#' @param num_chroms Optional. An integer. Number of chromosomes. Ignored if chrom_maps 
 #' is provided. Default is 10.
-#' @param num_markers An integer. Number of markers per chromosome. Ignored if 
+#' @param num_markers Optional. An integer. Number of markers per chromosome. Ignored if 
 #' chrom_maps is provided. Default is 1000.
-#' @param cM A numeric. Length of each chromosome in centiMorgans. Ignored if 
+#' @param cM A numeric. Optional. Length of each chromosome in centiMorgans. Ignored if 
 #' chrom_maps is provided. Default is 100.
-#' @param bp An integer. Length of each chromosome in base pairs. Ignored if 
+#' @param bp An integer. Optional. Length of each chromosome in base pairs. Ignored if 
 #' chrom_maps is provided. Default is 1000000.
-#' @param seed An integer. A seed for random number generation. Default is -1, 
+#' @param seed An integer. Optional. A seed for random number generation. Default is -1, 
 #' which generates a random seed.
 #' @return An external pointer to a BaseInfo object.
 #' @useDynLib BitBreedingSim, .registration = TRUE
@@ -141,10 +141,15 @@ getMap <- function(info) {
 #' @param name Name of the trait
 #' @param mean Phenotype mean
 #' @param h2 Heritability
-#' @param sd Optional Phenotype standard deviation
-#' @param a Optional numeric vector of additive effects
-#' @param loci Optional list of loci
-#' @param num_loci Number of loci (default is 1)
+#' @param sd Optional. Phenotype standard deviation
+#' @param a Optional. Numeric vector of additive effects
+#' @param loci Optional. List of loci in the form of a data frame with two columns: 'chrom' and 'marker'. For example:
+#' \preformatted{
+#' chrom <- c(3, 5, 10)
+#' marker <- c(1, 2, 1000)
+#' loci <- data.frame(chrom, marker)
+#' }
+#' @param num_loci Optional. Number of loci (default is 1)
 #' @export
 addTraitA <- function(info, name, mean, h2, sd = NULL, a = NULL,
 												loci = NULL, num_loci = 1) {
@@ -187,13 +192,18 @@ addTraitA <- function(info, name, mean, h2, sd = NULL, a = NULL,
 #' @param info External pointer to BaseInfo object
 #' @param name Name of the trait
 #' @param mean Phenotype mean
-#' @param Optional sd Phenotype standard deviation
-#' @param Optional h2 Narrow-sense heritability (proportion of variance due to additive genetic effects)
-#' @param Optional H2 Broad-sense heritability (proportion of variance due to all genetic effects, can be NULL)
-#' @param a Optional numeric vector of additive effects
-#' @param d Optional numeric vector of dominance effects
-#' @param loci Optional list of loci
-#' @param num_loci Number of loci (default is 1)
+#' @param sd Optional. Phenotype standard deviation
+#' @param h2 Optional. Narrow-sense heritability (proportion of variance due to additive genetic effects)
+#' @param H2 Optional. Broad-sense heritability (proportion of variance due to all genetic effects, can be NULL)
+#' @param a Optional. Numeric vector of additive effects
+#' @param d Optional. Numeric vector of dominance effects
+#' @param loci Optional. List of loci in the form of a data frame with two columns: 'chrom' and 'marker'. For example:
+#' \preformatted{
+#' chrom <- c(3, 5, 10)
+#' marker <- c(1, 2, 1000)
+#' loci <- data.frame(chrom, marker)
+#' }
+#' @param num_loci Optioal. Number of loci (default is 1)
 #' @export
 addTraitAD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
 								a = NULL, d = NULL, loci = NULL, num_loci = 1) {

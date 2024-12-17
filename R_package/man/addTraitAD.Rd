@@ -24,15 +24,24 @@ addTraitAD(
 
 \item{mean}{Phenotype mean}
 
-\item{a}{Optional numeric vector of additive effects}
+\item{sd}{Optional. Phenotype standard deviation}
 
-\item{d}{Optional numeric vector of dominance effects}
+\item{h2}{Optional. Narrow-sense heritability (proportion of variance due to additive genetic effects)}
 
-\item{loci}{Optional list of loci}
+\item{H2}{Optional. Broad-sense heritability (proportion of variance due to all genetic effects, can be NULL)}
 
-\item{num_loci}{Number of loci (default is 1)}
+\item{a}{Optional. Numeric vector of additive effects}
 
-\item{Optional}{H2 Broad-sense heritability (proportion of variance due to all genetic effects, can be NULL)}
+\item{d}{Optional. Numeric vector of dominance effects}
+
+\item{loci}{Optional. List of loci in the form of a data frame with two columns: 'chrom' and 'marker'. For example:
+\preformatted{
+chrom <- c(3, 5, 10)
+marker <- c(1, 2, 1000)
+loci <- data.frame(chrom, marker)
+}}
+
+\item{num_loci}{Optioal. Number of loci (default is 1)}
 }
 \description{
 This function adds a trait with additive and dominance effects to the BaseInfo object.
