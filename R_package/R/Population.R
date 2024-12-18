@@ -51,8 +51,13 @@ writeVCF <- function(pop, filename) {
     if (!inherits(pop, "Population")) {
         stop("Error: pop is not a Population object.")
     }
-    .Call('_BitBreedingSim_writeVCF', pop, filename)
+    tryCatch({
+        .Call('_BitBreedingSim_writeVCF', pop, filename)
+    }, error = function(e) {
+        message("Error: Unable to write to file '", filename, "'. ", e$message)
+    })
 }
+
 
 #' Get information for a Population object
 #'
