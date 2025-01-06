@@ -45,8 +45,12 @@ createOrigins <- function(num_inds, info, name_base) {
     .Call(`_BitBreedingSim_createOrigins`, num_inds, info, name_base)
 }
 
-crossPops <- function(num_inds, mothers, fathers, name_base, T) {
-    .Call(`_BitBreedingSim_crossPops`, num_inds, mothers, fathers, name_base, T)
+crossPopsRandomly <- function(num_inds, mothers, fathers, name_base, T) {
+    .Call(`_BitBreedingSim_crossPopsRandomly`, num_inds, mothers, fathers, name_base, T)
+}
+
+crossPopsByTable <- function(df, mothers, fathers, name_base, T) {
+    .Call(`_BitBreedingSim_crossPopsByTable`, df, mothers, fathers, name_base, T)
 }
 
 writeVCF <- function(pop, filename) {

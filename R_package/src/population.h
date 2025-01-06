@@ -67,8 +67,11 @@ public:
 //////////////////// Population ////////////////////
 
 class Population {
+public:
 	using Pair = std::pair<std::size_t, std::size_t>;
+	using Triplet = std::tuple<std::string, std::string, std::size_t>;
 	
+private:
 	struct ConfigThread {
 		const std::size_t	first;
 		const std::size_t	num_threads;
@@ -158,14 +161,27 @@ public:
 	static const Population *create_origins(std::size_t num_inds,
 											const BaseInfo *info,
 											const std::string& name_base);
-	static Population *cross(std::size_t num_inds, const Population& mothers,
+	static std::vector<Pair> make_pairs_randomly(std::size_t num_inds,
+												const Population& mothers,
+												const Population& fathers,
+												std::mt19937& engine);
+	static std::vector<Pair> make_pairs_by_table(
+										const std::vector<Triplet>& table,
+										const Population& mothers,
+										const Population& fathers);
+	static Population *cross_randomly(std::size_t num_inds, const Population& mothers,
 						const Population& fathers, const BaseInfo *info,
 						const std::string& name_base, int T);
+	static Population *cross_by_table(const std::vector<Triplet>& table,
+						const Population& mothers, const Population& fathers,
+						const BaseInfo *info,
+						const std::string& name_base, int T);
+	static Population *cross(const std::vector<Pair>& pairs,
+							const Population& mothers,
+							const Population& fathers, const BaseInfo *info,
+							const std::string& name_base,
+							std::mt19937& engine, int T);
 	static void cross_in_thread(void *config);
-	static std::vector<Pair> make_pairs(std::size_t num_inds,
-										const Population& mothers,
-										const Population& fathers,
-										std::mt19937& engine);
 	static const Population *join(const Population *pop1,
 								  const Population *pop2);
 };

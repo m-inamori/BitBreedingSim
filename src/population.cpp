@@ -159,11 +159,89 @@ const Population *Population::create_origins(size_t num_inds,
 	return pop;
 }
 
-Population *Population::cross(size_t num_inds,
+vector<Population::Pair> Population::make_pairs(size_t num_inds,
+												const Population& mothers,
+												const Population& fathers,
+												std::mt19937& engine) {
+	std::uniform_int_distribution<size_t>	dist1(0, mothers.num_inds()-1);
+	std::uniform_int_distribution<size_t>	dist2(0, fathers.num_inds()-1);
+	
+	vector<Pair>	pairs(num_inds);
+	for(size_t i = 0; i < num_inds; ++i) {
+		const size_t	mother_index = dist1(engine);
+		const size_t	father_index = dist2(engine);
+		pairs[i] = make_pair(mother_index, father_index);
+	}
+	return pairs;
+}
+
+vector<Population::Pair> Population::make_pairs_by_table(
+												const vector<Triple>& table,
+												const Population& mothers,
+												const Population& fathers) {
+	map<string, size_t>	dic_mat
+	for(size_t i = 0; i < mothers.names.size(); ++i) {
+		dic_mat.insert(mothers.names[i], i);
+	}
+	map<string, size_t>	dic_pat;
+	for(size_t i = 0; i < fathers.names.size(); ++i) {
+		dic_pat.insert(fathers.names[i], i);
+	}
+	
+	size_t	num_inds = 0;
+	for(const auto& t : table) {
+		num_inds += get<2>(t);
+	}
+	vector<Pair>>	pairs(num_inds);
+	set<string>	error_parents;
+	size_t	i = 0;
+	for(const auto& t: table) {
+		const string&	mat = get<0>(t);
+		const string&	pat = get<1>(t);
+		const size_t&	num = get<2>(t);
+		auto	p = dic_mat.find(mat);
+		auto	q = dic_pat.find(pat);
+		if(p == dic_mat.end()) {
+			error_parents.insert(mat);
+		}
+		if(q == dic_pat.end()) {
+			error_parents.insert(pat);
+		}
+		else {
+			for(size_t i = 0; i < num; ++i) {
+				pairs[i] = make_pair(p->second, q->second);
+			}
+		}
+	}
+	
+	if(error_parents.empty()) {
+		
+	}
+	
+	return pairs;
+}
+
+Population *Population::cross_randomly(size_t num_inds,
 						const Population& mothers, const Population& fathers,
 						const BaseInfo *info, const string& name_base, int T) {
+	
 	std::mt19937&	engine = info->get_random_engine();
 	const auto	pairs = make_pairs(num_inds, mothers, fathers, engine);
+	return cross(pairs, mothers, fathers, info, name_base, T);
+}
+
+Population *Population::cross_by_table(,
+						const Population& mothers, const Population& fathers,
+						const BaseInfo *info, const string& name_base, int T) {
+	
+	std::mt19937&	engine = info->get_random_engine();
+	const auto	pairs = make_pairs(num_inds, mothers, fathers, engine);
+	return cross(pairs, mothers, fathers, info, name_base, T);
+}
+
+Population *Population::cross(const vector<Population::Pair>& pairs, 
+						const Population& mothers, const Population& fathers,
+						const BaseInfo *info, const string& name_base, int T) {
 	const std::uint_fast32_t	seed = engine();
 	vector<BitChrPopulation *>	chr_pops_(info->num_chroms());
 	vector<ConfigThread *>	configs(T);
@@ -191,6 +269,7 @@ Population *Population::cross(size_t num_inds,
 	
 	Common::delete_all(configs);
 	
+	const size_t	num_inds = pairs.size();
 	vector<string>	names(num_inds);
 	for(size_t j = 0; j < num_inds; ++j) {
 		stringstream	ss;
@@ -215,22 +294,6 @@ void Population::cross_in_thread(void *config) {
 		chr_pop->cross(c->pairs, mat, pat, c->seed0 + i);
 		c->chr_pops[i] = chr_pop;
 	}
-}
-
-vector<Population::Pair> Population::make_pairs(size_t num_inds,
-												const Population& mothers,
-												const Population& fathers,
-												std::mt19937& engine) {
-	std::uniform_int_distribution<size_t>	dist1(0, mothers.num_inds()-1);
-	std::uniform_int_distribution<size_t>	dist2(0, fathers.num_inds()-1);
-	
-	vector<pair<size_t, size_t>>	pairs(num_inds);
-	for(size_t i = 0; i < num_inds; ++i) {
-		const size_t	mother_index = dist1(engine);
-		const size_t	father_index = dist2(engine);
-		pairs[i] = make_pair(mother_index, father_index);
-	}
-	return pairs;
 }
 
 void Population::write(ostream& os) const {

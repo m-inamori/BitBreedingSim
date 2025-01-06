@@ -65,6 +65,7 @@ public:
 
 class Population {
 	using Pair = std::pair<std::size_t, std::size_t>;
+	using Triple = std::tuple<std::string, std::string, std::size_t>;
 	
 	struct ConfigThread {
 		const std::size_t	first;
@@ -140,6 +141,12 @@ public:
 	static const Population *create_origins(std::size_t num_inds,
 											const BaseInfo *info,
 											const std::string& name_base);
+	static Population *cross_randomly(std::size_t num_inds,
+					const Population& mothers, const Population& fathers,
+					const BaseInfo *info, const std::string& name_base, int T);
+	static Population *cross_by_table(const std::vector<Triple>& table,
+					const Population& mothers, const Population& fathers,
+					const BaseInfo *info, const std::string& name_base, int T);
 	static Population *cross(std::size_t num_inds, const Population& mothers,
 						const Population& fathers, const BaseInfo *info,
 						const std::string& name_base, int T);

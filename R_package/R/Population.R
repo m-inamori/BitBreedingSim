@@ -11,11 +11,11 @@ createOrigins <- function(num_inds, info, name_base) {
 	return(pop)
 }
 
-#' Cross two Population
+#' Cross two Population randomly
 #'
 #' @param num_inds An integer. The number of individuals.
-#' @param mothers An external pointer to a Population object.
-#' @param fathers An external pointer to a Population object.
+#' @param mat_pop An external pointer to a Population object representing mothers.
+#' @param pat_pop An external pointer to a Population object representing fathers.
 #' @param name_base A string. The base name for individuals.
 #' @param num_threads Optional. An integer. The number of threads to be used.
 #'                             If not specified, the function will use
@@ -24,16 +24,101 @@ createOrigins <- function(num_inds, info, name_base) {
 #' @export
 #' @examples
 #' # Assuming 'mothers' and 'fathers' are valid Population objects
-#' new_population <- cross(100, mothers, fathers, "prog_")
+#' new_population <- cross_randomly(100, mothers, fathers, "prog_")
 #' summary(new_population)
-cross <- function(num_inds, mothers, fathers, name_base, num_threads = 0) {
+cross_randomly <- function(num_inds, mat_pop, pat_pop,
+										name_base, num_threads = 0) {
 	if(num_threads < 1) {
 		num_threads <- parallel::detectCores()
 	}
 	cat("num_threads :", num_threads, "\n")
-	pop <- .Call('_BitBreedingSim_crossPops', num_inds, mothers, fathers,
-														name_base, num_threads)
+	pop <- .Call('_BitBreedingSim_crossPopsRandomly', num_inds,
+									mothers, fathers, name_base, num_threads)
 	class(pop) <- "Population"
+	return(pop)
+}
+
+#' Check Parent Existence in Population
+#'
+#' This function checks whether the maternal and paternal names in the given cross table
+#' are present in the specified maternal and paternal populations.
+#'
+#' @param df A data.frame representing the cross table containing 'mat' (maternal names) and 'pat' (paternal names) columns.
+#' @param mat_pop An external pointer to the maternal Population object.
+#' @param pat_pop An external pointer to the paternal Population object.
+#' 
+#' @return This function does not return a value. It outputs messages if any maternal or paternal names 
+#'         in the cross table are not found in the respective populations.
+#' 
+#' @examples
+#' # Assuming 'df', 'mat_pop', and 'pat_pop' are valid objects
+#' check_parent_existance(df, mat_pop, pat_pop)
+check_parent_existance <- function(df, mat_pop, pat_pop) {
+	# Get name data from maternal and paternal Population objects
+	mats <- getPopNames(mat_pop)
+	pats <- getPopNames(pat_pop)
+	
+	# using env like a hash table
+	name_env <- new.env(hash = TRUE, parent = emptyenv())
+	# Store maternal names in the hash table
+	for(name in mats$name) {
+		assign(name, TRUE, envir = name_env)
+	}
+	# Store paternal names in the hash table
+	for(name in pats$name) {
+		assign(name, TRUE, envir = name_env)
+	}
+	
+	# Check each row in the cross table for the existence of maternal
+	# and paternal names
+	for(i in 1:nrow(df)) {
+		mat <- df$mats[i]
+		pat <- df$pats[i]
+		# If maternal name is not found, output an error message
+		if(!exists(mat, envir=name_env, inherits=FALSE)) {
+			message(paste(mat, "is not found in maternal population."))
+		}
+		# If paternal name is not found, output an error message
+		if(!exists(pat, envir=name_env, inherits=FALSE)) {
+			message(paste(pat, "is not found in paternal population."))
+		}
+	}
+}
+
+#' Cross populations according to a table
+#'
+#' @param df A data frame. Contains the crossing information with columns for mat, pat, and num.
+#'           The 'mat' column represents the maternal population, 'pat' represents the paternal population,
+#'           and 'num' represents the number of progenies resulting from the cross.
+#' @param mat_pop An external pointer to a Population object representing mothers.
+#' @param pat_pop An external pointer to a Population object representing fathers.
+#' @param name_base A string. The base name for the new individuals.
+#' @param num_threads Optional. An integer. The number of threads to be used.
+#'                             If less than 1, the function will use the maximum number of available threads.
+#' @return An external pointer to a Population object.
+#' @export
+#' @examples
+#' # Assuming 'mat_pop' and 'pat_pop' are valid inputs
+#' mats <- c("mat1", "mat2")
+#' pats <- c("pat1", "pat2")
+#' nums <- c(1, 2)
+#' df <- data.frame(mats, pats, nums)
+#' new_population <- cross_by_table(df, mat_pop, pat_pop, "prog_")
+#' summary(new_population)
+cross_by_table <- function(df, mat_pop, pat_pop, name_base, num_threads = 0) {
+	if(num_threads < 1) {
+		num_threads <- parallel::detectCores()
+	}
+	cat("num_threads :", num_threads, "\n")
+	pop <- NULL		# Initialize pop to NULL in case of error
+	tryCatch({
+		pop <- .Call('_BitBreedingSim_crossPopsByTable', df,
+									mat_pop, pat_pop, name_base, num_threads)
+		class(pop) <- "Population"
+	}, error = function(e) {
+		message(e$message);
+		check_parent_existance(df, mat_pop, pat_pop)
+	})
 	return(pop)
 }
 
@@ -57,7 +142,6 @@ writeVCF <- function(pop, filename) {
         message("Error: Unable to write to file '", filename, "'. ", e$message)
     })
 }
-
 
 #' Get information for a Population object
 #'
@@ -246,8 +330,12 @@ joinPops <- function(...) {
 #' Get name data from a Population object
 #'
 #' @param pop An external pointer to a Population object.
-#' @return A data.frame containing the names, maternal names,
-#'         and paternal names from the Population object.
+#' @return A data.frame containing the following columns:
+#' \describe{
+#'   \item{name}{Names from the Population object}
+#'   \item{mat}{Maternal names from the Population object}
+#'   \item{pat}{Paternal names from the Population object}
+#' }
 #' @export
 #' @examples
 #' # Assuming 'pop' is a valid Population object

@@ -189,11 +189,80 @@ const Population *Population::create_origins(size_t num_inds,
 	return pop;
 }
 
-Population *Population::cross(size_t num_inds,
+vector<Population::Pair> Population::make_pairs_randomly(size_t num_inds,
+												const Population& mothers,
+												const Population& fathers,
+												std::mt19937& engine) {
+	std::uniform_int_distribution<size_t>	dist1(0, mothers.num_inds()-1);
+	std::uniform_int_distribution<size_t>	dist2(0, fathers.num_inds()-1);
+	
+	vector<Pair>	pairs(num_inds);
+	for(size_t i = 0; i < num_inds; ++i) {
+		const size_t	mother_index = dist1(engine);
+		const size_t	father_index = dist2(engine);
+		pairs[i] = make_pair(mother_index, father_index);
+	}
+	return pairs;
+}
+
+vector<Population::Pair> Population::make_pairs_by_table(
+												const vector<Triplet>& table,
+												const Population& mothers,
+												const Population& fathers) {
+	map<string, size_t>	dic_mat;
+	for(size_t i = 0; i < mothers.names.size(); ++i) {
+		dic_mat.insert(make_pair(mothers.names[i], i));
+	}
+	map<string, size_t>	dic_pat;
+	for(size_t i = 0; i < fathers.names.size(); ++i) {
+		dic_pat.insert(make_pair(fathers.names[i], i));
+	}
+	
+	size_t	num_inds = 0;
+	for(const auto& t : table) {
+		num_inds += get<2>(t);
+	}
+	vector<Pair>	pairs(num_inds);
+	size_t	i = 0;
+	for(const auto& t: table) {
+		const string&	mat = get<0>(t);
+		const string&	pat = get<1>(t);
+		const size_t&	num = get<2>(t);
+		auto	p = dic_mat.find(mat);
+		auto	q = dic_pat.find(pat);
+		if(p == dic_mat.end() || q == dic_pat.end()) {
+			// If an error is detected, it is returned to R immediately.
+			// Error details are generated and output on the R side.
+			stop("parent in table not in parent population.");
+		}
+		for(size_t k = 0; k < num; ++k) {
+			pairs[i] = make_pair(p->second, q->second);
+			++i;
+		}
+	}
+	return pairs;
+}
+
+Population *Population::cross_randomly(size_t num_inds,
 						const Population& mothers, const Population& fathers,
 						const BaseInfo *info, const string& name_base, int T) {
 	std::mt19937&	engine = info->get_random_engine();
-	const auto	pairs = make_pairs(num_inds, mothers, fathers, engine);
+	const auto	pairs = make_pairs_randomly(num_inds, mothers, fathers, engine);
+	return cross(pairs, mothers, fathers, info, name_base, engine, T);
+}
+
+Population *Population::cross_by_table(const vector<Triplet>& table,
+						const Population& mothers, const Population& fathers,
+						const BaseInfo *info, const string& name_base, int T) {
+	std::mt19937&	engine = info->get_random_engine();
+	const auto	pairs = make_pairs_by_table(table, mothers, fathers);
+	return cross(pairs, mothers, fathers, info, name_base, engine, T);
+}
+
+Population *Population::cross(const vector<Pair>& pairs,
+						const Population& mothers, const Population& fathers,
+						const BaseInfo *info, const string& name_base,
+						std::mt19937& engine, int T) {
 	const std::uint_fast32_t	seed = engine();
 	vector<BitChrPopulation *>	chr_pops_(info->num_chroms());
 	vector<ConfigThread *>	configs(T);
@@ -221,6 +290,7 @@ Population *Population::cross(size_t num_inds,
 	
 	Common::delete_all(configs);
 	
+	const size_t	num_inds = pairs.size();
 	vector<string>	names(num_inds);
 	for(size_t j = 0; j < num_inds; ++j) {
 		stringstream	ss;
@@ -251,22 +321,6 @@ void Population::cross_in_thread(void *config) {
 		chr_pop->cross(c->pairs, mat, pat, c->seed0 + i);
 		c->chr_pops[i] = chr_pop;
 	}
-}
-
-vector<Population::Pair> Population::make_pairs(size_t num_inds,
-												const Population& mothers,
-												const Population& fathers,
-												std::mt19937& engine) {
-	std::uniform_int_distribution<size_t>	dist1(0, mothers.num_inds()-1);
-	std::uniform_int_distribution<size_t>	dist2(0, fathers.num_inds()-1);
-	
-	vector<pair<size_t, size_t>>	pairs(num_inds);
-	for(size_t i = 0; i < num_inds; ++i) {
-		const size_t	mother_index = dist1(engine);
-		const size_t	father_index = dist2(engine);
-		pairs[i] = make_pair(mother_index, father_index);
-	}
-	return pairs;
 }
 
 void Population::write_VCF(ostream& os) const {
@@ -413,7 +467,7 @@ SEXP createOrigins(SEXP num_inds, SEXP info, SEXP name_base) {
 }
 
 // [[Rcpp::export]]
-SEXP crossPops(SEXP num_inds, SEXP mothers, SEXP fathers,
+SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers,
 											SEXP name_base, int T) {
 	size_t num_inds_cpp = as<size_t>(num_inds);
 	Rcpp::XPtr<Population> mothers_cpp(mothers);
@@ -421,7 +475,39 @@ SEXP crossPops(SEXP num_inds, SEXP mothers, SEXP fathers,
 	const BaseInfo	*info = mothers_cpp.get()->get_info();
 	std::string name_base_cpp = as<std::string>(name_base);
 	Rcpp::XPtr<Population> ptr(const_cast<Population*>(
-						Population::cross(num_inds_cpp, *mothers_cpp.get(),
+						Population::cross_randomly(num_inds_cpp,
+											*mothers_cpp.get(),
+											*fathers_cpp.get(), info,
+											name_base_cpp, T)), true);
+	ptr.attr("class") = "Population";
+	return ptr;
+}
+
+// [[Rcpp::export]]
+SEXP crossPopsByTable(DataFrame df, SEXP mothers, SEXP fathers,
+											SEXP name_base, int T) {
+	CharacterVector mat = df["mats"];
+	CharacterVector pat = df["pats"];
+	IntegerVector num = df["nums"];
+	
+	int n = df.nrows();
+	
+	vector<Population::Triplet>	table;
+	for (int i = 0; i < n; ++i) {
+		std::string mat_str = as<std::string>(mat[i]);
+		std::string pat_str = as<std::string>(pat[i]);
+		std::size_t num_val = static_cast<std::size_t>(num[i]);
+		
+		table.push_back(std::make_tuple(mat_str, pat_str, num_val));
+	}
+	
+	Rcpp::XPtr<Population> mothers_cpp(mothers);
+	Rcpp::XPtr<Population> fathers_cpp(fathers);
+	const BaseInfo	*info = mothers_cpp.get()->get_info();
+	std::string name_base_cpp = as<std::string>(name_base);
+	Rcpp::XPtr<Population> ptr(const_cast<Population*>(
+						Population::cross_by_table(table,
+											*mothers_cpp.get(),
 											*fathers_cpp.get(), info,
 											name_base_cpp, T)), true);
 	ptr.attr("class") = "Population";

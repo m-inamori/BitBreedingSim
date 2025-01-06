@@ -153,9 +153,9 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// crossPops
-SEXP crossPops(SEXP num_inds, SEXP mothers, SEXP fathers, SEXP name_base, int T);
-RcppExport SEXP _BitBreedingSim_crossPops(SEXP num_indsSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP name_baseSEXP, SEXP TSEXP) {
+// crossPopsRandomly
+SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers, SEXP name_base, int T);
+RcppExport SEXP _BitBreedingSim_crossPopsRandomly(SEXP num_indsSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP name_baseSEXP, SEXP TSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -164,7 +164,22 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type fathers(fathersSEXP);
     Rcpp::traits::input_parameter< SEXP >::type name_base(name_baseSEXP);
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
-    rcpp_result_gen = Rcpp::wrap(crossPops(num_inds, mothers, fathers, name_base, T));
+    rcpp_result_gen = Rcpp::wrap(crossPopsRandomly(num_inds, mothers, fathers, name_base, T));
+    return rcpp_result_gen;
+END_RCPP
+}
+// crossPopsByTable
+SEXP crossPopsByTable(DataFrame df, SEXP mothers, SEXP fathers, SEXP name_base, int T);
+RcppExport SEXP _BitBreedingSim_crossPopsByTable(SEXP dfSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP name_baseSEXP, SEXP TSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type mothers(mothersSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type fathers(fathersSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type name_base(name_baseSEXP);
+    Rcpp::traits::input_parameter< int >::type T(TSEXP);
+    rcpp_result_gen = Rcpp::wrap(crossPopsByTable(df, mothers, fathers, name_base, T));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -316,7 +331,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getMapInfo", (DL_FUNC) &_BitBreedingSim_getMapInfo, 1},
     {"_BitBreedingSim_getMapCpp", (DL_FUNC) &_BitBreedingSim_getMapCpp, 1},
     {"_BitBreedingSim_createOrigins", (DL_FUNC) &_BitBreedingSim_createOrigins, 3},
-    {"_BitBreedingSim_crossPops", (DL_FUNC) &_BitBreedingSim_crossPops, 5},
+    {"_BitBreedingSim_crossPopsRandomly", (DL_FUNC) &_BitBreedingSim_crossPopsRandomly, 5},
+    {"_BitBreedingSim_crossPopsByTable", (DL_FUNC) &_BitBreedingSim_crossPopsByTable, 5},
     {"_BitBreedingSim_writeVCF", (DL_FUNC) &_BitBreedingSim_writeVCF, 2},
     {"_BitBreedingSim_getNumInds", (DL_FUNC) &_BitBreedingSim_getNumInds, 1},
     {"_BitBreedingSim_getNumChromsPop", (DL_FUNC) &_BitBreedingSim_getNumChromsPop, 1},

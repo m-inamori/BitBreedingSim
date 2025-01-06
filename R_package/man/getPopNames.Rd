@@ -10,8 +10,12 @@ getPopNames(pop)
 \item{pop}{An external pointer to a Population object.}
 }
 \value{
-A data.frame containing the names, maternal names,
-and paternal names from the Population object.
+A data.frame containing the following columns:
+\describe{
+\item{name}{Names from the Population object}
+\item{mat}{Maternal names from the Population object}
+\item{pat}{Paternal names from the Population object}
+}
 }
 \description{
 Get name data from a Population object
