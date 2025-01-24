@@ -4,7 +4,14 @@
 \alias{cross_randomly}
 \title{Cross two Population randomly}
 \usage{
-cross_randomly(num_inds, mat_pop, pat_pop, name_base, num_threads = 0)
+cross_randomly(
+  num_inds,
+  mat_pop,
+  pat_pop,
+  name_base = NULL,
+  names = NULL,
+  num_threads = 0
+)
 }
 \arguments{
 \item{num_inds}{An integer. The number of individuals.}
@@ -13,7 +20,9 @@ cross_randomly(num_inds, mat_pop, pat_pop, name_base, num_threads = 0)
 
 \item{pat_pop}{An external pointer to a Population object representing fathers.}
 
-\item{name_base}{A string. The base name for individuals.}
+\item{name_base}{A character string. The base name for individuals. If not provided, the 'names' parameter must be specified.}
+
+\item{names}{A character vector. The specific names for individuals. If not provided, the 'name_base' parameter must be specified.}
 
 \item{num_threads}{Optional. An integer. The number of threads to be used.
 If not specified, the function will use

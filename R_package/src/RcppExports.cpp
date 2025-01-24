@@ -154,8 +154,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // crossPopsRandomly
-SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers, SEXP name_base, int T);
-RcppExport SEXP _BitBreedingSim_crossPopsRandomly(SEXP num_indsSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP name_baseSEXP, SEXP TSEXP) {
+SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers, SEXP name_base, Rcpp::CharacterVector names, int T);
+RcppExport SEXP _BitBreedingSim_crossPopsRandomly(SEXP num_indsSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP name_baseSEXP, SEXP namesSEXP, SEXP TSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -163,8 +163,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type mothers(mothersSEXP);
     Rcpp::traits::input_parameter< SEXP >::type fathers(fathersSEXP);
     Rcpp::traits::input_parameter< SEXP >::type name_base(name_baseSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type names(namesSEXP);
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
-    rcpp_result_gen = Rcpp::wrap(crossPopsRandomly(num_inds, mothers, fathers, name_base, T));
+    rcpp_result_gen = Rcpp::wrap(crossPopsRandomly(num_inds, mothers, fathers, name_base, names, T));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -331,7 +332,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getMapInfo", (DL_FUNC) &_BitBreedingSim_getMapInfo, 1},
     {"_BitBreedingSim_getMapCpp", (DL_FUNC) &_BitBreedingSim_getMapCpp, 1},
     {"_BitBreedingSim_createOrigins", (DL_FUNC) &_BitBreedingSim_createOrigins, 3},
-    {"_BitBreedingSim_crossPopsRandomly", (DL_FUNC) &_BitBreedingSim_crossPopsRandomly, 5},
+    {"_BitBreedingSim_crossPopsRandomly", (DL_FUNC) &_BitBreedingSim_crossPopsRandomly, 6},
     {"_BitBreedingSim_crossPopsByTable", (DL_FUNC) &_BitBreedingSim_crossPopsByTable, 5},
     {"_BitBreedingSim_writeVCF", (DL_FUNC) &_BitBreedingSim_writeVCF, 2},
     {"_BitBreedingSim_getNumInds", (DL_FUNC) &_BitBreedingSim_getNumInds, 1},

@@ -468,17 +468,23 @@ SEXP createOrigins(SEXP num_inds, SEXP info, SEXP name_base) {
 
 // [[Rcpp::export]]
 SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers,
-											SEXP name_base, int T) {
+						SEXP name_base, Rcpp::CharacterVector names, int T) {
+	// あとで使う
+	vector<string>	names_cpp(names.size());
+	for(int i = 0; i < names.size(); ++i) {
+		names_cpp[i] = Rcpp::as<string>(names[i]);
+	}
+	
 	size_t num_inds_cpp = as<size_t>(num_inds);
 	Rcpp::XPtr<Population> mothers_cpp(mothers);
 	Rcpp::XPtr<Population> fathers_cpp(fathers);
 	const BaseInfo	*info = mothers_cpp.get()->get_info();
-	std::string name_base_cpp = as<std::string>(name_base);
-	Rcpp::XPtr<Population> ptr(const_cast<Population*>(
+	const std::string name_base_cpp = as<std::string>(name_base);
+	Rcpp::XPtr<Population> ptr(const_cast<Population *>(
 						Population::cross_randomly(num_inds_cpp,
-											*mothers_cpp.get(),
-											*fathers_cpp.get(), info,
-											name_base_cpp, T)), true);
+										*mothers_cpp.get(),
+										*fathers_cpp.get(), info,
+										name_base_cpp, T)), true);
 	ptr.attr("class") = "Population";
 	return ptr;
 }

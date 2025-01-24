@@ -16,7 +16,8 @@ createOrigins <- function(num_inds, info, name_base) {
 #' @param num_inds An integer. The number of individuals.
 #' @param mat_pop An external pointer to a Population object representing mothers.
 #' @param pat_pop An external pointer to a Population object representing fathers.
-#' @param name_base A string. The base name for individuals.
+#' @param name_base A character string. The base name for individuals. If not provided, the 'names' parameter must be specified.
+#' @param names A character vector. The specific names for individuals. If not provided, the 'name_base' parameter must be specified.
 #' @param num_threads Optional. An integer. The number of threads to be used.
 #'                             If not specified, the function will use
 #'                             the maximum number of available threads.
@@ -27,13 +28,22 @@ createOrigins <- function(num_inds, info, name_base) {
 #' new_population <- cross_randomly(100, mothers, fathers, "prog_")
 #' summary(new_population)
 cross_randomly <- function(num_inds, mat_pop, pat_pop,
-										name_base, num_threads = 0) {
+							name_base = NULL, names = NULL, num_threads = 0) {
+	if(is.null(name_base) && is.null(names)) {
+		stop("Either 'name_base' or 'names' must be specified.")
+	}
 	if(num_threads < 1) {
 		num_threads <- parallel::detectCores()
 	}
 	cat("num_threads :", num_threads, "\n")
+	
+	# If names is NULL, pass name_base. Otherwise, pass names.
+	if(is.null(names)) {
+		# Passing an empty character vector if names are not specified
+		names <- character(0)
+	}
 	pop <- .Call('_BitBreedingSim_crossPopsRandomly', num_inds,
-									mothers, fathers, name_base, num_threads)
+								mat_pop, pat_pop, name_base, names, num_threads)
 	class(pop) <- "Population"
 	return(pop)
 }

@@ -45,8 +45,8 @@ createOrigins <- function(num_inds, info, name_base) {
     .Call(`_BitBreedingSim_createOrigins`, num_inds, info, name_base)
 }
 
-crossPopsRandomly <- function(num_inds, mothers, fathers, name_base, T) {
-    .Call(`_BitBreedingSim_crossPopsRandomly`, num_inds, mothers, fathers, name_base, T)
+crossPopsRandomly <- function(num_inds, mothers, fathers, name_base, names, T) {
+    .Call(`_BitBreedingSim_crossPopsRandomly`, num_inds, mothers, fathers, name_base, names, T)
 }
 
 crossPopsByTable <- function(df, mothers, fathers, name_base, T) {
