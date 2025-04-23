@@ -4,17 +4,23 @@
 #include <string>
 #include <random>
 
+#include "GenomicsCommon.h"
 #include "exception_with_code.h"
 
+class BaseInfo;
 class Population;
 class Map;
+
+namespace GC = GenomicsCommon;
 
 
 //////////////////// Trait ////////////////////
 
 class Trait {
 public:
+	// (chrom index, marker index)
 	using Locus = std::pair<std::size_t, std::size_t>;
+	using Positions = std::vector<std::vector<GC::Pos>>;
 	
 private:
 	const std::string	name;
@@ -39,6 +45,8 @@ public:
 	
 public:
 	///// helper /////
+	static Locus get_locus(std::size_t k, const Positions& positions);
+	static std::size_t count_all_markers(const Positions& positions);
 	static std::vector<double> decide_additives_randomly(
 											std::size_t num_loci, double sd,
 											double h2, std::mt19937& engine);
@@ -46,8 +54,8 @@ public:
 												double sd, double h2, double H2,
 												std::mt19937 &engine);
 	static std::vector<Locus> decide_loci_randomly(std::size_t num_loci,
-											const Map *gmap,
-											std::mt19937 &engine);
+													const Positions& positions,
+													std::mt19937 &engine);
 	static double determine_sd_from_additives(const std::vector<double>& as,
 														double h2);
 	static double determine_sd_from_dominants(const std::vector<double>& ds,
@@ -59,13 +67,15 @@ public:
 										double mean, double sd, double h2,
 										std::mt19937 &engine);
 	static const Trait *create_A_l_randomly(const std::string& name,
-										const std::vector<double>& a,
-										double mean, double h2,
-										const Map *gmap, std::mt19937 &engine);
+											const std::vector<double>& a,
+											double mean, double h2,
+											const Positions& positions,
+											std::mt19937 &engine);
 	static const Trait *create_A_al_randomly(const std::string& name,
-										std::size_t num_loci,
-										double mean, double sd, double h2,
-										const Map *gmap, std::mt19937 &engine);
+											 std::size_t num_loci,
+											 double mean, double sd, double h2,
+											 const Positions& positions,
+											 std::mt19937 &engine);
 	static const Trait *create_A(const std::string& name,
 									double mean, double h2,
 									const std::vector<double>& a,
@@ -86,7 +96,7 @@ public:
 											double mean, double h2,
 											const std::vector<double>& as,
 											const std::vector<double>& ds,
-											const Map *gmap,
+											const Positions& positions,
 											std::mt19937 &engine);
 	static const Trait *create_AD_ad_randomly(const std::string& name,
 											double mean, double sd,
@@ -96,18 +106,18 @@ public:
 	static const Trait *create_AD_al_randomly(const std::string& name,
 											double mean, double h2, double H2,
 											const std::vector<double>& ds,
-											const Map *gmap,
+											const Positions& positions,
 											std::mt19937 &engine);
 	static const Trait *create_AD_dl_randomly(const std::string& name,
 											double mean, double sd, double H2,
 											const std::vector<double>& as,
-											const Map *gmap,
+											const Positions& positions,
 											std::mt19937 &engine);
 	static const Trait *create_AD_adl_randomly(const std::string& name,
 											std::size_t num_loci,
 											double mean, double sd,
 											double h2, double H2,
-											const Map *gmap,
+											const Positions& positions,
 											std::mt19937 &engine);
 	static const Trait *create_AD(const std::string& name,
 											double mean, double H2,

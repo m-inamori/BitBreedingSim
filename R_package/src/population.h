@@ -6,8 +6,12 @@
 #include <random>
 #include "Map.h"
 #include "Int.h"
+#include "GenomicsCommon.h"
 
 class BaseInfo;
+class VCF;
+
+namespace GC = GenomicsCommon;
 
 
 //////////////////// BitChrPopulation ////////////////////
@@ -18,20 +22,24 @@ class BitChrPopulation {
 	using Pair = std::pair<std::size_t, std::size_t>;
 	
 private:
-	std::vector<Int::ull>	genos;
-	const std::size_t	num_inds;
-	const ChromMap&	chrmap;
+	std::vector<Int::ull>		genos;
+	const std::vector<GC::Pos>&	positions;
+	const std::size_t			num_inds;
+	const ChromMap&				chrmap;
 	
 public:
 	BitChrPopulation(const std::vector<Int::ull>& gs,
-						std::size_t num, const ChromMap& cmap) :
-									genos(gs), num_inds(num), chrmap(cmap) { }
+									const std::vector<GC::Pos>& ps,
+									std::size_t n,
+									const ChromMap& cmap) :
+					genos(gs), positions(ps), num_inds(n), chrmap(cmap) { }
 	
-	BitChrPopulation(std::size_t num_inds_, const ChromMap& cmap) :
-							genos((cmap.get_num_markers()+63)/64*2*num_inds_),
-							num_inds(num_inds_), chrmap(cmap) { }
+	BitChrPopulation(std::size_t num_inds_, const std::vector<GC::Pos>& ps,
+														const ChromMap& cmap) :
+							genos((ps.size()+63)/64*2*num_inds_),
+							positions(ps), num_inds(num_inds_), chrmap(cmap) { }
 	
-	std::size_t num_markers() const { return chrmap.get_num_markers(); }
+	std::size_t num_markers() const { return positions.size(); }
 	std::size_t num_elements() const { return (num_markers()+63)/64; }
 	std::size_t get_num_inds() const { return num_inds; }
 	std::vector<Int::ull> get_genos() const { return genos; }
@@ -43,10 +51,15 @@ public:
 	Iter get_mut_haplotype(std::size_t ind_index, std::size_t hap_id) {
 		return genos.begin() + num_elements() * (ind_index * 2 + hap_id);
 	}
+	const std::vector<GC::Pos>& get_positions() const { return positions; }
 	
 	void cross(const std::vector<Pair>& pairs,
 				const BitChrPopulation& mothers,
 				const BitChrPopulation& fathers, std::uint_fast32_t seed0);
+	std::size_t Morgan_to_index(double M) const;
+	double get_length() const;
+	std::vector<std::size_t> select_random_crossover_points(
+												std::mt19937 &engine) const;
 	void reduce(std::size_t parent_index,
 				BitChrPopulation& new_population,
 				std::size_t ind_index, std::size_t hap_index,
@@ -56,9 +69,12 @@ public:
 	
 public:
 	static const BitChrPopulation *create_origins(std::size_t num_inds,
-													const ChromMap& cmap,
-													std::mt19937_64& engine);
+												const std::vector<GC::Pos>& ps,
+												const ChromMap& cmap,
+												std::mt19937_64& engine);
 	static std::vector<int> create_genotypes(std::size_t num_markers);
+	static std::vector<GC::Pos> extract_positions_from_VCF(const VCF *vcf);
+	static std::vector<Int::ull> create_genotypes_from_VCF(const VCF *vcf);
 	static const BitChrPopulation *join(const BitChrPopulation *pop1,
 										const BitChrPopulation *pop2);
 };
@@ -184,6 +200,7 @@ public:
 	static void cross_in_thread(void *config);
 	static const Population *join(const Population *pop1,
 								  const Population *pop2);
+	static Population *create_from_VCF(const VCF *vcf, int seed);
 };
 
 #endif

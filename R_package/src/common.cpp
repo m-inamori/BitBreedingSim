@@ -65,9 +65,12 @@ vector<string> Common::split(const string& s, char delim) {
 }
 
 string Common::join(const vector<string>& v, char delim) {
+	if(v.empty()) {
+		return "";
+	}
+	
 	stringstream	ss;
-	if(!v.empty())
-		ss << v.front();
+	ss << v.front();
 	for(auto p = v.begin() + 1; p != v.end(); ++p)
 		ss << delim << *p;
 	return ss.str();

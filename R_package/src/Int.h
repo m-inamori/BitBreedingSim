@@ -1,8 +1,5 @@
-#ifndef __INT
-#define __INT
+#pragma once
 
 namespace Int {
 	using ull = unsigned long long;
 }
-
-#endif

@@ -17,18 +17,45 @@ using namespace Rcpp;
 //////////////////// BitChrPopulation ////////////////////
 
 const BitChrPopulation *BitChrPopulation::create_origins(size_t num_inds,
+													const vector<GC::Pos>& ps,
 													const ChromMap& cmap,
 													std::mt19937_64& engine) {
 	std::uniform_int_distribution<Int::ull> dist(0, ULLONG_MAX);
 	
-	const size_t	num_markers = cmap.get_num_markers();
+	const size_t	num_markers = ps.size();
 	const size_t	num_elements = (num_markers + 63) / 64;
 	vector<Int::ull>	genos(num_elements * num_inds * 2);
 	// 端数は気にしなくてもよい
 	for(size_t i = 0; i < num_elements * num_inds * 2; ++i) {
 		genos[i] = dist(engine);
 	}
-	return new BitChrPopulation(genos, num_inds, cmap);
+	return new BitChrPopulation(genos, ps, num_inds, cmap);
+}
+
+vector<Int::ull> BitChrPopulation::create_genotypes_from_VCF(const VCF *vcf) {
+	const size_t	M = vcf->size();
+	const size_t	N = vcf->num_samples();
+	const size_t	L = (M + 63) / 64;	// number of ulls
+	vector<Int::ull>	genos(N * L * 2, 0ULL);
+	for(size_t i = 0; i < M; ++i) {
+		for(size_t k = 0; k < N; ++k) {
+			const string&	gt = vcf->get_gt(i, k);
+			if(gt.c_str()[0] == '1')
+				genos[(k*2)*L+i/64] |= 1ULL << (i & 63);
+			if(gt.c_str()[2] == '1')
+				genos[(k*2+1)*L+i/64] |= 1ULL << (i & 63);
+		}
+	}
+	return genos;
+}
+
+vector<GC::Pos> BitChrPopulation::extract_positions_from_VCF(const VCF *vcf) {
+	const size_t	M = vcf->size();
+	vector<GC::Pos>	positions(M, 0);
+	for(size_t i = 0; i < M; ++i) {
+		positions[i] = vcf->pos(i);
+	}
+	return positions;
 }
 
 void BitChrPopulation::cross(const vector<Pair>& pairs,
@@ -44,12 +71,56 @@ void BitChrPopulation::cross(const vector<Pair>& pairs,
 	}
 }
 
+size_t BitChrPopulation::Morgan_to_index(double M) const {
+	const int	bp = chrmap.Morgan_to_bp(M);
+	size_t	first = 0;
+	size_t	last = positions.size();
+	while(first < last - 1) {
+		const size_t	mid = (first + last) / 2;
+		if(positions[mid] == bp) {
+			return mid + 1;
+		}
+		else if(positions[mid] > bp) {
+			last = mid;
+		}
+		else {
+			first = mid;
+		}
+	}
+	
+	if(bp < positions[0])
+		return 0;
+	else
+		return last;
+}
+
+double BitChrPopulation::get_length() const {
+	return chrmap.Morgan_to_bp(num_markers()-1);
+}
+
+vector<size_t> BitChrPopulation::select_random_crossover_points(
+											std::mt19937 &engine) const {
+	// where crossovers happen
+	const double	L = get_length();
+	vector<size_t>	pts;
+	double	m0 = 0.0;	// start from 0.0 Morgan
+	std::exponential_distribution<>	dist(1.0);
+	while(true) {
+		const double	m = m0 + dist(engine);
+		if(m > L)
+			break;
+		pts.push_back(Morgan_to_index(m));
+		m0 = m;
+	}
+	return pts;
+}
+
 void BitChrPopulation::reduce(size_t parent_index,
 							  BitChrPopulation& new_population,
 							  size_t ind_index, size_t hap_index,
 							  std::mt19937 &engine) const {
 	Iter	new_iter = new_population.get_mut_haplotype(ind_index, hap_index);
-	const vector<size_t> pts = chrmap.select_random_crossover_points(engine);
+	const vector<size_t> pts = select_random_crossover_points(engine);
 	
 	// 最初はどちらのHaplotypeから取るか
 	std::uniform_int_distribution<size_t>	dist_unif(0, 1);
@@ -75,8 +146,7 @@ void BitChrPopulation::write(ostream& os) const {
 		vector<string>	gts(num_inds);
 		for(size_t k = 0; k < num_inds; ++k)
 			gts[k] = get_genotype(k, i);
-		VCF::write_data_line(os, chrmap.get_name(), 
-								chrmap.get_position(i), gts);
+		VCF::write_data_line(os, chrmap.get_name(), positions[i], gts);
 	}
 }
 
@@ -107,7 +177,8 @@ BitChrPopulation *BitChrPopulation::select(
 		std::copy(genos.begin() + N*ind_id, genos.begin() + N*(ind_id+1),
 											selected_genos.begin() + N*i);
 	}
-	return new BitChrPopulation(selected_genos, indices.size(), chrmap);
+	return new BitChrPopulation(selected_genos, positions,
+											indices.size(), chrmap);
 }
 
 const BitChrPopulation *BitChrPopulation::join(const BitChrPopulation *pop1,
@@ -115,7 +186,8 @@ const BitChrPopulation *BitChrPopulation::join(const BitChrPopulation *pop1,
 	vector<Int::ull>	genos;
 	Common::connect_vector(pop1->genos, pop2->genos, genos);
 	const size_t	num_inds = pop1->num_inds + pop2->num_inds;
-	return new BitChrPopulation(genos, num_inds, pop1->chrmap);
+	return new BitChrPopulation(genos, pop1->get_positions(),
+											num_inds, pop1->chrmap);
 }
 
 
@@ -170,7 +242,8 @@ const Population *Population::create_origins(size_t num_inds,
 	vector<const BitChrPopulation *>	chr_pops(gmap.num_chroms());
 	for(size_t i = 0; i < gmap.num_chroms(); ++i) {
 		const auto&	cmap = gmap.get_chr(i);
-		chr_pops[i] = BitChrPopulation::create_origins(num_inds,
+		const auto&	ps = info->get_positions(i);
+		chr_pops[i] = BitChrPopulation::create_origins(num_inds, ps,
 														cmap, engine64);
 	}
 	
@@ -317,7 +390,8 @@ void Population::cross_in_thread(void *config) {
 		const auto&	mat = *c->mothers.get_chrpop(i);
 		const auto&	pat = *c->fathers.get_chrpop(i);
 		const ChromMap&	cmap = c->mothers.get_chrmap(i);
-		auto	*chr_pop = new BitChrPopulation(c->num_inds(), cmap);
+		auto	*chr_pop = new BitChrPopulation(c->num_inds(),
+												mat.get_positions(), cmap);
 		chr_pop->cross(c->pairs, mat, pat, c->seed0 + i);
 		c->chr_pops[i] = chr_pop;
 	}
@@ -453,6 +527,39 @@ vector<double> Population::select_phenotypes(const vector<size_t>& indices,
 	return selected_phenotypes;
 }
 
+Population *Population::create_from_VCF(const VCF *vcf, int seed) {
+	vector<vector<Int::ull>>	geno_table;
+	vector<vector<GC::Pos>>	pos_table;
+	VCFDivisor	divisor(*vcf);
+	VCF	*vcf_chr;
+	while((vcf_chr = divisor.next()) != NULL) {
+		const auto	geno = BitChrPopulation::create_genotypes_from_VCF(vcf_chr);
+		geno_table.push_back(geno);
+		const auto	pos = BitChrPopulation::extract_positions_from_VCF(vcf_chr);
+		pos_table.push_back(pos);
+		delete vcf_chr;
+	}
+	
+	const Map	*gmap = Map::create_default(geno_table.size(), 1e8);
+	vector<const Trait *>	traits;
+	std::random_device	seed_gen;
+	const auto	s = seed == -1 ? seed_gen() :
+									static_cast<std::uint_fast32_t>(seed);
+	BaseInfo	*info = new BaseInfo(pos_table, gmap, traits, s);
+	
+	vector<const BitChrPopulation *>	chr_pops;
+	for(size_t i = 0; i < geno_table.size(); ++i) {
+		chr_pops.push_back(new BitChrPopulation(geno_table[i],
+												info->get_positions(i),
+												vcf->num_samples(),
+												gmap->get_chr(i)));
+	}
+	vector<string>	names = vcf->get_samples();
+	const size_t	N = names.size();
+	vector<string>	mats(N, "0");
+	vector<string>	pats(N, "0");
+	return new Population(chr_pops, info, names, mats, pats);
+}
 
 // [[Rcpp::export]]
 SEXP createOrigins(SEXP num_inds, SEXP info, SEXP name_base) {
@@ -464,6 +571,21 @@ SEXP createOrigins(SEXP num_inds, SEXP info, SEXP name_base) {
 						num_inds_cpp, info_cpp.get(), name_base_cpp)), true);
 	ptr.attr("class") = "Population";
 	return ptr;
+}
+
+// [[Rcpp::export]]
+Rcpp::List createInfoAndPopFromVCF(SEXP vcf, SEXP seed) {
+	Rcpp::XPtr<VCF> vcf_cpp(vcf);
+	int	seed_cpp = as<int>(seed);
+	auto	*pop = Population::create_from_VCF(vcf_cpp.get(), seed_cpp);
+	Rcpp::XPtr<BaseInfo> ptr1(const_cast<BaseInfo*>(pop->get_info()), true);
+	Rcpp::XPtr<Population> ptr2(const_cast<Population*>(pop), true);
+	ptr1.attr("class") = "BaseInfo";
+	ptr2.attr("class") = "Population";
+	return Rcpp::List::create(
+		Rcpp::Named("info") = ptr1,
+		Rcpp::Named("pop") = ptr2
+	);
 }
 
 // [[Rcpp::export]]

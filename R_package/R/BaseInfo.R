@@ -68,9 +68,6 @@ createBaseInfo <- function(chrom_maps=NULL, num_chroms=10, num_markers=1000,
 		info <- .Call('_BitBreedingSim_createBaseInfoCpp', num_chroms,
 													num_markers, cM, bp, seed)
 	}
-	else {
-		info <- .Call('_BitBreedingSim_createBaseInfoWithMap', chrom_maps, seed)
-	}
 	class(info) <- "BaseInfo"
 	return(info)
 }

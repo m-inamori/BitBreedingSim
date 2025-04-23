@@ -25,18 +25,6 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// createBaseInfoWithMap
-SEXP createBaseInfoWithMap(Rcpp::List chrom_maps, std::uint_fast32_t seed);
-RcppExport SEXP _BitBreedingSim_createBaseInfoWithMap(SEXP chrom_mapsSEXP, SEXP seedSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::List >::type chrom_maps(chrom_mapsSEXP);
-    Rcpp::traits::input_parameter< std::uint_fast32_t >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(createBaseInfoWithMap(chrom_maps, seed));
-    return rcpp_result_gen;
-END_RCPP
-}
 // getNumChroms
 int getNumChroms(SEXP ptr);
 RcppExport SEXP _BitBreedingSim_getNumChroms(SEXP ptrSEXP) {
@@ -140,6 +128,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// readVCF
+SEXP readVCF(const std::string& filename);
+RcppExport SEXP _BitBreedingSim_readVCF(SEXP filenameSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const std::string& >::type filename(filenameSEXP);
+    rcpp_result_gen = Rcpp::wrap(readVCF(filename));
+    return rcpp_result_gen;
+END_RCPP
+}
 // createOrigins
 SEXP createOrigins(SEXP num_inds, SEXP info, SEXP name_base);
 RcppExport SEXP _BitBreedingSim_createOrigins(SEXP num_indsSEXP, SEXP infoSEXP, SEXP name_baseSEXP) {
@@ -150,6 +149,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type info(infoSEXP);
     Rcpp::traits::input_parameter< SEXP >::type name_base(name_baseSEXP);
     rcpp_result_gen = Rcpp::wrap(createOrigins(num_inds, info, name_base));
+    return rcpp_result_gen;
+END_RCPP
+}
+// createInfoAndPopFromVCF
+Rcpp::List createInfoAndPopFromVCF(SEXP vcf, SEXP seed);
+RcppExport SEXP _BitBreedingSim_createInfoAndPopFromVCF(SEXP vcfSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vcf(vcfSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(createInfoAndPopFromVCF(vcf, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -322,7 +333,6 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_createBaseInfoCpp", (DL_FUNC) &_BitBreedingSim_createBaseInfoCpp, 5},
-    {"_BitBreedingSim_createBaseInfoWithMap", (DL_FUNC) &_BitBreedingSim_createBaseInfoWithMap, 2},
     {"_BitBreedingSim_getNumChroms", (DL_FUNC) &_BitBreedingSim_getNumChroms, 1},
     {"_BitBreedingSim_getNumTraits", (DL_FUNC) &_BitBreedingSim_getNumTraits, 1},
     {"_BitBreedingSim_getTraitCpp", (DL_FUNC) &_BitBreedingSim_getTraitCpp, 2},
@@ -331,7 +341,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_add_Trait_AD_wrapper", (DL_FUNC) &_BitBreedingSim_add_Trait_AD_wrapper, 10},
     {"_BitBreedingSim_getMapInfo", (DL_FUNC) &_BitBreedingSim_getMapInfo, 1},
     {"_BitBreedingSim_getMapCpp", (DL_FUNC) &_BitBreedingSim_getMapCpp, 1},
+    {"_BitBreedingSim_readVCF", (DL_FUNC) &_BitBreedingSim_readVCF, 1},
     {"_BitBreedingSim_createOrigins", (DL_FUNC) &_BitBreedingSim_createOrigins, 3},
+    {"_BitBreedingSim_createInfoAndPopFromVCF", (DL_FUNC) &_BitBreedingSim_createInfoAndPopFromVCF, 2},
     {"_BitBreedingSim_crossPopsRandomly", (DL_FUNC) &_BitBreedingSim_crossPopsRandomly, 6},
     {"_BitBreedingSim_crossPopsByTable", (DL_FUNC) &_BitBreedingSim_crossPopsByTable, 5},
     {"_BitBreedingSim_writeVCF", (DL_FUNC) &_BitBreedingSim_writeVCF, 2},

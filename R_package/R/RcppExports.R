@@ -5,10 +5,6 @@ createBaseInfoCpp <- function(num_chroms, num_markers, cM, bp, seed) {
     .Call(`_BitBreedingSim_createBaseInfoCpp`, num_chroms, num_markers, cM, bp, seed)
 }
 
-createBaseInfoWithMap <- function(chrom_maps, seed) {
-    .Call(`_BitBreedingSim_createBaseInfoWithMap`, chrom_maps, seed)
-}
-
 getNumChroms <- function(ptr) {
     .Call(`_BitBreedingSim_getNumChroms`, ptr)
 }
@@ -41,8 +37,16 @@ getMapCpp <- function(mapPtr) {
     .Call(`_BitBreedingSim_getMapCpp`, mapPtr)
 }
 
+readVCF <- function(filename) {
+    .Call(`_BitBreedingSim_readVCF`, filename)
+}
+
 createOrigins <- function(num_inds, info, name_base) {
     .Call(`_BitBreedingSim_createOrigins`, num_inds, info, name_base)
+}
+
+createInfoAndPopFromVCF <- function(vcf, seed) {
+    .Call(`_BitBreedingSim_createInfoAndPopFromVCF`, vcf, seed)
 }
 
 crossPopsRandomly <- function(num_inds, mothers, fathers, name_base, names, T) {

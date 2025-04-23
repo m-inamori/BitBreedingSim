@@ -11,10 +11,6 @@ using namespace Rcpp;
 
 //////////////////// BaseInfo ////////////////////
 
-BaseInfo::BaseInfo(const Map *m, const vector<const Trait *>& ts,
-											std::uint_fast32_t seed) :
-										gmap(m), traits(ts), engine(seed) { }
-
 BaseInfo::~BaseInfo() {
 	delete gmap;
 	Common::delete_all(traits);
@@ -33,15 +29,21 @@ const string& BaseInfo::get_trait_name(size_t i) const {
 }
 
 BaseInfo *BaseInfo::create_default(int num_chroms, int num_markers,
-										double cM, int bp, int seed) {
-	const Map	*gmap = Map::create_default(num_chroms, num_markers,
-															cM / 100, bp);
+										double cM, GC::Pos bp, int seed) {
+	const Map	*gmap = Map::create_default(num_chroms, 1e8);
+	vector<vector<GC::Pos>>	positions(num_chroms, vector<GC::Pos>(num_markers));
+	for(size_t i = 0; i < num_chroms; ++i) {
+		for(size_t k = 0; k < num_markers; ++k)
+			positions[i][k] = static_cast<GC::Pos>((k + 1) * bp / num_markers);
+	}
+	vector<const Trait *>	traits;
+	
 	if(seed == -1) {
 		std::random_device	seed_gen;
-		return new BaseInfo(gmap, vector<const Trait *>(), seed_gen());
+		return new BaseInfo(positions, gmap, traits, seed_gen());
 	}
 	else {
-		return new BaseInfo(gmap, vector<const Trait *>(),
+		return new BaseInfo(positions, gmap, traits,
 										static_cast<std::uint_fast32_t>(seed));
 	}
 }
@@ -59,14 +61,14 @@ void BaseInfo::add_A_l_randomly(const string& name,
 										const vector<double>& a,
 										double mean, double h2) {
 	const Trait	*trait = Trait::create_A_l_randomly(name, a, mean, h2,
-																gmap, engine);
+														positions, engine);
 	traits.push_back(trait);
 }
 
 void BaseInfo::add_A_al_randomly(const string& name, size_t num_loci,
 										double mean, double sd, double h2) {
 	const Trait	*trait = Trait::create_A_al_randomly(name, num_loci, mean,
-														sd, h2, gmap, engine);
+													sd, h2, positions, engine);
 	traits.push_back(trait);
 }
 
@@ -101,7 +103,7 @@ void BaseInfo::add_AD_l_randomly(const string& name, double mean, double h2,
 										const vector<double>& as,
 										const vector<double>& ds) {
 	const Trait	*trait = Trait::create_AD_l_randomly(name, mean, h2,
-														as, ds, gmap, engine);
+													as, ds, positions, engine);
 	traits.push_back(trait);
 }
 
@@ -117,7 +119,7 @@ void BaseInfo::add_AD_al_randomly(const std::string& name, double mean,
 										double h2, double H2,
 										const std::vector<double>& ds) {
 	const Trait	*trait = Trait::create_AD_al_randomly(name, mean, h2, H2,
-															ds, gmap, engine);
+														ds, positions, engine);
 	traits.push_back(trait);
 }
 
@@ -125,15 +127,16 @@ void BaseInfo::add_AD_dl_randomly(const std::string& name,
 										double mean, double h2, double H2,
 										const std::vector<double>& as) {
 	const Trait	*trait = Trait::create_AD_dl_randomly(name, mean, h2, H2,
-															as, gmap, engine);
+														as, positions, engine);
 	traits.push_back(trait);
 }
 
 void BaseInfo::add_AD_adl_randomly(const std::string& name,
 										std::size_t num_loci, double mean,
 										double sd, double h2, double H2) {
-	const Trait	*trait = Trait::create_AD_adl_randomly(name, num_loci, mean,
-													sd, h2, H2, gmap, engine);
+	const Trait	*trait = Trait::create_AD_adl_randomly(name, num_loci,
+															mean, sd, h2, H2,
+															positions, engine);
 	traits.push_back(trait);
 }
 
@@ -171,15 +174,6 @@ SEXP createBaseInfoCpp(int num_chroms, int num_markers,
 								double cM, int bp, int seed) {
 	Rcpp::XPtr<BaseInfo> ptr(BaseInfo::create_default(num_chroms, num_markers,
 														cM, bp, seed), true);
-	return ptr;
-}
-
-// [[Rcpp::export]]
-SEXP createBaseInfoWithMap(Rcpp::List chrom_maps, std::uint_fast32_t seed) {
-	const Map	*gmap = Map::create_map_from_list(chrom_maps);
-	vector<const Trait*> traits;
-	BaseInfo* base_info = new BaseInfo(gmap, traits, seed);
-	Rcpp::XPtr<BaseInfo> ptr(base_info, true);
 	return ptr;
 }
 
@@ -238,12 +232,13 @@ List getMapfromInfo(SEXP baseInfoPtr) {
 	CharacterVector	names(gmap.num_chroms());
 	for(size_t i = 0; i < gmap.num_chroms(); ++i) {
 		const ChromMap&	cmap = gmap.get_chr(i);
-		const size_t	N = cmap.get_num_markers();
+		const auto	ps = cmap.collect_positions();
+		const size_t	N = ps.size();
 		NumericVector	cMs(N);
 		IntegerVector	bps(N);
 		for(size_t k = 0; k < N; ++k) {
-			cMs[k] = cmap.get_cM(k);
-			bps[k] = cmap.get_position(k);
+			cMs[k] = ps[k].first;
+			bps[k] = ps[k].second;
 		}
 		DataFrame	df = DataFrame::create(Named("cM") = cMs,
 										   Named("position") = bps);

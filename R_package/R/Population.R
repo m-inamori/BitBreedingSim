@@ -11,6 +11,37 @@ createOrigins <- function(num_inds, info, name_base) {
 	return(pop)
 }
 
+#' Create BaseInfo and Population from a VCF file
+#'
+#' This function takes a VCF object and a seed value, and returns both a Population object
+#' and its associated BaseInfo object. It reads the input VCF and initializes the data
+#' accordingly. The seed value is used to initialize the pseudo-random number generator
+#' for the BaseInfo object. If the seed is set to -1, an appropriate value will be
+#' automatically chosen.
+#'
+#' @param vcf An external pointer to a VCF object.
+#' @param seed An integer. The seed value for initializing the BaseInfo object's
+#'             pseudo-random number generator. Defaults to -1, which automatically
+#'             selects a suitable seed.
+#' @return A list containing two elements:
+#' \describe{
+#'   \item{info}{An external pointer to a BaseInfo object.}
+#'   \item{pop}{An external pointer to a Population object.}
+#' }
+#' @export
+#' @examples
+#' # Assuming 'vcf_file' is a valid VCF file
+#' vcf <- read_VCF(vcf_file)
+#' result <- create_info_pop_from_VCF(vcf, seed = 42)
+#' summary(result$info)
+#' summary(result$pop)
+create_info_pop_from_VCF <- function(vcf, seed=-1) {
+	result <- .Call('_BitBreedingSim_createInfoAndPopFromVCF', vcf, seed)
+	class(result$info) <- "BaseInfo"
+	class(result$pop) <- "Population"
+	return(result)
+}
+
 #' Cross two Population randomly
 #'
 #' @param num_inds An integer. The number of individuals.
@@ -141,8 +172,8 @@ cross_by_table <- function(df, mat_pop, pat_pop, name_base, num_threads = 0) {
 #' @export
 #' @examples
 #' # Assuming 'pop' is a valid Population object
-#' writeVCF(pop, "output.vcf")
-writeVCF <- function(pop, filename) {
+#' write_VCF(pop, "output.vcf")
+write_VCF <- function(pop, filename) {
     if (!inherits(pop, "Population")) {
         stop("Error: pop is not a Population object.")
     }

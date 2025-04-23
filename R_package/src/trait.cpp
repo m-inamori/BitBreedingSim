@@ -1,6 +1,7 @@
 #include <random>
 #include <cmath>
 #include "trait.h"
+#include "BaseInfo.h"
 #include "population.h"
 #include "Map.h"
 #include "common.h"
@@ -9,6 +10,24 @@ using namespace std;
 
 
 //////////////////// Trait ////////////////////
+
+Trait::Locus Trait::get_locus(std::size_t k, const Positions& positions) {
+	for(size_t i = 0; i < positions.size(); ++i) {
+		if(k < positions[i].size()) {
+			return Trait::Locus(i, k);
+		}
+		k -= positions[i].size();
+	}
+	return Trait::Locus(0, 0);	// not come here
+}
+
+size_t Trait::count_all_markers(const Positions& positions) {
+	size_t	num = 0;
+	for(const auto& p : positions) {
+		num += p.size();
+	}
+	return num;
+}
 
 vector<double> Trait::decide_additives_randomly(size_t num_loci,
 													double sd, double h2,
@@ -66,14 +85,15 @@ vector<double> Trait::decide_dominants_randomly(size_t num_loci,
 }
 
 vector<Trait::Locus> Trait::decide_loci_randomly(size_t num_loci,
-													const Map *gmap,
+													const Positions& positions,
 													std::mt19937 &engine) {
 	vector<Locus>	loci(num_loci);
-	const size_t	n = gmap->num_all_markers();
-	std::uniform_int_distribution<>	dist(0, n - 1);
+	
+	const size_t	num = count_all_markers(positions);
+	std::uniform_int_distribution<>	dist(0, num - 1);
 	for(size_t i = 0; i < num_loci; ++i) {
 		const size_t	k = dist(engine);
-		loci[i] = gmap->get_loci(k);
+		loci[i] = Trait::get_locus(k, positions);
 	}
 	return loci;
 }
@@ -102,17 +122,19 @@ const Trait *Trait::create_A_a_randomly(const string& name,
 const Trait *Trait::create_A_l_randomly(const string& name,
 										const vector<double>& as,
 										double mean, double h2,
-										const Map *gmap, std::mt19937 &engine) {
+										const Positions& positions,
+										std::mt19937 &engine) {
 	const size_t	N = as.size();
-	const auto	loci = decide_loci_randomly(N, gmap, engine);
+	const auto	loci = decide_loci_randomly(N, positions, engine);
 	return create_A(name, mean, h2, as, loci);
 }
 
 const Trait *Trait::create_A_al_randomly(const string& name, std::size_t N,
-										double mean, double sd, double h2,
-										const Map *gmap, std::mt19937 &engine) {
+										 double mean, double sd, double h2,
+										 const Positions& positions,
+										 std::mt19937 &engine) {
 	const auto	as = decide_additives_randomly(N, sd, h2, engine);
-	const auto	loci = decide_loci_randomly(N, gmap, engine);
+	const auto	loci = decide_loci_randomly(N, positions, engine);
 	return create_A(name, mean, h2, as, loci);
 }
 
@@ -153,12 +175,13 @@ const Trait *Trait::create_AD_d_randomly(const string& name,
 }
 
 const Trait *Trait::create_AD_l_randomly(const string& name,
-								double mean, double h2,
-								const vector<double>& as,
-								const vector<double>& ds,
-								const Map *gmap, std::mt19937 &engine) {
+										 double mean, double h2,
+										 const vector<double>& as,
+										 const vector<double>& ds,
+										 const Positions& positions,
+										 std::mt19937 &engine) {
 	const size_t	N = ds.size();
-	const auto	loci = decide_loci_randomly(N, gmap, engine);
+	const auto	loci = decide_loci_randomly(N, positions, engine);
 	const double	sd = determine_sd_from_additives(as, h2);
 	const double	sum_d2 = Common::dot_product(ds, ds);
 	const double	H2 = h2 + sum_d2 / (4.0 * sd * sd);
@@ -176,34 +199,37 @@ const Trait *Trait::create_AD_ad_randomly(const string& name,
 }
 
 const Trait *Trait::create_AD_al_randomly(const string& name,
-								double mean, double h2, double H2,
-								const vector<double>& ds,
-								const Map *gmap, std::mt19937 &engine) {
+										  double mean, double h2, double H2,
+										  const vector<double>& ds,
+										  const Positions& positions,
+										  std::mt19937 &engine) {
 	const size_t	N = ds.size();
 	const double	sd = determine_sd_from_dominants(ds, h2, H2);
 	const auto	as = decide_additives_randomly(N, sd, h2, engine);
-	const auto	loci = decide_loci_randomly(N, gmap, engine);
+	const auto	loci = decide_loci_randomly(N, positions, engine);
 	return create_AD(name, mean, H2, as, ds, loci);
 }
 
 const Trait *Trait::create_AD_dl_randomly(const string& name,
-								double mean, double h2, double H2,
-								const vector<double>& as,
-								const Map *gmap, std::mt19937 &engine) {
+										  double mean, double h2, double H2,
+										  const vector<double>& as,
+										  const Positions& positions,
+										  std::mt19937 &engine) {
 	const size_t	N = as.size();
 	const double	sd = determine_sd_from_additives(as, h2);
 	const vector<double> ds = decide_dominants_randomly(N, sd, h2, H2, engine);
-	const auto	loci = decide_loci_randomly(N, gmap, engine);
+	const auto	loci = decide_loci_randomly(N, positions, engine);
 	return create_AD(name, mean, H2, as, ds, loci);
 }
 
-const Trait *Trait::create_AD_adl_randomly(const string& name,
-								std::size_t N,
-								double mean, double sd, double h2, double H2,
-								const Map *gmap, std::mt19937 &engine) {
+const Trait *Trait::create_AD_adl_randomly(const string& name, std::size_t N,
+										   double mean, double sd,
+										   double h2, double H2,
+										   const Positions& positions,
+										   std::mt19937 &engine) {
 	const auto	as = decide_additives_randomly(N, sd, h2, engine);
 	const auto	ds = decide_dominants_randomly(N, sd, h2, H2, engine);
-	const auto	loci = decide_loci_randomly(N, gmap, engine);
+	const auto	loci = decide_loci_randomly(N, positions, engine);
 	return create_AD(name, mean, H2, as, ds, loci);
 }
 

@@ -4,27 +4,46 @@
 #include <string>
 #include <random>
 #include "trait.h"
+#include "GenomicsCommon.h"
 
 class Map;
 class ChromMap;
 class Population;
 
+namespace GC = GenomicsCommon;
+
 
 //////////////////// BaseInfo ////////////////////
 
 class BaseInfo {
+	const std::vector<std::vector<GC::Pos>>	positions;
 	const Map *gmap;
 	std::vector<const Trait *>	traits;
 	mutable std::mt19937	engine;
 	
 public:
-	BaseInfo(const Map *m, const std::vector<const Trait *>& ts,
-												std::uint_fast32_t seed);
+	BaseInfo(const std::vector<std::vector<GC::Pos>>& ps,
+				const Map *m, const std::vector<const Trait *>& ts,
+												std::uint_fast32_t seed) :
+						positions(ps), gmap(m), traits(ts), engine(seed) { }
 	~BaseInfo();
 	
 	const Map& get_map() const { return *gmap; }
 	std::size_t num_chroms() const;
 	const ChromMap& get_chrom_map(std::size_t i) const;
+	std::size_t get_num_all_markers() const {
+		std::size_t	num = 0;
+		for(const auto& ps : positions) {
+			num += ps.size();
+		}
+		return num;
+	}
+	std::size_t get_num_markers(std::size_t i) const {
+		return positions[i].size();
+	}
+	const std::vector<GC::Pos>& get_positions(std::size_t i) const {
+		return positions[i];
+	}
 	std::size_t num_traits() const { return traits.size(); }
 	const Trait *get_trait(std::size_t i) const { return traits[i]; }
 	const std::string& get_trait_name(std::size_t i) const;
@@ -78,5 +97,8 @@ public:
 	
 public:
 	static BaseInfo *create_default(int num_chroms, int num_markers,
-										double cM, int bp, int seed);
+										double cM, GC::Pos bp, int seed);
+	static BaseInfo *create_from_markers(
+							const std::vector<std::size_t>& num_markers,
+							const std::vector<int>& bps, int seed);
 };
