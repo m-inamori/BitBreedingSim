@@ -5,10 +5,7 @@ Fast breeding simulator package for R
 ## Install
 
 ```
-$ R
-> library(devtools)
-> Rcpp::compileAttributes()
-> devtools::document()
+$ ./configure
 $ make
 $ make install
 ```
