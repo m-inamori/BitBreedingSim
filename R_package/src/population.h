@@ -4,8 +4,9 @@
 #include <ostream>
 #include <vector>
 #include <random>
+#include <cstdint>
+#include <Rcpp.h>
 #include "Map.h"
-#include "Int.h"
 #include "GenomicsCommon.h"
 
 class BaseInfo;
@@ -17,18 +18,18 @@ namespace GC = GenomicsCommon;
 //////////////////// BitChrPopulation ////////////////////
 
 class BitChrPopulation {
-	using ConstIter = std::vector<Int::ull>::const_iterator;
-	using Iter = std::vector<Int::ull>::iterator;
+	using ConstIter = std::vector<uint64_t>::const_iterator;
+	using Iter = std::vector<uint64_t>::iterator;
 	using Pair = std::pair<std::size_t, std::size_t>;
 	
 private:
-	std::vector<Int::ull>		genos;
+	std::vector<uint64_t>		genos;
 	const std::vector<GC::Pos>&	positions;
 	const std::size_t			num_inds;
 	const ChromMap&				chrmap;
 	
 public:
-	BitChrPopulation(const std::vector<Int::ull>& gs,
+	BitChrPopulation(const std::vector<uint64_t>& gs,
 									const std::vector<GC::Pos>& ps,
 									std::size_t n,
 									const ChromMap& cmap) :
@@ -42,9 +43,11 @@ public:
 	std::size_t num_markers() const { return positions.size(); }
 	std::size_t num_elements() const { return (num_markers()+63)/64; }
 	std::size_t get_num_inds() const { return num_inds; }
-	std::vector<Int::ull> get_genos() const { return genos; }
+	std::vector<uint64_t> get_genos() const { return genos; }
 	std::string get_genotype(std::size_t id_ind, std::size_t id_marker) const;
 	int get_int_genotype(std::size_t id_ind, std::size_t id_marker) const;
+	int get_haplotype(std::size_t id_ind,
+						std::size_t id_marker, std::size_t parent) const;
 	ConstIter get_haplotype(std::size_t ind_index, std::size_t hap_id) const {
 		return genos.begin() + num_elements() * (ind_index * 2 + hap_id);
 	}
@@ -74,7 +77,7 @@ public:
 												std::mt19937_64& engine);
 	static std::vector<int> create_genotypes(std::size_t num_markers);
 	static std::vector<GC::Pos> extract_positions_from_VCF(const VCF *vcf);
-	static std::vector<Int::ull> create_genotypes_from_VCF(const VCF *vcf);
+	static std::vector<uint64_t> create_genotypes_from_VCF(const VCF *vcf);
 	static const BitChrPopulation *join(const BitChrPopulation *pop1,
 										const BitChrPopulation *pop2);
 };
@@ -139,9 +142,12 @@ public:
 	std::size_t num_markers() const;
 	std::size_t num_traits() const;
 	const BaseInfo *get_info() const { return info; }
-	const ChromMap&	get_chrmap(std::size_t i) const;
-	const BitChrPopulation	*get_chrpop(std::size_t i) const {
+	const ChromMap& get_chrmap(std::size_t i) const;
+	const BitChrPopulation *get_chrpop(std::size_t i) const {
 		return chr_populations[i];
+	}
+	const std::size_t get_chr_size(std::size_t i) const {
+		return get_chrpop(i)->num_markers();
 	}
 	std::string get_genotype(std::size_t ind_index, std::size_t chr_index,
 												std::size_t marker_id) const {
@@ -152,6 +158,11 @@ public:
 												std::size_t marker_id) const {
 		return chr_populations[chr_index]->get_int_genotype(ind_index,
 																marker_id);
+	}
+	int get_haplotype(std::size_t ind_index, std::size_t chr_index,
+						std::size_t marker_index, std::size_t parent) const {
+		return chr_populations[chr_index]->get_haplotype(ind_index,
+														marker_index, parent);
 	}
 	void write_VCF(std::ostream& os) const;
 	
@@ -174,9 +185,13 @@ private:
 								size_t i) const;
 	
 public:
-	static const Population *create_origins(std::size_t num_inds,
+	static Population *create_origins(std::size_t num_inds,
 											const BaseInfo *info,
 											const std::string& name_base);
+	static Population *create_from_HaploArray(
+								const std::vector<std::vector<uint64_t>>& genos,
+								const BaseInfo *info,
+								const std::vector<std::string>& names);
 	static std::vector<Pair> make_pairs_randomly(std::size_t num_inds,
 												const Population& mothers,
 												const Population& fathers,
@@ -198,9 +213,13 @@ public:
 							const std::string& name_base,
 							std::mt19937& engine, int T);
 	static void cross_in_thread(void *config);
-	static const Population *join(const Population *pop1,
-								  const Population *pop2);
+	static Population *join(const Population *pop1, const Population *pop2);
 	static Population *create_from_VCF(const VCF *vcf, int seed);
+	static std::size_t transform_NumericVector_to_geno(
+									const Rcpp::NumericVector& haploArray,
+									std::vector<uint64_t>& geno,
+									std::size_t first, std::size_t last,
+									std::size_t parent);
 };
 
 #endif

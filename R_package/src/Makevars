@@ -1,3 +1,4 @@
 # src/Makevars
 CXX_STD = CXX17
-CXX17 = g++ -std=gnu++17 -I/usr/share/R/include -I/home/inamori/R/x86_64-pc-linux-gnu-library/4.4/Rcpp/include -O3 -fpic
+CXXFLAGS=-O3 -march=native -mtune=native -Wall
+CFLAGS=-O3 -march=native -mtune=native -Wall

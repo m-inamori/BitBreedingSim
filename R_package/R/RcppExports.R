@@ -13,6 +13,14 @@ getNumTraits <- function(ptr) {
     .Call(`_BitBreedingSim_getNumTraits`, ptr)
 }
 
+getNumAllMarkers <- function(ptr) {
+    .Call(`_BitBreedingSim_getNumAllMarkers`, ptr)
+}
+
+getNumMarkers <- function(ptr, i) {
+    .Call(`_BitBreedingSim_getNumMarkers`, ptr, i)
+}
+
 getTraitCpp <- function(baseInfoPtr, i) {
     .Call(`_BitBreedingSim_getTraitCpp`, baseInfoPtr, i)
 }
@@ -47,6 +55,14 @@ createOrigins <- function(num_inds, info, name_base) {
 
 createInfoAndPopFromVCF <- function(vcf, seed) {
     .Call(`_BitBreedingSim_createInfoAndPopFromVCF`, vcf, seed)
+}
+
+createPopFromHaploArray <- function(haploArray, info) {
+    .Call(`_BitBreedingSim_createPopFromHaploArray`, haploArray, info)
+}
+
+createHaploArrayFromPop <- function(pop_ptr) {
+    .Call(`_BitBreedingSim_createHaploArrayFromPop`, pop_ptr)
 }
 
 crossPopsRandomly <- function(num_inds, mothers, fathers, name_base, names, T) {

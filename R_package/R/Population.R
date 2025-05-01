@@ -5,7 +5,7 @@
 #' @param name_base A string. The base name for individuals.
 #' @return An external pointer to a Population object.
 #' @export
-createOrigins <- function(num_inds, info, name_base) {
+create_origins <- function(num_inds, info, name_base) {
 	pop <- .Call('_BitBreedingSim_createOrigins', num_inds, info, name_base)
 	class(pop) <- "Population"
 	return(pop)
@@ -36,10 +36,133 @@ createOrigins <- function(num_inds, info, name_base) {
 #' summary(result$info)
 #' summary(result$pop)
 create_info_pop_from_VCF <- function(vcf, seed=-1) {
+	if(!inherits(vcf, "VCF")) {
+		stop("Error: vcf must be a VCF object.")
+	}
+	if(!is.numeric(seed) || seed != as.integer(seed)) {
+		stop("Error: seed must be an integer.")
+	}
+	
 	result <- .Call('_BitBreedingSim_createInfoAndPopFromVCF', vcf, seed)
 	class(result$info) <- "BaseInfo"
 	class(result$pop) <- "Population"
 	return(result)
+}
+
+#' Create a Population object from a HaploArray
+#'
+#' This function takes a 3-dimensional array (HaploArray) and a BaseInfo object to create a Population object.
+#' The HaploArray should have dimensions representing individuals, markers, and alleles (Maternal and Paternal).
+#' Allele values must be binary (0 or 1). A value of 0 indicates that the allele matches the reference genome, 
+#' while a value of 1 indicates the alternative allele.
+#' The function validates the input data and initializes the Population object accordingly.
+#'
+#' @param haploArray A 3-dimensional array where:
+#' \describe{
+#'   \item{dim[1]}{Number of individuals.}
+#'   \item{dim[2]}{Number of markers.}
+#'   \item{dim[3]}{Size must be 2, representing Maternal and Paternal alleles.}
+#' }
+#' Allele values must be binary (0 or 1), based on the reference genome.
+#' @param info An external pointer to a BaseInfo object.
+#' @return An external pointer to a Population object.
+#' @export
+#' @examples
+#' # Create a HaploArray
+#' haploArray <- array(
+#'   data = rbinom(n = 30, size = 1, prob = 0.3),
+#'   dim = c(3, 5, 2),
+#'   dimnames = list(
+#'     paste0("Ind_", 1:3),
+#'     paste0("Mrk_", 1:5),
+#'     c("Maternal", "Paternal")
+#'   )
+#' )
+#' 
+#' # Assuming 'info' is a valid BaseInfo object
+#' pop <- create_pop_from_HaploArray(haploArray, info)
+#' summary(pop)
+create_pop_from_HaploArray <- function(haploArray, info) {
+	if(!inherits(info, "BaseInfo")) {
+		stop("Error: info must be a BaseInfo object.")
+	}
+	
+	# Check if 'haploArray' is an array
+	if(!is.array(haploArray)) {
+		stop("Error: haploArray must be an array.")
+	}
+	# Verify the array has 3 dimensions
+	if(length(dim(haploArray)) != 3) {
+		stop("Error: haploArray must have exactly 3 dimensions.")
+	}
+	# Ensure the size of the innermost dimension (Allele) is 2
+	if(dim(haploArray)[3] != 2) {
+		stop("Error: The third dimension of haploArray must have a size of 2 (Maternal and Paternal).")
+	}
+	
+	info_value <- get_info(info)
+	if(info_value$num_markers != dim(haploArray)[2]) {
+		stop(
+			sprintf(
+				"Error: The number of markers is inconsistent.\nhaploArray has %d markers, while info specifies %d markers.",
+				dim(haploArray)[2],
+				info_value$num_markers
+			)
+		)
+	}
+	
+	pop <- .Call('_BitBreedingSim_createPopFromHaploArray', haploArray, info)
+	class(pop) <- "Population"
+	return(pop)
+}
+
+#' Create a 3-dimensional HaploArray from a Population object
+#'
+#' This function converts a Population object into a 3-dimensional array (HaploArray). 
+#' The resulting HaploArray contains dimensions representing individuals, markers, 
+#' and alleles (Maternal and Paternal).
+#' The HaploArray has the following dimensions:
+#' \describe{
+#'   \item{dim[1]}{Number of individuals.}
+#'   \item{dim[2]}{Number of markers.}
+#'   \item{dim[3]}{Size is 2, representing Maternal and Paternal alleles.}
+#' }
+#' The array also includes dimension names such as individual names, marker names, 
+#' and allele labels (Maternal and Paternal).
+#'
+#' Note: This function is the reverse of `create_pop_from_HaploArray`, which creates 
+#' a Population object from a HaploArray.
+#'
+#' @param pop An external pointer to a Population object. This object must be properly initialized.
+#' @return A 3-dimensional array (HaploArray) containing the following dimensions:
+#' \describe{
+#'   \item{Individuals}{Individual names as rows.}
+#'   \item{Markers}{Marker names as columns.}
+#'   \item{Alleles}{Maternal and Paternal alleles as the third dimension.}
+#' }
+#' @export
+#' @examples
+#' info <- create_base_info(num_chroms=2, num_markers=10, cM=100, bp=1e6, seed=2)
+#' addTraitA(info, "Trait1", mean=100.0, h2=0.6, sd=10.0, num_loci = 2)
+#' trait <- getTrait(info, 1)
+#' 
+#' haploArray <- array(
+#'   data = rbinom(n = 120, size = 1, prob = 0.3),
+#'   dim = c(3, 20, 2),
+#'   dimnames = list(
+#'     paste0("Ind_", 1:3),
+#'     paste0("Mrk_", 1:20),
+#'     c("Maternal", "Paternal")
+#'   )
+#' )
+#' pop <- create_pop_from_HaploArray(haploArray, info)
+#' prog <- cross_randomly(5, pop, pop, "prog_")
+#' haploArrayProg <- create_HaploArray_from_pop(prog)
+create_HaploArray_from_pop <- function(pop) {
+	if(!inherits(pop, "Population")) {
+		stop("Error: pop must be a Population object.")
+	}
+	return(.Call('_BitBreedingSim_createHaploArrayFromPop', pop))
 }
 
 #' Cross two Population randomly
@@ -190,7 +313,7 @@ write_VCF <- function(pop, filename) {
 #' @return A list containing the number of individuals
 #'         and the number of chromosomes in the population.
 #' @export
-getPopInfo <- function(pop) {
+get_pop_info <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: info is not a BaseInfo object.")
 	}
@@ -211,9 +334,9 @@ getPopInfo <- function(pop) {
 #' @export
 #' @examples
 #' # Assuming 'pop' is a valid Population object and trait index 1 is valid
-#' phenotypes <- getPhenotypes(pop, 1)
+#' phenotypes <- get_phenotypes(pop, 1)
 #' print(phenotypes)
-getPhenotypes <- function(pop, i) {
+get_phenotypes <- function(pop, i) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: pop is not a BaseInfo object.")
 	}
@@ -242,7 +365,7 @@ getPhenotypes <- function(pop, i) {
 #' @param pop An external pointer to a Population object.
 #' @return A matrix of genotypes where rows are samples and columns are markers.
 #' @export
-getGenotypes <- function(pop) {
+get_genotypes <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: info is not a BaseInfo object.")
 	}
@@ -265,7 +388,7 @@ getGenotypes <- function(pop) {
 #' @return A matrix of genotypes where rows are samples and columns are markers.
 #' @export
 #' @noRd
-getGenotypesNaive <- function(pop) {
+get_genotypes_naive <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: info is not a BaseInfo object.")
 	}
@@ -284,7 +407,7 @@ getGenotypesNaive <- function(pop) {
 #' @param pop An external pointer to a Population object.
 #' @return A matrix of genotypes where rows are samples and columns are markers.
 #' @export
-getPhasedGenotypes <- function(pop) {
+get_phased_genotypes <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: info is not a BaseInfo object.")
 	}
@@ -306,12 +429,12 @@ getPhasedGenotypes <- function(pop) {
 #'         Each sample has two rows: the first row is the maternal allele and the
 #'         second row is the paternal allele.
 #' @export
-getPhasedIntGenotypes <- function(pop) {
+get_phased_int_genotypes <- function(pop) {
 	if(!inherits(pop, "Population")) {
-		stop("Error: info is not a BaseInfo object.")
+		stop("Error: info must be a BaseInfo object.")
 	}
 	
-	.Call('_BitBreedingSim_getPhasedGenotypes', pop)
+	.Call('_BitBreedingSim_getPhasedIntGenotypes', pop)
 }
 
 #' Select individuals from a Population object
@@ -324,11 +447,11 @@ getPhasedIntGenotypes <- function(pop) {
 #' @export
 #' @examples
 #' # Assuming 'pop' is a valid Population object and indices are valid
-#' selected_pop <- selectPop(pop, c(1, 2, 3))
+#' selected_pop <- select_pop(pop, c(1, 2, 3))
 #' print(selected_pop)
-selectPop <- function(pop, indices) {
+select_pop <- function(pop, indices) {
 	if(!inherits(pop, "Population")) {
-		stop("Error: pop is not a Population object.")
+		stop("Error: pop must be a Population object.")
 	}
 	
 	num_inds <- .Call('_BitBreedingSim_getNumInds', pop)
@@ -350,9 +473,9 @@ selectPop <- function(pop, indices) {
 #' @export
 #' @examples
 #' # Assuming 'pop1', 'pop2', and 'pop3' are valid Population objects
-#' combined_pop <- joinPops(pop1, pop2, pop3)
+#' combined_pop <- join_pops(pop1, pop2, pop3)
 #' print(combined_pop)
-joinPops <- function(...) {
+join_pops <- function(...) {
 	pops <- list(...)
 	if(length(pops) < 2) {
 		stop("Error: At least two Population objects are required.")
@@ -380,20 +503,37 @@ joinPops <- function(...) {
 #' @export
 #' @examples
 #' # Assuming 'pop' is a valid Population object
-#' name_data <- getPopNames(pop)
+#' name_data <- get_pop_names(pop)
 #' print(name_data)
-getPopNames <- function(pop) {
+get_pop_names <- function(pop) {
 	if(!inherits(pop, "Population")) {
-		stop("Error: pop is not a Population object.")
+		stop("Error: pop must be a Population object.")
 	}
 	
 	.Call('_BitBreedingSim_createNameDataFromPop', pop)
 }
 
+#' Summarize the details of a Population object
+#'
+#' This function extracts and displays key information from a Population object.
+#' A Population object represents a collection of individuals, chromosomes, 
+#' and genetic markers used in genetic simulations. The summary includes the 
+#' number of individuals, chromosomes, and markers in the population, providing 
+#' an overview of its structure and size.
+#'
+#' @param pop An external pointer to a Population object. This object must 
+#'            be properly initialized and created using the appropriate 
+#'            functions or constructors.
+#' @param ... Additional arguments (not currently used).
+#' @return Prints a formatted summary of the Population object directly 
+#'         to the console.
 #' @export
-summary.Population <- function(pop, ...) {
+#' @examples
+#' # Assuming 'pop' is a valid Population object
+#' summary_population(pop)
+summary_population <- function(pop, ...) {
 	if(!inherits(pop, "Population")) {
-		stop("Error: pop is not a Population object.")
+		stop("Error: pop must be a Population object.")
 	}
 	
 	pop_list <- .Call('_BitBreedingSim_getPopulationInfo', pop)

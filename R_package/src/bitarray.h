@@ -1,11 +1,11 @@
 #pragma once
 
 #include <vector>
-#include "Int.h"
+#include <cstdint>
 
 namespace BitArray {
-	using ConstIter = std::vector<Int::ull>::const_iterator;
-	using Iter = std::vector<Int::ull>::iterator;
+	using ConstIter = std::vector<uint64_t>::const_iterator;
+	using Iter = std::vector<uint64_t>::iterator;
 	
 	inline int get(ConstIter source, std::size_t i) {
 		const std::size_t	q = i >> 6;

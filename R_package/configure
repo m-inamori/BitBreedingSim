@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Detect R_HOME
+R_HOME=$(R RHOME)
+if [ -z "$R_HOME" ]; then
+  echo "Error: R is not installed or R_HOME could not be determined."
+  exit 1
+fi
+
+# Detect R include path
+if [ -f "$R_HOME/include/R.h" ]; then
+  R_INCLUDE_DIR="$R_HOME/include"
+else
+  if [ -f "/usr/share/R/include/R.h" ]; then
+    R_INCLUDE_DIR="/usr/share/R/include"
+  elif [ -f "/usr/lib/R/include/R.h" ]; then
+    R_INCLUDE_DIR="/usr/lib/R/include"
+  else
+    echo "Error: R.h not found in standard include paths."
+    exit 1
+  fi
+fi
+
+# Detect Rcpp include path
+RCPP_INCLUDE_DIR=$(Rscript -e "Rcpp:::CxxFlags()" | sed 's/-I//g' | tr -d '\n')
+if [ ! -d "$RCPP_INCLUDE_DIR" ]; then
+  echo "Error: Rcpp include directory not found at $RCPP_INCLUDE_DIR"
+  exit 1
+fi
+
+# Generate Makevars file
+echo "Generating Makevars file..."
+cat <<EOF > Makevars
+PKG_CPPFLAGS = -I$R_INCLUDE_DIR -I$RCPP_INCLUDE_DIR
+LDFLAGS = -shared -L$R_HOME/lib -lR
+EOF
+
+echo "Makevars file created successfully!"

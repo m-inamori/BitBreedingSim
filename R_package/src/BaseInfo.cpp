@@ -189,6 +189,18 @@ int getNumTraits(SEXP ptr) {
 	return baseInfo->num_traits();
 }
 
+// [[Rcpp::export]]
+int getNumAllMarkers(SEXP ptr) {
+	Rcpp::XPtr<BaseInfo> baseInfo(ptr);
+	return baseInfo->get_num_all_markers();
+}
+
+// [[Rcpp::export]]
+int getNumMarkers(SEXP ptr, std::size_t i) {
+	Rcpp::XPtr<BaseInfo> baseInfo(ptr);
+	return baseInfo->get_num_markers(i);
+}
+
 // std::pairをRcppのリストに変換する関数
 List wrap_pair(const Trait::Locus& p) {
 	return List::create(_["first"] = p.first, _["second"] = p.second);

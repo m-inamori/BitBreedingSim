@@ -1,7 +1,6 @@
 #include <fstream>
 #include <sstream>
 #include <climits>
-#include <Rcpp.h>
 #include "BaseInfo.h"
 #include "trait.h"
 #include "population.h"
@@ -20,11 +19,11 @@ const BitChrPopulation *BitChrPopulation::create_origins(size_t num_inds,
 													const vector<GC::Pos>& ps,
 													const ChromMap& cmap,
 													std::mt19937_64& engine) {
-	std::uniform_int_distribution<Int::ull> dist(0, ULLONG_MAX);
+	std::uniform_int_distribution<uint64_t> dist(0, ULLONG_MAX);
 	
 	const size_t	num_markers = ps.size();
 	const size_t	num_elements = (num_markers + 63) / 64;
-	vector<Int::ull>	genos(num_elements * num_inds * 2);
+	vector<uint64_t>	genos(num_elements * num_inds * 2);
 	// 端数は気にしなくてもよい
 	for(size_t i = 0; i < num_elements * num_inds * 2; ++i) {
 		genos[i] = dist(engine);
@@ -32,11 +31,11 @@ const BitChrPopulation *BitChrPopulation::create_origins(size_t num_inds,
 	return new BitChrPopulation(genos, ps, num_inds, cmap);
 }
 
-vector<Int::ull> BitChrPopulation::create_genotypes_from_VCF(const VCF *vcf) {
+vector<uint64_t> BitChrPopulation::create_genotypes_from_VCF(const VCF *vcf) {
 	const size_t	M = vcf->size();
 	const size_t	N = vcf->num_samples();
 	const size_t	L = (M + 63) / 64;	// number of ulls
-	vector<Int::ull>	genos(N * L * 2, 0ULL);
+	vector<uint64_t>	genos(N * L * 2, 0ULL);
 	for(size_t i = 0; i < M; ++i) {
 		for(size_t k = 0; k < N; ++k) {
 			const string&	gt = vcf->get_gt(i, k);
@@ -95,7 +94,7 @@ size_t BitChrPopulation::Morgan_to_index(double M) const {
 }
 
 double BitChrPopulation::get_length() const {
-	return chrmap.Morgan_to_bp(num_markers()-1);
+	return chrmap.bp_to_Morgan(positions.back());
 }
 
 vector<size_t> BitChrPopulation::select_random_crossover_points(
@@ -124,7 +123,7 @@ void BitChrPopulation::reduce(size_t parent_index,
 	
 	// 最初はどちらのHaplotypeから取るか
 	std::uniform_int_distribution<size_t>	dist_unif(0, 1);
-	int	ihap = dist_unif(engine);
+	volatile int	ihap = dist_unif(engine);
 	size_t	first = 0;
 	for(auto p = pts.begin(); p != pts.end(); ++p) {
 		ConstIter	iter = get_haplotype(parent_index, ihap);
@@ -168,10 +167,16 @@ int BitChrPopulation::get_int_genotype(size_t id_ind, size_t id_marker) const {
 	return gt1 + gt2 - 1;
 }
 
+int BitChrPopulation::get_haplotype(size_t id_ind,
+									size_t id_marker, size_t parent) const {
+	ConstIter	iter = get_haplotype(id_ind, parent);
+	return BitArray::get(iter, id_marker);
+}
+
 BitChrPopulation *BitChrPopulation::select(
 							const vector<size_t>& indices) const {
 	const size_t	N = num_elements() * 2;		// data per individual
-	vector<Int::ull>	selected_genos(N * indices.size());
+	vector<uint64_t>	selected_genos(N * indices.size());
 	for(size_t i = 0; i < indices.size(); ++i) {
 		const size_t	ind_id = indices[i];
 		std::copy(genos.begin() + N*ind_id, genos.begin() + N*(ind_id+1),
@@ -183,7 +188,7 @@ BitChrPopulation *BitChrPopulation::select(
 
 const BitChrPopulation *BitChrPopulation::join(const BitChrPopulation *pop1,
 											   const BitChrPopulation *pop2) {
-	vector<Int::ull>	genos;
+	vector<uint64_t>	genos;
 	Common::connect_vector(pop1->genos, pop2->genos, genos);
 	const size_t	num_inds = pop1->num_inds + pop2->num_inds;
 	return new BitChrPopulation(genos, pop1->get_positions(),
@@ -234,8 +239,8 @@ vector<vector<double>> Population::compute_phenotypes(const BaseInfo *info,
 	return phenotypes;
 }
 
-const Population *Population::create_origins(size_t num_inds,
-							const BaseInfo *info, const string& name_base) {
+Population *Population::create_origins(size_t num_inds,
+								const BaseInfo *info, const string& name_base) {
 	const Map&	gmap = info->get_map();
 	std::mt19937&	engine = info->get_random_engine();
 	std::mt19937_64	engine64(engine());
@@ -257,6 +262,28 @@ const Population *Population::create_origins(size_t num_inds,
 	vector<string>	mats(num_inds, "0");
 	vector<string>	pats(num_inds, "0");
 	
+	Population	*pop = new Population(chr_pops, info, names, mats, pats);
+	pop->set_phenotypes(info);
+	return pop;
+}
+
+Population *Population::create_from_HaploArray(
+									const vector<vector<uint64_t>>& genos,
+									const BaseInfo *info,
+									const vector<string>& names) {
+	const Map&	gmap = info->get_map();
+	const size_t	num_ind = names.size();
+	std::mt19937&	engine = info->get_random_engine();
+	std::mt19937_64	engine64(engine());
+	vector<const BitChrPopulation *>	chr_pops(gmap.num_chroms());
+	for(size_t i = 0; i < gmap.num_chroms(); ++i) {
+		const auto&	cmap = gmap.get_chr(i);
+		const auto&	ps = info->get_positions(i);
+		chr_pops[i] = new BitChrPopulation(genos[i], ps, num_ind, cmap);
+	}
+	
+	vector<string>	mats(num_ind, "0");
+	vector<string>	pats(num_ind, "0");
 	Population	*pop = new Population(chr_pops, info, names, mats, pats);
 	pop->set_phenotypes(info);
 	return pop;
@@ -492,8 +519,7 @@ Population *Population::select(const vector<size_t>& indices) const {
 	return new_pop;
 }
 
-const Population *Population::join(const Population *pop1,
-								   const Population *pop2) {
+Population *Population::join(const Population *pop1, const Population *pop2) {
 	vector<const BitChrPopulation *>	chr_pops(pop1->num_chroms());
 	for(size_t i = 0; i < pop1->num_chroms(); ++i) {
 		chr_pops[i] = BitChrPopulation::join(pop1->chr_populations[i],
@@ -528,7 +554,7 @@ vector<double> Population::select_phenotypes(const vector<size_t>& indices,
 }
 
 Population *Population::create_from_VCF(const VCF *vcf, int seed) {
-	vector<vector<Int::ull>>	geno_table;
+	vector<vector<uint64_t>>	geno_table;
 	vector<vector<GC::Pos>>	pos_table;
 	VCFDivisor	divisor(*vcf);
 	VCF	*vcf_chr;
@@ -566,9 +592,8 @@ SEXP createOrigins(SEXP num_inds, SEXP info, SEXP name_base) {
 	size_t num_inds_cpp = as<size_t>(num_inds);
 	Rcpp::XPtr<BaseInfo> info_cpp(info);
 	std::string name_base_cpp = as<std::string>(name_base);
-	Rcpp::XPtr<Population> ptr(const_cast<Population*>(
-						Population::create_origins(
-						num_inds_cpp, info_cpp.get(), name_base_cpp)), true);
+	Rcpp::XPtr<Population> ptr(Population::create_origins(num_inds_cpp,
+										info_cpp.get(), name_base_cpp), true);
 	ptr.attr("class") = "Population";
 	return ptr;
 }
@@ -579,13 +604,120 @@ Rcpp::List createInfoAndPopFromVCF(SEXP vcf, SEXP seed) {
 	int	seed_cpp = as<int>(seed);
 	auto	*pop = Population::create_from_VCF(vcf_cpp.get(), seed_cpp);
 	Rcpp::XPtr<BaseInfo> ptr1(const_cast<BaseInfo*>(pop->get_info()), true);
-	Rcpp::XPtr<Population> ptr2(const_cast<Population*>(pop), true);
+	Rcpp::XPtr<Population> ptr2(pop, true);
 	ptr1.attr("class") = "BaseInfo";
 	ptr2.attr("class") = "Population";
 	return Rcpp::List::create(
 		Rcpp::Named("info") = ptr1,
 		Rcpp::Named("pop") = ptr2
 	);
+}
+
+size_t Population::transform_NumericVector_to_geno(
+									const NumericVector& haploArray,
+									vector<uint64_t>& geno,
+									size_t first, size_t last, size_t parent) {
+	// transform the genotypes of one chromosome
+	IntegerVector	dim = haploArray.attr("dim");
+	const size_t	num_ind = static_cast<size_t>(dim[0]);
+	const size_t	num_marker = (last - first) / num_ind;
+	const size_t	L = (num_marker + 63) / 64;		// num of uinit64_t per hap
+	
+	// This function must be called
+	// in the order of parent 0 (Maternal) and 1 (Paternal).
+	if(parent == 0) {
+		geno.resize(L * num_ind * 2);
+		std::fill(geno.begin(), geno.end(), 0);
+	}
+	else {
+		// Paternal is the latter half
+		first += haploArray.size() / 2;
+		last += haploArray.size() / 2;
+	}
+	
+	size_t	k = first;	// index of haploArray
+	for(size_t marker = 0; marker < num_marker; ++marker) {
+		for(size_t ind = 0; ind < num_ind; ++ind) {
+			const size_t	i = marker / 64;
+			const size_t	j = marker % 64;
+			const uint64_t	gt = static_cast<uint64_t>(haploArray[k]);
+			geno[(ind*2+parent)*L+i] |= gt << j;
+			k += 1;
+		}
+	}
+	return k;
+}
+
+// [[Rcpp::export]]
+SEXP createPopFromHaploArray(const NumericVector& haploArray, SEXP info) {
+	Rcpp::XPtr<BaseInfo> info_cpp(info);
+	
+	// sample names
+	List	dimnames = haploArray.attr("dimnames");
+	CharacterVector	ind_names = dimnames[0];
+	vector<string> samples(ind_names.begin(), ind_names.end());
+	const size_t	num_ind = samples.size();
+	
+	// genotypes
+	vector<vector<uint64_t>>	genos(info_cpp->num_chroms());
+	size_t	k = 0;
+	for(size_t chr = 0; chr < info_cpp->num_chroms(); ++chr) {
+		const size_t	num_marker = info_cpp->get_num_markers(chr);
+		const size_t	first = k;
+		const size_t	last = first + num_marker * num_ind;
+		k = Population::transform_NumericVector_to_geno(haploArray,
+													genos[chr], first, last, 0);
+		auto	_ = Population::transform_NumericVector_to_geno(haploArray,
+													genos[chr], first, last, 1);
+	}
+	auto	*pop = Population::create_from_HaploArray(genos, info_cpp, samples);
+	Rcpp::XPtr<Population> ptr(pop, true);
+	ptr.attr("class") = "Population";
+	return ptr;
+}
+
+// [[Rcpp::export]]
+NumericVector createHaploArrayFromPop(SEXP pop_ptr) {
+	Rcpp::XPtr<Population> pop(pop_ptr);
+	const BaseInfo	*info = pop->get_info();
+	const size_t	num_inds = pop->num_inds();
+	const size_t	num_markers = info->get_num_all_markers();
+	
+	// Create a NumericVector with 3D array attributes
+	NumericVector	haploArray(num_inds * num_markers * 2);
+	
+	// Set array dimensions (individuals x markers x maternal/paternal)
+	haploArray.attr("dim") = Dimension(num_inds, num_markers, 2);
+	
+	// Set dimnames for the array
+	const auto&	names = pop->get_names();
+	CharacterVector	ind_names(names.begin(), names.end());
+	CharacterVector	marker_names(num_markers);
+	CharacterVector	haplo_names = CharacterVector::create("Maternal",
+															"Paternal");
+	
+	for(size_t j = 0; j < num_markers; ++j) {
+		marker_names[j] = "Mrk_" + std::to_string(j + 1);
+	}
+	
+	haploArray.attr("dimnames") = List::create(ind_names,
+												marker_names, haplo_names);
+	
+	// Populate the array with genotype data
+	size_t	i = 0;
+	for(size_t parent = 0; parent < 2; ++parent) {
+		for(size_t chr_index = 0; chr_index < pop->num_chroms(); ++chr_index) {
+			for(size_t m = 0; m < pop->get_chr_size(chr_index); ++m) {
+				for(size_t ind = 0; ind < num_inds; ++ind) {
+					haploArray[i] = pop->get_haplotype(ind, chr_index,
+																m, parent);
+					i += 1;
+				}
+			}
+		}
+	}
+	
+	return haploArray;
 }
 
 // [[Rcpp::export]]
@@ -602,11 +734,10 @@ SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers,
 	Rcpp::XPtr<Population> fathers_cpp(fathers);
 	const BaseInfo	*info = mothers_cpp.get()->get_info();
 	const std::string name_base_cpp = as<std::string>(name_base);
-	Rcpp::XPtr<Population> ptr(const_cast<Population *>(
-						Population::cross_randomly(num_inds_cpp,
-										*mothers_cpp.get(),
-										*fathers_cpp.get(), info,
-										name_base_cpp, T)), true);
+	auto	*pop = Population::cross_randomly(num_inds_cpp, *mothers_cpp.get(),
+													*fathers_cpp.get(), info,
+													name_base_cpp, T);
+	Rcpp::XPtr<Population> ptr(pop, true);
 	ptr.attr("class") = "Population";
 	return ptr;
 }
@@ -633,11 +764,10 @@ SEXP crossPopsByTable(DataFrame df, SEXP mothers, SEXP fathers,
 	Rcpp::XPtr<Population> fathers_cpp(fathers);
 	const BaseInfo	*info = mothers_cpp.get()->get_info();
 	std::string name_base_cpp = as<std::string>(name_base);
-	Rcpp::XPtr<Population> ptr(const_cast<Population*>(
-						Population::cross_by_table(table,
-											*mothers_cpp.get(),
-											*fathers_cpp.get(), info,
-											name_base_cpp, T)), true);
+	auto	*pop = Population::cross_by_table(table, *mothers_cpp.get(),
+												*fathers_cpp.get(), info,
+												name_base_cpp, T);
+	Rcpp::XPtr<Population> ptr(pop, true);
 	ptr.attr("class") = "Population";
 	return ptr;
 }
@@ -680,8 +810,7 @@ SEXP selectPop(SEXP pop, NumericVector indices_R) {
     for(int i = 0; i < indices_R.size(); ++i) {
         indices_cpp[i] = static_cast<size_t>(indices_R[i]-1);
     }
-	Rcpp::XPtr<Population> ptr(const_cast<Population*>(
-								pop_cpp.get()->select(indices_cpp)), true);
+	Rcpp::XPtr<Population> ptr(pop_cpp.get()->select(indices_cpp), true);
 	return ptr;
 }
 
@@ -693,12 +822,12 @@ NumericMatrix getGenotypes(SEXP pop) {
 	size_t	mat_index = 0;
 	for(size_t i = 0; i < ptr_pop->num_chroms(); ++i) {
 		const auto	*chr_pop = ptr_pop->get_chrpop(i);
-		const vector<Int::ull>&	genos = chr_pop->get_genos();
+		const vector<uint64_t>&	genos = chr_pop->get_genos();
 		for(size_t ind_id = 0; ind_id < chr_pop->get_num_inds(); ++ind_id) {
 			const size_t	num_elems = chr_pop->num_elements();
 			for(size_t gid = 0; gid < num_elems; ++gid) {
-				const Int::ull&	geno1 = genos[num_elems*2*ind_id+gid];
-				const Int::ull&	geno2 = genos[num_elems*(2*ind_id+1)+gid];
+				const uint64_t&	geno1 = genos[num_elems*2*ind_id+gid];
+				const uint64_t&	geno2 = genos[num_elems*(2*ind_id+1)+gid];
 				const size_t	num = gid != num_elems - 1 ? 64 :
 											chr_pop->num_markers() - 64 * gid;
 				for(size_t k = 0; k < num; ++k) {
@@ -750,12 +879,12 @@ CharacterMatrix getPhasedGenotypes(SEXP pop) {
 	size_t	mat_index = 0;
 	for(size_t i = 0; i < ptr_pop->num_chroms(); ++i) {
 		const auto	*chr_pop = ptr_pop->get_chrpop(i);
-		const vector<Int::ull>&	genos = chr_pop->get_genos();
+		const vector<uint64_t>&	genos = chr_pop->get_genos();
 		for(size_t ind_id = 0; ind_id < chr_pop->get_num_inds(); ++ind_id) {
 			const size_t	num_elems = chr_pop->num_elements();
 			for(size_t gid = 0; gid < num_elems; ++gid) {
-				const Int::ull&	geno1 = genos[num_elems*2*ind_id+gid];
-				const Int::ull&	geno2 = genos[num_elems*(2*ind_id+1)+gid];
+				const uint64_t&	geno1 = genos[num_elems*2*ind_id+gid];
+				const uint64_t&	geno2 = genos[num_elems*(2*ind_id+1)+gid];
 				const size_t	num = gid != num_elems - 1 ? 64 :
 											chr_pop->num_markers() - 64 * gid;
 				for(size_t k = 0; k < num; ++k) {
@@ -788,12 +917,12 @@ NumericMatrix getPhasedIntGenotypes(SEXP pop) {
 	size_t	mat_index = 0;
 	for(size_t i = 0; i < ptr_pop->num_chroms(); ++i) {
 		const auto	*chr_pop = ptr_pop->get_chrpop(i);
-		const vector<Int::ull>&	genos = chr_pop->get_genos();
+		const vector<uint64_t>&	genos = chr_pop->get_genos();
 		for(size_t ind_id = 0; ind_id < chr_pop->get_num_inds(); ++ind_id) {
 			const size_t	num_elems = chr_pop->num_elements();
 			for(size_t gid = 0; gid < num_elems; ++gid) {
-				const Int::ull&	geno1 = genos[num_elems*2*ind_id+gid];
-				const Int::ull&	geno2 = genos[num_elems*(2*ind_id+1)+gid];
+				const uint64_t&	geno1 = genos[num_elems*2*ind_id+gid];
+				const uint64_t&	geno2 = genos[num_elems*(2*ind_id+1)+gid];
 				const size_t	num = gid != num_elems - 1 ? 64 :
 											chr_pop->num_markers() - 64 * gid;
 				for(size_t k = 0; k < num; ++k) {
@@ -847,7 +976,6 @@ Rcpp::DataFrame createNameDataFromPop(SEXP pop) {
 SEXP joinPop(SEXP pop1, SEXP pop2) {
 	Rcpp::XPtr<Population> pop1_cpp(pop1);
 	Rcpp::XPtr<Population> pop2_cpp(pop2);
-	Rcpp::XPtr<Population> ptr(const_cast<Population *>(
-							Population::join(pop1_cpp.get(), pop2_cpp.get())));
+	Rcpp::XPtr<Population> ptr(Population::join(pop1_cpp.get(), pop2_cpp.get()));
 	return ptr;
 }

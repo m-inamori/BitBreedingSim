@@ -47,6 +47,29 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getNumAllMarkers
+int getNumAllMarkers(SEXP ptr);
+RcppExport SEXP _BitBreedingSim_getNumAllMarkers(SEXP ptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ptr(ptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(getNumAllMarkers(ptr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getNumMarkers
+int getNumMarkers(SEXP ptr, std::size_t i);
+RcppExport SEXP _BitBreedingSim_getNumMarkers(SEXP ptrSEXP, SEXP iSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type ptr(ptrSEXP);
+    Rcpp::traits::input_parameter< std::size_t >::type i(iSEXP);
+    rcpp_result_gen = Rcpp::wrap(getNumMarkers(ptr, i));
+    return rcpp_result_gen;
+END_RCPP
+}
 // getTraitCpp
 SEXP getTraitCpp(SEXP baseInfoPtr, std::size_t i);
 RcppExport SEXP _BitBreedingSim_getTraitCpp(SEXP baseInfoPtrSEXP, SEXP iSEXP) {
@@ -118,7 +141,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // getMapCpp
-SEXP getMapCpp(SEXP mapPtr);
+Rcpp::DataFrame getMapCpp(SEXP mapPtr);
 RcppExport SEXP _BitBreedingSim_getMapCpp(SEXP mapPtrSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -161,6 +184,29 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< SEXP >::type vcf(vcfSEXP);
     Rcpp::traits::input_parameter< SEXP >::type seed(seedSEXP);
     rcpp_result_gen = Rcpp::wrap(createInfoAndPopFromVCF(vcf, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// createPopFromHaploArray
+SEXP createPopFromHaploArray(const NumericVector& haploArray, SEXP info);
+RcppExport SEXP _BitBreedingSim_createPopFromHaploArray(SEXP haploArraySEXP, SEXP infoSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const NumericVector& >::type haploArray(haploArraySEXP);
+    Rcpp::traits::input_parameter< SEXP >::type info(infoSEXP);
+    rcpp_result_gen = Rcpp::wrap(createPopFromHaploArray(haploArray, info));
+    return rcpp_result_gen;
+END_RCPP
+}
+// createHaploArrayFromPop
+NumericVector createHaploArrayFromPop(SEXP pop_ptr);
+RcppExport SEXP _BitBreedingSim_createHaploArrayFromPop(SEXP pop_ptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop_ptr(pop_ptrSEXP);
+    rcpp_result_gen = Rcpp::wrap(createHaploArrayFromPop(pop_ptr));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -335,6 +381,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_createBaseInfoCpp", (DL_FUNC) &_BitBreedingSim_createBaseInfoCpp, 5},
     {"_BitBreedingSim_getNumChroms", (DL_FUNC) &_BitBreedingSim_getNumChroms, 1},
     {"_BitBreedingSim_getNumTraits", (DL_FUNC) &_BitBreedingSim_getNumTraits, 1},
+    {"_BitBreedingSim_getNumAllMarkers", (DL_FUNC) &_BitBreedingSim_getNumAllMarkers, 1},
+    {"_BitBreedingSim_getNumMarkers", (DL_FUNC) &_BitBreedingSim_getNumMarkers, 2},
     {"_BitBreedingSim_getTraitCpp", (DL_FUNC) &_BitBreedingSim_getTraitCpp, 2},
     {"_BitBreedingSim_getMapfromInfo", (DL_FUNC) &_BitBreedingSim_getMapfromInfo, 1},
     {"_BitBreedingSim_add_Trait_A_wrapper", (DL_FUNC) &_BitBreedingSim_add_Trait_A_wrapper, 8},
@@ -344,6 +392,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_readVCF", (DL_FUNC) &_BitBreedingSim_readVCF, 1},
     {"_BitBreedingSim_createOrigins", (DL_FUNC) &_BitBreedingSim_createOrigins, 3},
     {"_BitBreedingSim_createInfoAndPopFromVCF", (DL_FUNC) &_BitBreedingSim_createInfoAndPopFromVCF, 2},
+    {"_BitBreedingSim_createPopFromHaploArray", (DL_FUNC) &_BitBreedingSim_createPopFromHaploArray, 2},
+    {"_BitBreedingSim_createHaploArrayFromPop", (DL_FUNC) &_BitBreedingSim_createHaploArrayFromPop, 1},
     {"_BitBreedingSim_crossPopsRandomly", (DL_FUNC) &_BitBreedingSim_crossPopsRandomly, 6},
     {"_BitBreedingSim_crossPopsByTable", (DL_FUNC) &_BitBreedingSim_crossPopsByTable, 5},
     {"_BitBreedingSim_writeVCF", (DL_FUNC) &_BitBreedingSim_writeVCF, 2},

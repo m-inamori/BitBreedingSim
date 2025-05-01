@@ -5,7 +5,6 @@
 #include <vector>
 #include <string>
 #include "filereader.h"
-#include "Int.h"
 #include "GenomicsCommon.h"
 
 namespace GC = GenomicsCommon;

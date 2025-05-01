@@ -236,24 +236,22 @@ SEXP getMapInfo(SEXP mapPtr) {
 }
 
 // [[Rcpp::export]]
-SEXP getMapCpp(SEXP mapPtr) {
-	Rcpp::XPtr<Map>	ptr_map(mapPtr);
-	CharacterVector	chrs(ptr_map->num_chroms());
-	IntegerVector	positions(ptr_map->num_chroms());
-	size_t	k = 0;
-	for(size_t i = 0; i < ptr_map->num_chroms(); ++i) {
-		const ChromMap&	cmap = ptr_map->get_chr(i);
-		const auto	ps = cmap.collect_positions();
-		for(size_t j = 0; j < ps.size(); ++j) {
-			chrs[k] = ptr_map->get_chr(i).get_name();
-			positions[k] = ps[j].first;
-			k += 1;
+Rcpp::DataFrame getMapCpp(SEXP mapPtr) {
+	Rcpp::XPtr<Map> ptr_map(mapPtr);
+	std::vector<std::string> chrs;
+	std::vector<GC::Pos> positions;
+	
+	for (size_t i = 0; i < ptr_map->num_chroms(); ++i) {
+		const ChromMap& cmap = ptr_map->get_chr(i);
+		const auto ps = cmap.collect_positions();
+		for (size_t j = 0; j < ps.size(); ++j) {
+			chrs.push_back(ptr_map->get_chr(i).get_name());
+			positions.push_back(ps[j].first);
 		}
 	}
 	
-	Rcpp::List	pop_list = Rcpp::List::create(
-		_["chrom"] = chrs,
-		_["position"] = positions
+	return Rcpp::DataFrame::create(
+		Rcpp::Named("chrom") = chrs,
+		Rcpp::Named("position") = positions
 	);
-	return pop_list;
 }

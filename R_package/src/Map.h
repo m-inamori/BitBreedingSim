@@ -48,7 +48,7 @@ public:
 	GC::Pos Morgan_to_bp(double M) const {
 		return static_cast<int>(slope * M);
 	}
-	double bp_to_Morgan(GC::Pos bp) const { return slope * bp; }
+	double bp_to_Morgan(GC::Pos bp) const { return bp / slope; }
 	std::vector<std::pair<GC::Pos, double>> collect_positions() const {
 		return std::vector<std::pair<GC::Pos, double>> {
 			std::pair<GC::Pos, double>(0, 0.0),

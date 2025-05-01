@@ -1,6 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=gnu++17 -I"/usr/share/R/include" -I"/home/inamori/R/x86_64-pc-linux-gnu-library/4.4/Rcpp/include" -O3 -fpic
-LDFLAGS = -shared -L/usr/lib/R/lib -lR
+include Makevars
 
 BUILD_DIR = build/release
 SRC_DIR = src
@@ -9,14 +8,16 @@ TARGET = $(BUILD_DIR)/BitBreedingSim.so
 SOURCES = $(wildcard src/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
 
+CXXFLAGS = -std=gnu++17 $(PKG_CPPFLAGS) -O3 -fpic
+
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) $(LDFLAGS) -o $(TARGET)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-    mkdir -p $(BUILD_DIR)
-    $(CXX) $(CXXFLAGS) -c $< -o $@
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 install:
 	mkdir -p libs
@@ -24,4 +25,4 @@ install:
 	R CMD INSTALL .
 
 clean:
-    rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR)

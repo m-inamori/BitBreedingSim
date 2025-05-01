@@ -5,7 +5,7 @@
 #' is called. If a specific seed is provided, the random number generation will 
 #' be based on that seed, ensuring reproducible results.
 #'
-#' @name createBaseInfo
+#' @name create_base_info
 #' @import Rcpp
 #' @param chrom_maps A list of data.frames, each representing a chromosome map.
 #' Each data.frame should have two columns: 'cM' for centiMorgans and
@@ -28,7 +28,7 @@
 #' @export
 #' @examples
 #' # Create a BaseInfo object with a random seed
-#' base_info_random <- createBaseInfo()
+#' base_info_random <- create_base_info()
 #' getInfo(base_info_random)
 #'
 #' # Create a BaseInfo object with a specific seed for reproducible results
@@ -42,9 +42,9 @@
 #' chrom_map <- data.frame(cM, position)
 #' chrom_maps <- replicate(10, chrom_map, simplify = FALSE)
 #' names(chrom_maps) <- paste0("chr", 1:10)
-#' info <- createBaseInfo(chrom_maps, seed = 123)
+#' info <- create_base_info(chrom_maps, seed = 123)
 #' getInfo(info)
-createBaseInfo <- function(chrom_maps=NULL, num_chroms=10, num_markers=1000,
+create_base_info <- function(chrom_maps=NULL, num_chroms=10, num_markers=1000,
 													cM=100, bp=1000000, seed=-1) {
 	if(!is.null(chrom_maps) && !is.list(chrom_maps)) {
 		stop("Error: chrom_maps must be a list of data.frames.")
@@ -72,20 +72,40 @@ createBaseInfo <- function(chrom_maps=NULL, num_chroms=10, num_markers=1000,
 	return(info)
 }
 
-#' Get the values of a BaseInfo object
+#' Retrieve key values from a BaseInfo object
 #'
-#' @param info An external pointer to a BaseInfo object
-#' @return The list of the values of a BaseInfo object
+#' This function extracts essential information from a BaseInfo object. A BaseInfo object 
+#' stores metadata related to genetic simulations, such as the number of chromosomes, traits, 
+#' and markers. This function is useful for summarizing or verifying the content of a BaseInfo 
+#' object during analysis.
+#'
+#' @param info An external pointer to a BaseInfo object. This object must be properly initialized 
+#'             and created using the appropriate BaseInfo constructor or relevant functions.
+#' @return A list containing the following elements:
+#' \describe{
+#'   \item{num_chroms}{An integer representing the total number of chromosomes contained in the BaseInfo object.}
+#'   \item{num_traits}{An integer indicating the number of traits managed by the BaseInfo object.}
+#'   \item{num_markers}{An integer specifying the total number of markers tracked in the BaseInfo object.}
+#' }
 #' @export
-getInfo <- function(info) {
+#' @examples
+#' # Assume 'info' is a valid BaseInfo object
+#' values <- get_info(info)
+#' print(values$num_chroms)  # Print the number of chromosomes
+#' print(values$num_traits)  # Print the number of traits
+#' print(values$num_markers) # Print the number of markers
+get_info <- function(info) {
 	if(!inherits(info, "BaseInfo")) {
-		stop("Error: info is not a BaseInfo object.")
+		stop("Error: info must be a BaseInfo object.")
 	}
 	
 	num_chroms <- .Call('_BitBreedingSim_getNumChroms', info)
 	num_traits <- .Call('_BitBreedingSim_getNumTraits', info)
+	num_markers <- .Call('_BitBreedingSim_getNumAllMarkers', info)
 	
-	return(list(num_chroms = num_chroms, num_traits = num_traits))
+	return(list(num_chroms = num_chroms,
+				num_traits = num_traits,
+				num_markers = num_markers))
 }
 
 #' Get a trait from a BaseInfo object
@@ -94,7 +114,7 @@ getInfo <- function(info) {
 #' @param i An integer. The index of the trait to retrieve.
 #' @return The trait at the specified index.
 #' @export
-getTrait <- function(info, i) {
+get_trait <- function(info, i) {
 	if(!inherits(info, "BaseInfo")) {
 		stop("Error: info is not a BaseInfo object.")
 	}
@@ -118,11 +138,11 @@ getTrait <- function(info, i) {
 #' @examples
 #' \dontrun{
 #'   # Assuming `info` is a valid BaseInfo object
-#'   map <- getMap(info)
+#'   map <- get_map(info)
 #'   print(map)
 #' }
 #' @export
-getMap <- function(info) {
+get_map <- function(info) {
 	if(!inherits(info, "BaseInfo")) {
 		stop("Error: info is not a BaseInfo object.")
 	}
@@ -148,7 +168,7 @@ getMap <- function(info) {
 #' }
 #' @param num_loci Optional. Number of loci (default is 1)
 #' @export
-addTraitA <- function(info, name, mean, h2, sd = NULL, a = NULL,
+add_trait_A <- function(info, name, mean, h2, sd = NULL, a = NULL,
 												loci = NULL, num_loci = 1) {
 	if(!inherits(info, "BaseInfo")) {
 		stop("Error: info is not a BaseInfo object.")
@@ -178,8 +198,8 @@ addTraitA <- function(info, name, mean, h2, sd = NULL, a = NULL,
 	
 	add_Trait_A_wrapper(info, name, mean, h2, sd, a, loci, num_loci)
 	num = getNumTraits(info)
-	trait <- getTrait(info, num)
-	summary.Trait(trait)
+	trait <- get_trait(info, num)
+	summary_trait(trait)
 }
 
 #' Add Trait with Additive and Dominance Effects to BaseInfo
@@ -202,7 +222,7 @@ addTraitA <- function(info, name, mean, h2, sd = NULL, a = NULL,
 #' }
 #' @param num_loci Optioal. Number of loci (default is 1)
 #' @export
-addTraitAD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
+add_trait_AD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
 								a = NULL, d = NULL, loci = NULL, num_loci = 1) {
 	if(!inherits(info, "BaseInfo")) {
 		stop("Error: info is not a BaseInfo object.")
@@ -297,6 +317,6 @@ addTraitAD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
 	}
 	add_Trait_AD_wrapper(info, name, mean, sd, h2, H2, a, d, loci, num_loci)
 	num = getNumTraits(info)
-	trait <- getTrait(info, num)
-	summary.Trait(trait)
+	trait <- get_trait(info, num)
+	summary_trait(trait)
 }
