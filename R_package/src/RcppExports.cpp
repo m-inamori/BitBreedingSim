@@ -11,17 +11,29 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // createBaseInfoCpp
-SEXP createBaseInfoCpp(int num_chroms, int num_markers, double cM, int bp, int seed);
-RcppExport SEXP _BitBreedingSim_createBaseInfoCpp(SEXP num_chromsSEXP, SEXP num_markersSEXP, SEXP cMSEXP, SEXP bpSEXP, SEXP seedSEXP) {
+SEXP createBaseInfoCpp(Rcpp::List pos, double cM, int bp, int seed);
+RcppExport SEXP _BitBreedingSim_createBaseInfoCpp(SEXP posSEXP, SEXP cMSEXP, SEXP bpSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type num_chroms(num_chromsSEXP);
-    Rcpp::traits::input_parameter< int >::type num_markers(num_markersSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type pos(posSEXP);
     Rcpp::traits::input_parameter< double >::type cM(cMSEXP);
     Rcpp::traits::input_parameter< int >::type bp(bpSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(createBaseInfoCpp(num_chroms, num_markers, cM, bp, seed));
+    rcpp_result_gen = Rcpp::wrap(createBaseInfoCpp(pos, cM, bp, seed));
+    return rcpp_result_gen;
+END_RCPP
+}
+// createBaseInfoWithMap
+SEXP createBaseInfoWithMap(Rcpp::List pos, Rcpp::List chrom_maps, int seed);
+RcppExport SEXP _BitBreedingSim_createBaseInfoWithMap(SEXP posSEXP, SEXP chrom_mapsSEXP, SEXP seedSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type pos(posSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type chrom_maps(chrom_mapsSEXP);
+    Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
+    rcpp_result_gen = Rcpp::wrap(createBaseInfoWithMap(pos, chrom_maps, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -378,7 +390,8 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_BitBreedingSim_createBaseInfoCpp", (DL_FUNC) &_BitBreedingSim_createBaseInfoCpp, 5},
+    {"_BitBreedingSim_createBaseInfoCpp", (DL_FUNC) &_BitBreedingSim_createBaseInfoCpp, 4},
+    {"_BitBreedingSim_createBaseInfoWithMap", (DL_FUNC) &_BitBreedingSim_createBaseInfoWithMap, 3},
     {"_BitBreedingSim_getNumChroms", (DL_FUNC) &_BitBreedingSim_getNumChroms, 1},
     {"_BitBreedingSim_getNumTraits", (DL_FUNC) &_BitBreedingSim_getNumTraits, 1},
     {"_BitBreedingSim_getNumAllMarkers", (DL_FUNC) &_BitBreedingSim_getNumAllMarkers, 1},

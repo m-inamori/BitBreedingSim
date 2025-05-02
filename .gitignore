@@ -3,4 +3,4 @@ depend/
 obj/
 R_package/src/*.o
 R_package/src/*.so
-R_package/Makevars
+R_package/build/Makevars

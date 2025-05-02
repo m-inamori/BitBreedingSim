@@ -30,7 +30,7 @@ fi
 
 # Generate Makevars file
 echo "Generating Makevars file..."
-cat <<EOF > Makevars
+cat <<EOF > build/Makevars
 PKG_CPPFLAGS = -I$R_INCLUDE_DIR -I$RCPP_INCLUDE_DIR
 LDFLAGS = -shared -L$R_HOME/lib -lR
 EOF

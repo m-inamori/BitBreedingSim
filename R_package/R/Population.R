@@ -143,8 +143,8 @@ create_pop_from_HaploArray <- function(haploArray, info) {
 #' @export
 #' @examples
 #' info <- create_base_info(num_chroms=2, num_markers=10, cM=100, bp=1e6, seed=2)
-#' addTraitA(info, "Trait1", mean=100.0, h2=0.6, sd=10.0, num_loci = 2)
-#' trait <- getTrait(info, 1)
+#' add_trait_A(info, "Trait1", mean=100.0, h2=0.6, sd=10.0, num_loci = 2)
+#' trait <- get_trait(info, 1)
 #' 
 #' haploArray <- array(
 #'   data = rbinom(n = 120, size = 1, prob = 0.3),

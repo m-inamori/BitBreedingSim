@@ -4,8 +4,8 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-#include "exception_with_code.h"
-#include "common.h"
+#include "../include/exception_with_code.h"
+#include "../include/common.h"
 
 using namespace std;
 

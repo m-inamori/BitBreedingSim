@@ -1,4 +1,0 @@
-# src/Makevars
-CXX_STD = CXX17
-CXXFLAGS=-O3 -march=native -mtune=native -Wall
-CFLAGS=-O3 -march=native -mtune=native -Wall

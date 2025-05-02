@@ -1,13 +1,13 @@
 #include <fstream>
 #include <sstream>
 #include <climits>
-#include "BaseInfo.h"
-#include "trait.h"
-#include "population.h"
-#include "VCF.h"
-#include "bitarray.h"
-#include "bitoperation.h"
-#include "common.h"
+#include "../include/BaseInfo.h"
+#include "../include/trait.h"
+#include "../include/population.h"
+#include "../include/VCF.h"
+#include "../include/bitarray.h"
+#include "../include/bitoperation.h"
+#include "../include/common.h"
 
 using namespace std;
 using namespace Rcpp;

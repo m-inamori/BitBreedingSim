@@ -1,10 +1,11 @@
 CXX = g++
-include Makevars
+include build/Makevars
 
 LDFLAGS = -shared -L/usr/lib/R/lib -lR
 
 BUILD_DIR = build/debug
 SRC_DIR = src
+PKG_LIBS = -L$(LDFLAGS) -lBitBreedingSim
 TARGET = $(BUILD_DIR)/BitBreedingSim.so
 
 CXXFLAGS = -std=gnu++17 $(PKG_CPPFLAGS) -g3 -O0 -fno-inline -DDEBUG -fpic
@@ -22,8 +23,6 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 install:
-	mkdir -p libs
-	cp $(BUILD_DIR)/BitBreedingSim.so libs/
 	R CMD INSTALL .
 
 clean:

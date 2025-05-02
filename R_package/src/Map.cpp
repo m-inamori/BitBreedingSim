@@ -2,8 +2,8 @@
 #include <sstream>
 #include <iomanip>
 #include <random>
-#include "Map.h"
-#include "common.h"
+#include "../include/Map.h"
+#include "../include/common.h"
 
 using namespace std;
 using namespace Rcpp;
@@ -43,15 +43,14 @@ double ChromMapLines::bp_to_Morgan(GC::Pos bp) const {
 	size_t	last = Morgans.size();
 	while(last - first > 1) {
 		const size_t	mid = (first + last) / 2;
-		const double	m = positions[mid];
-		if(Morgans[mid] < bp)
-			last = mid;
-		else
+		if(positions[mid] < bp)
 			first = mid;
+		else
+			last = mid;
 	}
 	return (Morgans[first+1] - Morgans[first]) /
 			(positions[first+1] - positions[first]) * (bp - positions[first]) +
-															positions[first];
+																Morgans[first];
 }
 
 ChromMapLines *ChromMapLines::create(const string& name,
@@ -195,7 +194,6 @@ Map *Map::create_map_from_list(Rcpp::List chrom_maps) {
 	std::vector<const ChromMap*> maps;
 	Rcpp::CharacterVector names = chrom_maps.names();
 	for(int i = 0; i < chrom_maps.size(); ++i) {
-//		Rcpp::DataFrame	df = chrom_maps[i];
 		Rcpp::DataFrame df = Rcpp::as<Rcpp::DataFrame>(chrom_maps[i]);
 		const string	name = Rcpp::as<string>(names[i]);
 		const ChromMap	*chr_map = create_chrom_map_lines_from_df(df, name);

@@ -7,20 +7,24 @@
 #'
 #' @name create_base_info
 #' @import Rcpp
+#' @param positions Optional. A list of numeric vectors, where each vector represents 
+#' the marker positions for a chromosome in base pairs. Each list element corresponds 
+#' to a chromosome, and the number of elements should match `num_chroms`. If `positions` 
+#' is provided, `num_chroms` and `num_markers` are ignored.
 #' @param chrom_maps A list of data.frames, each representing a chromosome map.
 #' Each data.frame should have two columns: 'cM' for centiMorgans and
 #' 'position' for base pair positions. The list should be named, with each name 
 #' corresponding to a chromosome identifier (e.g., "chr1", "chr2", etc.).
-#' If chrom_maps is provided, the parameters num_chroms, num_markers, cM, and 
-#' bp are ignored.
-#' @param num_chroms Optional. An integer. Number of chromosomes. Ignored if chrom_maps 
-#' is provided. Default is 10.
+#' If `chrom_maps` is provided, the parameters `num_chroms`, `num_markers`, `cM`, 
+#' and `bp` are ignored.
+#' @param num_chroms Optional. An integer. Number of chromosomes. Ignored if either 
+#' `chrom_maps` or `positions` is provided. Default is 10.
 #' @param num_markers Optional. An integer. Number of markers per chromosome. Ignored if 
-#' chrom_maps is provided. Default is 1000.
+#' `chrom_maps` or `positions` is provided. Default is 1000.
 #' @param cM A numeric. Optional. Length of each chromosome in centiMorgans. Ignored if 
-#' chrom_maps is provided. Default is 100.
+#' `chrom_maps` is provided. Default is 100.
 #' @param bp An integer. Optional. Length of each chromosome in base pairs. Ignored if 
-#' chrom_maps is provided. Default is 1000000.
+#' `chrom_maps` is provided. Default is 100000000.
 #' @param seed An integer. Optional. A seed for random number generation. Default is -1, 
 #' which generates a random seed.
 #' @return An external pointer to a BaseInfo object.
@@ -29,28 +33,43 @@
 #' @examples
 #' # Create a BaseInfo object with a random seed
 #' base_info_random <- create_base_info()
-#' getInfo(base_info_random)
+#' get_info(base_info_random)
 #'
 #' # Create a BaseInfo object with a specific seed for reproducible results
-#' base_info_reproducible <- createBaseInfo(seed = 123)
-#' getInfo(base_info_reproducible)
+#' base_info_reproducible <- create_base_info(seed = 123)
+#' get_info(base_info_reproducible)
 #'
-#' # Create a chromosome map with 100 cM and 1 Mbp, containing 1000 markers
+#' # Create marker positions manually
+#' num_chr <- 10
+#' position <- sapply(1:100, function(i) i * 1000000)
+#' positions <- replicate(10, position, simplify = FALSE)
+#'
+#' # Create a chromosome map with 100 cM and 1 Mbp
 #' f <- function(x) { (x^3 / (1 + x^2) + 8/5) * 500 / 16 }
-#' cM <- sapply(1:1000, function(i) f(i/250 - 2))
-#' position <- sapply(1:1000, function(i) i * 1000)
-#' chrom_map <- data.frame(cM, position)
+#' cM <- sapply(1:10, function(i) f(i/2.5 - 2))
+#' chr_position <- sapply(1:10, function(i) i * 10000000)
+#' chrom_map <- data.frame(cM, chr_position)
 #' chrom_maps <- replicate(10, chrom_map, simplify = FALSE)
 #' names(chrom_maps) <- paste0("chr", 1:10)
-#' info <- create_base_info(chrom_maps, seed = 123)
-#' getInfo(info)
-create_base_info <- function(chrom_maps=NULL, num_chroms=10, num_markers=1000,
-													cM=100, bp=1000000, seed=-1) {
+#' info <- create_base_info(positions = positions, chrom_maps = chrom_maps, seed = 123)
+#' get_info(info)
+create_base_info <- function(positions=NULL, num_markers=1000, bp=100000000,
+							 chrom_maps=NULL, num_chroms=10, cM=100, seed=-1) {
+	if(!is.null(positions) && !is.list(positions)) {
+		stop("Error: positions must be a list of data.frames.")
+	}
 	if(!is.null(chrom_maps) && !is.list(chrom_maps)) {
 		stop("Error: chrom_maps must be a list of data.frames.")
 	}
 	if(!is.numeric(num_chroms) || num_chroms <= 0) {
 		stop("Error: num_chroms must be a positive integer.")
+	}
+	if(!is.null(chrom_maps) && length(chrom_maps) != num_chroms) {
+		stop("Error: size of chrom_maps and num_chroms must be the same.")
+	}
+	if(!is.null(positions) && !is.null(chrom_maps) &&
+								length(chrom_maps) != length(positions)) {
+		stop("Error: sizes of positions and chrom_maps must be the same.")
 	}
 	if(!is.numeric(num_markers) || num_markers <= 0) {
 		stop("Error: num_markers must be a positive integer.")
@@ -64,9 +83,24 @@ create_base_info <- function(chrom_maps=NULL, num_chroms=10, num_markers=1000,
 	if(!is.numeric(seed)) {
 		stop("Error: seed must be an integer.")
 	}
+	
+	# create default marker positions
+	if(is.null(positions)) {
+		step <- (bp - 1) %/% (num_markers - 1)	# common difference
+		first_term <- bp - (num_markers - 1) * step
+		
+		# Generate the arithmetic sequence as natural numbers
+		position <- seq(from = first_term, to = bp, by = step)
+		positions <- replicate(num_chroms, position, simplify = FALSE)
+	}
+	
 	if(is.null(chrom_maps)) {
-		info <- .Call('_BitBreedingSim_createBaseInfoCpp', num_chroms,
-													num_markers, cM, bp, seed)
+		info <- .Call('_BitBreedingSim_createBaseInfoCpp',
+												positions, cM, bp, seed)
+	}
+	else {
+		info <- .Call('_BitBreedingSim_createBaseInfoWithMap',
+												positions, chrom_maps, seed)
 	}
 	class(info) <- "BaseInfo"
 	return(info)

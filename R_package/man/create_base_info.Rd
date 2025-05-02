@@ -5,33 +5,39 @@
 \title{Create a BaseInfo object}
 \usage{
 create_base_info(
+  positions = NULL,
+  num_markers = 1000,
+  bp = 1e+08,
   chrom_maps = NULL,
   num_chroms = 10,
-  num_markers = 1000,
   cM = 100,
-  bp = 1e+06,
   seed = -1
 )
 }
 \arguments{
+\item{positions}{Optional. A list of numeric vectors, where each vector represents
+the marker positions for a chromosome in base pairs. Each list element corresponds
+to a chromosome, and the number of elements should match \code{num_chroms}. If \code{positions}
+is provided, \code{num_chroms} and \code{num_markers} are ignored.}
+
+\item{num_markers}{Optional. An integer. Number of markers per chromosome. Ignored if
+\code{chrom_maps} or \code{positions} is provided. Default is 1000.}
+
+\item{bp}{An integer. Optional. Length of each chromosome in base pairs. Ignored if
+\code{chrom_maps} is provided. Default is 100000000.}
+
 \item{chrom_maps}{A list of data.frames, each representing a chromosome map.
 Each data.frame should have two columns: 'cM' for centiMorgans and
 'position' for base pair positions. The list should be named, with each name
 corresponding to a chromosome identifier (e.g., "chr1", "chr2", etc.).
-If chrom_maps is provided, the parameters num_chroms, num_markers, cM, and
-bp are ignored.}
+If \code{chrom_maps} is provided, the parameters \code{num_chroms}, \code{num_markers}, \code{cM},
+and \code{bp} are ignored.}
 
-\item{num_chroms}{Optional. An integer. Number of chromosomes. Ignored if chrom_maps
-is provided. Default is 10.}
-
-\item{num_markers}{Optional. An integer. Number of markers per chromosome. Ignored if
-chrom_maps is provided. Default is 1000.}
+\item{num_chroms}{Optional. An integer. Number of chromosomes. Ignored if either
+\code{chrom_maps} or \code{positions} is provided. Default is 10.}
 
 \item{cM}{A numeric. Optional. Length of each chromosome in centiMorgans. Ignored if
-chrom_maps is provided. Default is 100.}
-
-\item{bp}{An integer. Optional. Length of each chromosome in base pairs. Ignored if
-chrom_maps is provided. Default is 1000000.}
+\code{chrom_maps} is provided. Default is 100.}
 
 \item{seed}{An integer. Optional. A seed for random number generation. Default is -1,
 which generates a random seed.}
@@ -48,19 +54,24 @@ be based on that seed, ensuring reproducible results.
 \examples{
 # Create a BaseInfo object with a random seed
 base_info_random <- create_base_info()
-getInfo(base_info_random)
+get_info(base_info_random)
 
 # Create a BaseInfo object with a specific seed for reproducible results
-base_info_reproducible <- createBaseInfo(seed = 123)
-getInfo(base_info_reproducible)
+base_info_reproducible <- create_base_info(seed = 123)
+get_info(base_info_reproducible)
+
+# Create marker positions manually
+num_chr <- 10
+position <- sapply(1:100, function(i) i * 1000000)
+positions <- replicate(10, position, simplify = FALSE)
 
 # Create a chromosome map with 100 cM and 1 Mbp, containing 1000 markers
 f <- function(x) { (x^3 / (1 + x^2) + 8/5) * 500 / 16 }
-cM <- sapply(1:1000, function(i) f(i/250 - 2))
-position <- sapply(1:1000, function(i) i * 1000)
-chrom_map <- data.frame(cM, position)
+cM <- sapply(1:10, function(i) f(i/2.5 - 2))
+chr_position <- sapply(1:10, function(i) i * 10000000)
+chrom_map <- data.frame(cM, chr_position)
 chrom_maps <- replicate(10, chrom_map, simplify = FALSE)
 names(chrom_maps) <- paste0("chr", 1:10)
-info <- create_base_info(chrom_maps, seed = 123)
-getInfo(info)
+info <- create_base_info(positions = positions, chrom_maps = chrom_maps, seed = 123)
+get_info(info)
 }

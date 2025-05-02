@@ -1,9 +1,9 @@
 #include <sstream>
 
-#include "BaseInfo.h"
-#include "Map.h"
-#include "population.h"
-#include "common.h"
+#include "../include/BaseInfo.h"
+#include "../include/Map.h"
+#include "../include/population.h"
+#include "../include/common.h"
 
 using namespace std;
 using namespace Rcpp;
@@ -28,14 +28,10 @@ const string& BaseInfo::get_trait_name(size_t i) const {
 	return traits[i]->get_name();
 }
 
-BaseInfo *BaseInfo::create_default(int num_chroms, int num_markers,
-										double cM, GC::Pos bp, int seed) {
+BaseInfo *BaseInfo::create_default(const vector<vector<GC::Pos>>& positions,
+														double cM, int seed) {
+	const size_t	num_chroms = positions.size();
 	const Map	*gmap = Map::create_default(num_chroms, 1e8);
-	vector<vector<GC::Pos>>	positions(num_chroms, vector<GC::Pos>(num_markers));
-	for(size_t i = 0; i < num_chroms; ++i) {
-		for(size_t k = 0; k < num_markers; ++k)
-			positions[i][k] = static_cast<GC::Pos>((k + 1) * bp / num_markers);
-	}
 	vector<const Trait *>	traits;
 	
 	if(seed == -1) {
@@ -43,8 +39,8 @@ BaseInfo *BaseInfo::create_default(int num_chroms, int num_markers,
 		return new BaseInfo(positions, gmap, traits, seed_gen());
 	}
 	else {
-		return new BaseInfo(positions, gmap, traits,
-										static_cast<std::uint_fast32_t>(seed));
+		const auto	s = static_cast<std::uint_fast32_t>(seed);
+		return new BaseInfo(positions, gmap, traits, s);
 	}
 }
 
@@ -158,7 +154,7 @@ vector<double> BaseInfo::compute_phenotypes(const Population& pop,
 	return phenotypes;
 }
 
-// Rのデータフレームからstd::vector<Trait::Locus>に変換する関数
+// convert from an R data frame to a std::vector<Trait::Locus>
 vector<Trait::Locus> dataframe_to_loci(const DataFrame& df) {
 	vector<Trait::Locus> loci;
 	IntegerVector chrom = df["chrom"];
@@ -170,10 +166,35 @@ vector<Trait::Locus> dataframe_to_loci(const DataFrame& df) {
 }
 
 // [[Rcpp::export]]
-SEXP createBaseInfoCpp(int num_chroms, int num_markers,
-								double cM, int bp, int seed) {
-	Rcpp::XPtr<BaseInfo> ptr(BaseInfo::create_default(num_chroms, num_markers,
-														cM, bp, seed), true);
+SEXP createBaseInfoCpp(Rcpp::List pos, double cM, int bp, int seed) {
+	vector<vector<GC::Pos>>	positions(pos.size());
+	for(size_t i = 0; i < positions.size(); ++i) {
+		NumericVector	r_vec = pos[i];
+		positions[i].reserve(r_vec.size());
+		for(double value : r_vec) {
+			positions[i].push_back(static_cast<GC::Pos>(value));
+		}
+	}
+	auto	*info = BaseInfo::create_default(positions, cM, seed);
+	Rcpp::XPtr<BaseInfo> ptr(info, true);
+	return ptr;
+}
+
+// [[Rcpp::export]]
+SEXP createBaseInfoWithMap(Rcpp::List pos, Rcpp::List chrom_maps, int seed) {
+	vector<vector<GC::Pos>>	positions(pos.size());
+	for(size_t i = 0; i < positions.size(); ++i) {
+		NumericVector	r_vec = pos[i];
+		positions[i].reserve(r_vec.size());
+		for(double value : r_vec) {
+			positions[i].push_back(static_cast<GC::Pos>(value));
+		}
+	}
+	const Map	*gmap = Map::create_map_from_list(chrom_maps);
+	vector<const Trait*> traits;
+	const auto	s = static_cast<std::uint_fast32_t>(seed);
+	BaseInfo* base_info = new BaseInfo(positions, gmap, traits, s);
+	Rcpp::XPtr<BaseInfo> ptr(base_info, true);
 	return ptr;
 }
 

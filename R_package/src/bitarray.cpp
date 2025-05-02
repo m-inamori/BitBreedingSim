@@ -1,5 +1,5 @@
-#include "bitarray.h"
-#include "bitoperation.h"
+#include "../include/bitarray.h"
+#include "../include/bitoperation.h"
 
 using namespace std;
 

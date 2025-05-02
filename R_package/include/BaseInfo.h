@@ -96,9 +96,10 @@ public:
 										const std::vector<Trait::Locus>& loci);
 	
 public:
-	static BaseInfo *create_default(int num_chroms, int num_markers,
-										double cM, GC::Pos bp, int seed);
+	static BaseInfo *create_default(
+						const std::vector<std::vector<GC::Pos>>& positions,
+						double cM, int seed);
 	static BaseInfo *create_from_markers(
-							const std::vector<std::size_t>& num_markers,
-							const std::vector<int>& bps, int seed);
+						const std::vector<std::size_t>& num_markers,
+						const std::vector<int>& bps, std::uint_fast32_t seed);
 };

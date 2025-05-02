@@ -1,8 +1,9 @@
 CXX = g++
-include Makevars
+include build/Makevars
 
 BUILD_DIR = build/release
 SRC_DIR = src
+PKG_LIBS = -L$(LDFLAGS) -lBitBreedingSim
 TARGET = $(BUILD_DIR)/BitBreedingSim.so
 
 SOURCES = $(wildcard src/*.cpp)
@@ -20,8 +21,6 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 install:
-	mkdir -p libs
-	cp $(BUILD_DIR)/BitBreedingSim.so libs/
 	R CMD INSTALL .
 
 clean:

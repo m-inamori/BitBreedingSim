@@ -1,10 +1,10 @@
 #include <random>
 #include <cmath>
-#include "trait.h"
-#include "BaseInfo.h"
-#include "population.h"
-#include "Map.h"
-#include "common.h"
+#include "../include/trait.h"
+#include "../include/BaseInfo.h"
+#include "../include/population.h"
+#include "../include/Map.h"
+#include "../include/common.h"
 
 using namespace std;
 
