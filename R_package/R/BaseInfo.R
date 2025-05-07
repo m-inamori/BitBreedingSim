@@ -8,24 +8,26 @@
 #' @name create_base_info
 #' @import Rcpp
 #' @param positions Optional. A list of numeric vectors, where each vector represents 
-#' the marker positions for a chromosome in base pairs. Each list element corresponds 
-#' to a chromosome, and the number of elements should match `num_chroms`. If `positions` 
-#' is provided, `num_chroms` and `num_markers` are ignored.
-#' @param chrom_maps A list of data.frames, each representing a chromosome map.
+#' the marker positions for a chromosome in base pairs. The number of elements in 
+#' `positions` defines the number of chromosomes and overrides `num_chroms`. If `positions` 
+#' is provided, `num_markers` is ignored.
+#' @param num_markers Optional. An integer. Number of markers per chromosome. Ignored if 
+#' `positions` is provided. Default is 1000.
+#' @param bp Optional. An integer. Length of each chromosome in base pairs. Ignored if 
+#' `positions` is provided. Default is 100000000.
+#' @param chrom_maps Optional. A list of data.frames, each representing a chromosome map.
 #' Each data.frame should have two columns: 'cM' for centiMorgans and
 #' 'position' for base pair positions. The list should be named, with each name 
 #' corresponding to a chromosome identifier (e.g., "chr1", "chr2", etc.).
-#' If `chrom_maps` is provided, the parameters `num_chroms`, `num_markers`, `cM`, 
-#' and `bp` are ignored.
+#' For a given `cM` value, the corresponding `position` can be interpolated or extrapolated,
+#' and vice versa. This effectively represents the mapping as a piecewise linear 
+#' approximation of the chromosome's relationship between cM and base pair positions.
+#' If `chrom_maps` is provided, the parameter `num_chroms` is ignored.
 #' @param num_chroms Optional. An integer. Number of chromosomes. Ignored if either 
 #' `chrom_maps` or `positions` is provided. Default is 10.
-#' @param num_markers Optional. An integer. Number of markers per chromosome. Ignored if 
-#' `chrom_maps` or `positions` is provided. Default is 1000.
-#' @param cM A numeric. Optional. Length of each chromosome in centiMorgans. Ignored if 
+#' @param cM Optional. A numeric. Length of each chromosome in centiMorgans. Ignored if 
 #' `chrom_maps` is provided. Default is 100.
-#' @param bp An integer. Optional. Length of each chromosome in base pairs. Ignored if 
-#' `chrom_maps` is provided. Default is 100000000.
-#' @param seed An integer. Optional. A seed for random number generation. Default is -1, 
+#' @param seed Optional. An integer. A seed for random number generation. Default is -1, 
 #' which generates a random seed.
 #' @return An external pointer to a BaseInfo object.
 #' @useDynLib BitBreedingSim, .registration = TRUE
@@ -44,9 +46,8 @@
 #' position <- sapply(1:100, function(i) i * 1000000)
 #' positions <- replicate(10, position, simplify = FALSE)
 #'
-#' # Create a chromosome map with 100 cM and 1 Mbp
-#' f <- function(x) { (x^3 / (1 + x^2) + 8/5) * 500 / 16 }
-#' cM <- sapply(1:10, function(i) f(i/2.5 - 2))
+#' # Create a chromosome map with 100 cM and 100 Mbp
+#' cM <- c(14.0, 27.9, 40.2, 48.3, 50.0, 51.7, 59.8, 72.1, 86.0, 100.0)
 #' chr_position <- sapply(1:10, function(i) i * 10000000)
 #' chrom_map <- data.frame(cM, chr_position)
 #' chrom_maps <- replicate(10, chrom_map, simplify = FALSE)
@@ -95,8 +96,7 @@ create_base_info <- function(positions=NULL, num_markers=1000, bp=100000000,
 	}
 	
 	if(is.null(chrom_maps)) {
-		info <- .Call('_BitBreedingSim_createBaseInfoCpp',
-												positions, cM, bp, seed)
+		info <- .Call('_BitBreedingSim_createBaseInfoCpp', positions, cM, seed)
 	}
 	else {
 		info <- .Call('_BitBreedingSim_createBaseInfoWithMap',

@@ -16,30 +16,32 @@ create_base_info(
 }
 \arguments{
 \item{positions}{Optional. A list of numeric vectors, where each vector represents
-the marker positions for a chromosome in base pairs. Each list element corresponds
-to a chromosome, and the number of elements should match \code{num_chroms}. If \code{positions}
-is provided, \code{num_chroms} and \code{num_markers} are ignored.}
+the marker positions for a chromosome in base pairs. The number of elements in
+\code{positions} defines the number of chromosomes and overrides \code{num_chroms}. If \code{positions}
+is provided, \code{num_markers} is ignored.}
 
 \item{num_markers}{Optional. An integer. Number of markers per chromosome. Ignored if
-\code{chrom_maps} or \code{positions} is provided. Default is 1000.}
+\code{positions} is provided. Default is 1000.}
 
-\item{bp}{An integer. Optional. Length of each chromosome in base pairs. Ignored if
-\code{chrom_maps} is provided. Default is 100000000.}
+\item{bp}{Optional. An integer. Length of each chromosome in base pairs. Ignored if
+\code{positions} is provided. Default is 100000000.}
 
-\item{chrom_maps}{A list of data.frames, each representing a chromosome map.
+\item{chrom_maps}{Optional. A list of data.frames, each representing a chromosome map.
 Each data.frame should have two columns: 'cM' for centiMorgans and
 'position' for base pair positions. The list should be named, with each name
 corresponding to a chromosome identifier (e.g., "chr1", "chr2", etc.).
-If \code{chrom_maps} is provided, the parameters \code{num_chroms}, \code{num_markers}, \code{cM},
-and \code{bp} are ignored.}
+For a given \code{cM} value, the corresponding \code{position} can be interpolated or extrapolated,
+and vice versa. This effectively represents the mapping as a piecewise linear
+approximation of the chromosome's relationship between cM and base pair positions.
+If \code{chrom_maps} is provided, the parameter \code{num_chroms} is ignored.}
 
 \item{num_chroms}{Optional. An integer. Number of chromosomes. Ignored if either
 \code{chrom_maps} or \code{positions} is provided. Default is 10.}
 
-\item{cM}{A numeric. Optional. Length of each chromosome in centiMorgans. Ignored if
+\item{cM}{Optional. A numeric. Length of each chromosome in centiMorgans. Ignored if
 \code{chrom_maps} is provided. Default is 100.}
 
-\item{seed}{An integer. Optional. A seed for random number generation. Default is -1,
+\item{seed}{Optional. An integer. A seed for random number generation. Default is -1,
 which generates a random seed.}
 }
 \value{
@@ -65,9 +67,8 @@ num_chr <- 10
 position <- sapply(1:100, function(i) i * 1000000)
 positions <- replicate(10, position, simplify = FALSE)
 
-# Create a chromosome map with 100 cM and 1 Mbp, containing 1000 markers
-f <- function(x) { (x^3 / (1 + x^2) + 8/5) * 500 / 16 }
-cM <- sapply(1:10, function(i) f(i/2.5 - 2))
+# Create a chromosome map with 100 cM and 100 Mbp
+cM <- c(14.0, 27.9, 40.2, 48.3, 50.0, 51.7, 59.8, 72.1, 86.0, 100.0)
 chr_position <- sapply(1:10, function(i) i * 10000000)
 chrom_map <- data.frame(cM, chr_position)
 chrom_maps <- replicate(10, chrom_map, simplify = FALSE)

@@ -35,7 +35,7 @@ GC::Pos ChromMapLines::Morgan_to_bp(double M) const {
 	}
 	return (positions[first+1] - positions[first]) /
 					(Morgans[first+1] - Morgans[first]) * (M - Morgans[first]) +
-																Morgans[first];
+																positions[first];
 }
 
 double ChromMapLines::bp_to_Morgan(GC::Pos bp) const {

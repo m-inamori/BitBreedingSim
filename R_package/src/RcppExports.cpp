@@ -11,16 +11,15 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // createBaseInfoCpp
-SEXP createBaseInfoCpp(Rcpp::List pos, double cM, int bp, int seed);
-RcppExport SEXP _BitBreedingSim_createBaseInfoCpp(SEXP posSEXP, SEXP cMSEXP, SEXP bpSEXP, SEXP seedSEXP) {
+SEXP createBaseInfoCpp(Rcpp::List pos, double cM, int seed);
+RcppExport SEXP _BitBreedingSim_createBaseInfoCpp(SEXP posSEXP, SEXP cMSEXP, SEXP seedSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type pos(posSEXP);
     Rcpp::traits::input_parameter< double >::type cM(cMSEXP);
-    Rcpp::traits::input_parameter< int >::type bp(bpSEXP);
     Rcpp::traits::input_parameter< int >::type seed(seedSEXP);
-    rcpp_result_gen = Rcpp::wrap(createBaseInfoCpp(pos, cM, bp, seed));
+    rcpp_result_gen = Rcpp::wrap(createBaseInfoCpp(pos, cM, seed));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -390,7 +389,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_BitBreedingSim_createBaseInfoCpp", (DL_FUNC) &_BitBreedingSim_createBaseInfoCpp, 4},
+    {"_BitBreedingSim_createBaseInfoCpp", (DL_FUNC) &_BitBreedingSim_createBaseInfoCpp, 3},
     {"_BitBreedingSim_createBaseInfoWithMap", (DL_FUNC) &_BitBreedingSim_createBaseInfoWithMap, 3},
     {"_BitBreedingSim_getNumChroms", (DL_FUNC) &_BitBreedingSim_getNumChroms, 1},
     {"_BitBreedingSim_getNumTraits", (DL_FUNC) &_BitBreedingSim_getNumTraits, 1},

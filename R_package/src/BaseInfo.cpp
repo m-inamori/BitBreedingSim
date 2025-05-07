@@ -166,7 +166,7 @@ vector<Trait::Locus> dataframe_to_loci(const DataFrame& df) {
 }
 
 // [[Rcpp::export]]
-SEXP createBaseInfoCpp(Rcpp::List pos, double cM, int bp, int seed) {
+SEXP createBaseInfoCpp(Rcpp::List pos, double cM, int seed) {
 	vector<vector<GC::Pos>>	positions(pos.size());
 	for(size_t i = 0; i < positions.size(); ++i) {
 		NumericVector	r_vec = pos[i];
@@ -193,7 +193,7 @@ SEXP createBaseInfoWithMap(Rcpp::List pos, Rcpp::List chrom_maps, int seed) {
 	const Map	*gmap = Map::create_map_from_list(chrom_maps);
 	vector<const Trait*> traits;
 	const auto	s = static_cast<std::uint_fast32_t>(seed);
-	BaseInfo* base_info = new BaseInfo(positions, gmap, traits, s);
+	BaseInfo	*base_info = new BaseInfo(positions, gmap, traits, s);
 	Rcpp::XPtr<BaseInfo> ptr(base_info, true);
 	return ptr;
 }
