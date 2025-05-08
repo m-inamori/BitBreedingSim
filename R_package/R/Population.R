@@ -165,6 +165,40 @@ create_HaploArray_from_pop <- function(pop) {
 	return(.Call('_BitBreedingSim_createHaploArrayFromPop', pop))
 }
 
+#' Set sample names for a Population object
+#'
+#' This function assigns names to samples in a Population object. 
+#' The `names` argument must be a character vector, and `pop` must be an object 
+#' of the "Population" class.
+#'
+#' @param names A character vector containing the names of samples to assign.
+#' @param pop A Population object where the sample names will be set.
+#' @return None. The function modifies the Population object directly.
+#' @examples
+#' # Create a Population object and set sample names
+#' info <- create_base_info()
+#' pop <- create_origins(2, info, "ind")
+#' set_sample_names(c("sample1", "sample2"), pop)
+#'
+#' # Access the updated sample names
+#' get_sample_names(pop)
+#' @export
+set_sample_names <- function(names, pop) {
+	if(!is.character(names) || !is.vector(names)) {
+		stop("Error: names must be a character vector.")
+	}
+	if(!inherits(pop, "Population")) {
+		stop("Error: pop must be a Population object.")
+	}
+	ret <- get_pop_info(pop)
+	if(ret$num_individuals != length(names)) {
+		stop(paste("Error: length of names (", length(names), 
+			") must match the number of samples in the Population (",
+			num, ")."))
+	}
+	return(.Call('_BitBreedingSim_setSampleNames', names, pop))
+}
+
 #' Cross two Population randomly
 #'
 #' @param num_inds An integer. The number of individuals.
@@ -503,9 +537,9 @@ join_pops <- function(...) {
 #' @export
 #' @examples
 #' # Assuming 'pop' is a valid Population object
-#' name_data <- get_pop_names(pop)
+#' name_data <- get_sample_names(pop)
 #' print(name_data)
-get_pop_names <- function(pop) {
+get_sample_names <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: pop must be a Population object.")
 	}

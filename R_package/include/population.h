@@ -115,7 +115,7 @@ private:
 private:
 	std::vector<const BitChrPopulation *>	chr_populations;
 	const BaseInfo	*info;
-	const std::vector<std::string>	names;
+	std::vector<std::string>	names;
 	const std::vector<std::string>	mats;
 	const std::vector<std::string>	pats;
 	std::vector<std::vector<double>>	phenotypes;
@@ -167,6 +167,7 @@ public:
 	void write_VCF(std::ostream& os) const;
 	
 	void set_phenotypes(const BaseInfo *info);
+	void set_names(const std::vector<std::string>& names_);
 	std::vector<std::vector<double>> compute_phenotypes(const BaseInfo *ifno,
 														std::mt19937 &engine);
 	std::vector<double> get_phenotypes(std::size_t i) const {

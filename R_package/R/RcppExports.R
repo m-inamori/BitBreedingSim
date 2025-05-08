@@ -69,6 +69,10 @@ createHaploArrayFromPop <- function(pop_ptr) {
     .Call(`_BitBreedingSim_createHaploArrayFromPop`, pop_ptr)
 }
 
+setSampleNames <- function(names_, pop_ptr) {
+    invisible(.Call(`_BitBreedingSim_setSampleNames`, names_, pop_ptr))
+}
+
 crossPopsRandomly <- function(num_inds, mothers, fathers, name_base, names, T) {
     .Call(`_BitBreedingSim_crossPopsRandomly`, num_inds, mothers, fathers, name_base, names, T)
 }

@@ -221,6 +221,17 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// setSampleNames
+void setSampleNames(const CharacterVector& names_, SEXP pop_ptr);
+RcppExport SEXP _BitBreedingSim_setSampleNames(SEXP names_SEXP, SEXP pop_ptrSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const CharacterVector& >::type names_(names_SEXP);
+    Rcpp::traits::input_parameter< SEXP >::type pop_ptr(pop_ptrSEXP);
+    setSampleNames(names_, pop_ptr);
+    return R_NilValue;
+END_RCPP
+}
 // crossPopsRandomly
 SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers, SEXP name_base, Rcpp::CharacterVector names, int T);
 RcppExport SEXP _BitBreedingSim_crossPopsRandomly(SEXP num_indsSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP name_baseSEXP, SEXP namesSEXP, SEXP TSEXP) {
@@ -406,6 +417,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_createInfoAndPopFromVCF", (DL_FUNC) &_BitBreedingSim_createInfoAndPopFromVCF, 2},
     {"_BitBreedingSim_createPopFromHaploArray", (DL_FUNC) &_BitBreedingSim_createPopFromHaploArray, 2},
     {"_BitBreedingSim_createHaploArrayFromPop", (DL_FUNC) &_BitBreedingSim_createHaploArrayFromPop, 1},
+    {"_BitBreedingSim_setSampleNames", (DL_FUNC) &_BitBreedingSim_setSampleNames, 2},
     {"_BitBreedingSim_crossPopsRandomly", (DL_FUNC) &_BitBreedingSim_crossPopsRandomly, 6},
     {"_BitBreedingSim_crossPopsByTable", (DL_FUNC) &_BitBreedingSim_crossPopsByTable, 5},
     {"_BitBreedingSim_writeVCF", (DL_FUNC) &_BitBreedingSim_writeVCF, 2},

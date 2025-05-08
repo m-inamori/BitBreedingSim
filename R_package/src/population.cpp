@@ -70,6 +70,8 @@ void BitChrPopulation::cross(const vector<Pair>& pairs,
 	}
 }
 
+// Returns the index of the smallest marker position (in base pairs)
+// that is greater than or equal to the position corresponding to the given Morgan value (M).
 size_t BitChrPopulation::Morgan_to_index(double M) const {
 	const int	bp = chrmap.Morgan_to_bp(M);
 	size_t	first = 0;
@@ -341,6 +343,10 @@ vector<Population::Pair> Population::make_pairs_by_table(
 		}
 	}
 	return pairs;
+}
+
+void Population::set_names(const vector<string>& names_) {
+	names = names_;
 }
 
 Population *Population::cross_randomly(size_t num_inds,
@@ -678,7 +684,7 @@ SEXP createPopFromHaploArray(const NumericVector& haploArray, SEXP info) {
 
 // [[Rcpp::export]]
 NumericVector createHaploArrayFromPop(SEXP pop_ptr) {
-	Rcpp::XPtr<Population> pop(pop_ptr);
+	Rcpp::XPtr<Population>	pop(pop_ptr);
 	const BaseInfo	*info = pop->get_info();
 	const size_t	num_inds = pop->num_inds();
 	const size_t	num_markers = info->get_num_all_markers();
@@ -718,6 +724,13 @@ NumericVector createHaploArrayFromPop(SEXP pop_ptr) {
 	}
 	
 	return haploArray;
+}
+
+// [[Rcpp::export]]
+void setSampleNames(const CharacterVector& names_, SEXP pop_ptr) {
+	Rcpp::XPtr<Population>	pop(pop_ptr);
+	vector<string>	names(names_.begin(), names_.end());
+	pop->set_names(names);
 }
 
 // [[Rcpp::export]]
