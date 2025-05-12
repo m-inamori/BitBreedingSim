@@ -40,3 +40,9 @@ loci <- data.frame(chrom, marker)
 \description{
 This function adds a trait with additive effects to the BaseInfo object.
 }
+\examples{
+# Assume 'info' is a valid BaseInfo object
+add_trait_A(info, "Trait1", mean=100.0, h2=0.6, sd=10.0, num_loci = 2)
+trait <- get_trait(info, 1)
+summary(trait)
+}

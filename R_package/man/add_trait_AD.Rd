@@ -46,3 +46,9 @@ loci <- data.frame(chrom, marker)
 \description{
 This function adds a trait with additive and dominance effects to the BaseInfo object.
 }
+\examples{
+# Assume 'info' is a valid BaseInfo object
+add_trait_AD(info, "Trait1", mean=100.0, h2=0.6, H2=0.7, sd=10.0, num_loci = 2)
+trait <- get_trait(info, 1)
+summary(trait)
+}

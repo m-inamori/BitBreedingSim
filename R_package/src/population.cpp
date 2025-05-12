@@ -241,8 +241,9 @@ vector<vector<double>> Population::compute_phenotypes(const BaseInfo *info,
 	return phenotypes;
 }
 
-Population *Population::create_origins(size_t num_inds,
-								const BaseInfo *info, const string& name_base) {
+Population *Population::create_origins(const BaseInfo *info,
+										const vector<string>& names) {
+	const size_t	num_inds = names.size();
 	const Map&	gmap = info->get_map();
 	std::mt19937&	engine = info->get_random_engine();
 	std::mt19937_64	engine64(engine());
@@ -252,13 +253,6 @@ Population *Population::create_origins(size_t num_inds,
 		const auto&	ps = info->get_positions(i);
 		chr_pops[i] = BitChrPopulation::create_origins(num_inds, ps,
 														cmap, engine64);
-	}
-	
-	vector<string>	names(num_inds);
-	for(size_t j = 0; j < num_inds; ++j) {
-		stringstream	ss;
-		ss << name_base << j + 1;
-		names[j] = ss.str();
 	}
 	
 	vector<string>	mats(num_inds, "0");
@@ -589,12 +583,11 @@ Population *Population::create_from_VCF(const VCF *vcf, int seed) {
 }
 
 // [[Rcpp::export]]
-SEXP createOrigins(SEXP num_inds, SEXP info, SEXP name_base) {
-	size_t num_inds_cpp = as<size_t>(num_inds);
+SEXP createOrigins(SEXP info, const CharacterVector& names) {
+	const vector<string>	names_cpp = Rcpp::as<vector<string>>(names);
 	Rcpp::XPtr<BaseInfo> info_cpp(info);
-	std::string name_base_cpp = as<std::string>(name_base);
-	Rcpp::XPtr<Population> ptr(Population::create_origins(num_inds_cpp,
-										info_cpp.get(), name_base_cpp), true);
+	auto	*pop = Population::create_origins(info_cpp.get(), names_cpp);
+	Rcpp::XPtr<Population> ptr(pop, true);
 	ptr.attr("class") = "Population";
 	return ptr;
 }

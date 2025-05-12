@@ -4,12 +4,12 @@
 \alias{create_origins}
 \title{Create origins for a Population object}
 \usage{
-create_origins(num_inds, info, name_base)
+create_origins(info, names = NULL, num_inds = NULL, name_base = NULL)
 }
 \arguments{
-\item{num_inds}{An integer. The number of individuals.}
-
 \item{info}{An external pointer to a BaseInfo object.}
+
+\item{num_inds}{An integer. The number of individuals.}
 
 \item{name_base}{A string. The base name for individuals.}
 }
@@ -18,4 +18,13 @@ An external pointer to a Population object.
 }
 \description{
 Create origins for a Population object
+}
+\examples{
+# Example 1: Specify individual names directly
+pop <- create_origins(info, names = c("p1", "p2"))
+get_individual_names(pop)
+
+# Example 2: Generate individual names using name_base and num_inds
+pop2 <- create_origins(info, num_inds = 2, name_base = "q")
+get_individual_names(pop2)
 }

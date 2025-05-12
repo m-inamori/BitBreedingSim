@@ -5,8 +5,34 @@
 #' @param name_base A string. The base name for individuals.
 #' @return An external pointer to a Population object.
 #' @export
-create_origins <- function(num_inds, info, name_base) {
-	pop <- .Call('_BitBreedingSim_createOrigins', num_inds, info, name_base)
+#' @examples
+#' # Example 1: Specify individual names directly
+#' pop <- create_origins(info, names = c("p1", "p2"))
+#' get_individual_names(pop)
+#'
+#' # Example 2: Generate individual names using name_base and num_inds
+#' pop2 <- create_origins(info, num_inds = 2, name_base = "q")
+#' get_individual_names(pop2)
+create_origins <- function(info, names = NULL,
+								num_inds = NULL, name_base = NULL) {
+	if(is.null(name_base) == is.null(names)) {
+		stop("Error: Either 'name_base' or 'names' must be specified, but not both.")
+	}
+	if(is.null(names)) {
+		names <- generate_names(name_base, num_inds)
+	}
+	# Check names length vs num_inds and handle mismatch
+	if(!is.null(names) && !is.null(num_inds) && length(names) != num_inds) {
+		warning(paste("Warning: Length mismatch detected.",
+					  sprintf("'names' has %d elements, while 'num_inds' is %d.",
+													length(names), num_inds_value),
+					  "'num_inds' will be ignored."))
+	}
+	# If names is NULL, pass name_base. Otherwise, pass names.
+	if(is.null(names)) {
+		names <- paste0(name_base, 1:num_inds)
+	}
+	pop <- .Call('_BitBreedingSim_createOrigins', info, names)
 	class(pop) <- "Population"
 	return(pop)
 }

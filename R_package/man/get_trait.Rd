@@ -17,3 +17,8 @@ The trait at the specified index.
 \description{
 Get a trait from a BaseInfo object
 }
+\examples{
+# Assume 'info' is a valid BaseInfo object
+trait <- get_trait(info, 1)
+summary(trait)
+}

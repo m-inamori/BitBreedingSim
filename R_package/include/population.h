@@ -186,9 +186,8 @@ private:
 								size_t i) const;
 	
 public:
-	static Population *create_origins(std::size_t num_inds,
-											const BaseInfo *info,
-											const std::string& name_base);
+	static Population *create_origins(const BaseInfo *info,
+										const std::vector<std::string>& names);
 	static Population *create_from_HaploArray(
 								const std::vector<std::vector<uint64_t>>& genos,
 								const BaseInfo *info,

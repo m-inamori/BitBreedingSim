@@ -53,8 +53,8 @@ readVCF <- function(filename) {
     .Call(`_BitBreedingSim_readVCF`, filename)
 }
 
-createOrigins <- function(num_inds, info, name_base) {
-    .Call(`_BitBreedingSim_createOrigins`, num_inds, info, name_base)
+createOrigins <- function(info, names) {
+    .Call(`_BitBreedingSim_createOrigins`, info, names)
 }
 
 createInfoAndPopFromVCF <- function(vcf, seed) {

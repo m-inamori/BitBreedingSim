@@ -148,14 +148,22 @@ get_info <- function(info) {
 #' @param i An integer. The index of the trait to retrieve.
 #' @return The trait at the specified index.
 #' @export
+#' @examples
+#' # Assume 'info' is a valid BaseInfo object
+#' trait <- get_trait(info, 1)
+#' summary(trait)
 get_trait <- function(info, i) {
 	if(!inherits(info, "BaseInfo")) {
 		stop("Error: info is not a BaseInfo object.")
 	}
 	
 	num_traits <- .Call('_BitBreedingSim_getNumTraits', info)
-	if(i < 1 || i > num_traits) {
-		stop(paste("Index out of bounds: i should be between 1 and", num_traits, "but got", i))
+	if(!is.numeric(i) || i %% 1 != 0 || i < 1) {
+		stop("Error: i must be a positive integer.")
+	}
+	if(i > num_traits) {
+		stop(paste("Index out of bounds: i should be between 1 and",
+												num_traits, "but got", i))
 	}
 	trait <- .Call('_BitBreedingSim_getTraitCpp', info, i - 1)
 	return(trait)
@@ -202,6 +210,11 @@ get_map <- function(info) {
 #' }
 #' @param num_loci Optional. Number of loci (default is 1)
 #' @export
+#' @examples
+#' # Assume 'info' is a valid BaseInfo object
+#' add_trait_A(info, "Trait1", mean=100.0, h2=0.6, sd=10.0, num_loci = 2)
+#' trait <- get_trait(info, 1)
+#' summary(trait)
 add_trait_A <- function(info, name, mean, h2, sd = NULL, a = NULL,
 												loci = NULL, num_loci = 1) {
 	if(!inherits(info, "BaseInfo")) {
@@ -256,6 +269,11 @@ add_trait_A <- function(info, name, mean, h2, sd = NULL, a = NULL,
 #' }
 #' @param num_loci Optioal. Number of loci (default is 1)
 #' @export
+#' @examples
+#' # Assume 'info' is a valid BaseInfo object
+#' add_trait_AD(info, "Trait1", mean=100.0, h2=0.6, H2=0.7, sd=10.0, num_loci = 2)
+#' trait <- get_trait(info, 1)
+#' summary(trait)
 add_trait_AD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
 								a = NULL, d = NULL, loci = NULL, num_loci = 1) {
 	if(!inherits(info, "BaseInfo")) {
