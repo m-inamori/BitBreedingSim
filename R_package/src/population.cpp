@@ -349,25 +349,27 @@ void Population::set_names(const vector<string>& names_) {
 	names = names_;
 }
 
-Population *Population::cross_randomly(size_t num_inds,
-						const Population& mothers, const Population& fathers,
-						const BaseInfo *info, const string& name_base, int T) {
+Population *Population::cross_randomly(const Population& mothers,
+										const Population& fathers,
+										const BaseInfo *info,
+										const vector<string>& names, int T) {
 	std::mt19937&	engine = info->get_random_engine();
+	const size_t	num_inds = names.size();
 	const auto	pairs = make_pairs_randomly(num_inds, mothers, fathers, engine);
-	return cross(pairs, mothers, fathers, info, name_base, engine, T);
+	return cross(pairs, mothers, fathers, info, names, engine, T);
 }
 
 Population *Population::cross_by_table(const vector<Triplet>& table,
-						const Population& mothers, const Population& fathers,
-						const BaseInfo *info, const string& name_base, int T) {
+					const Population& mothers, const Population& fathers,
+					const BaseInfo *info, const vector<string>& names, int T) {
 	std::mt19937&	engine = info->get_random_engine();
 	const auto	pairs = make_pairs_by_table(table, mothers, fathers);
-	return cross(pairs, mothers, fathers, info, name_base, engine, T);
+	return cross(pairs, mothers, fathers, info, names, engine, T);
 }
 
 Population *Population::cross(const vector<Pair>& pairs,
 						const Population& mothers, const Population& fathers,
-						const BaseInfo *info, const string& name_base,
+						const BaseInfo *info, const vector<string>& names,
 						std::mt19937& engine, int T) {
 	const std::uint_fast32_t	seed = engine();
 	vector<BitChrPopulation *>	chr_pops_(info->num_chroms());
@@ -397,13 +399,6 @@ Population *Population::cross(const vector<Pair>& pairs,
 	Common::delete_all(configs);
 	
 	const size_t	num_inds = pairs.size();
-	vector<string>	names(num_inds);
-	for(size_t j = 0; j < num_inds; ++j) {
-		stringstream	ss;
-		ss << name_base << j + 1;
-		names[j] = ss.str();
-	}
-	
 	vector<string>	mats(num_inds);
 	vector<string>	pats(num_inds);
 	std::transform(pairs.begin(), pairs.end(), mats.begin(),
@@ -734,22 +729,15 @@ void setSampleNames(const CharacterVector& names_, SEXP pop_ptr) {
 }
 
 // [[Rcpp::export]]
-SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers,
-						SEXP name_base, Rcpp::CharacterVector names, int T) {
-	// あとで使う
-	vector<string>	names_cpp(names.size());
-	for(int i = 0; i < names.size(); ++i) {
-		names_cpp[i] = Rcpp::as<string>(names[i]);
-	}
-	
-	size_t num_inds_cpp = as<size_t>(num_inds);
+SEXP crossPopsRandomly(SEXP mothers, SEXP fathers,
+							Rcpp::CharacterVector names, int T) {
+	const vector<string>	names_cpp = Rcpp::as<vector<string>>(names);
 	Rcpp::XPtr<Population> mothers_cpp(mothers);
 	Rcpp::XPtr<Population> fathers_cpp(fathers);
 	const BaseInfo	*info = mothers_cpp.get()->get_info();
-	const std::string name_base_cpp = as<std::string>(name_base);
-	auto	*pop = Population::cross_randomly(num_inds_cpp, *mothers_cpp.get(),
-													*fathers_cpp.get(), info,
-													name_base_cpp, T);
+	auto	*pop = Population::cross_randomly(*mothers_cpp.get(),
+												*fathers_cpp.get(),
+												info, names_cpp, T);
 	Rcpp::XPtr<Population> ptr(pop, true);
 	ptr.attr("class") = "Population";
 	return ptr;
@@ -757,29 +745,29 @@ SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers,
 
 // [[Rcpp::export]]
 SEXP crossPopsByTable(DataFrame df, SEXP mothers, SEXP fathers,
-											SEXP name_base, int T) {
-	CharacterVector mat = df["mats"];
-	CharacterVector pat = df["pats"];
-	IntegerVector num = df["nums"];
+										Rcpp::CharacterVector names, int T) {
+	CharacterVector	mat = df["mat"];
+	CharacterVector	pat = df["pat"];
+	IntegerVector	num = df["num"];
 	
 	int n = df.nrows();
 	
 	vector<Population::Triplet>	table;
 	for (int i = 0; i < n; ++i) {
-		std::string mat_str = as<std::string>(mat[i]);
-		std::string pat_str = as<std::string>(pat[i]);
-		std::size_t num_val = static_cast<std::size_t>(num[i]);
+		const std::string	mat_str = as<std::string>(mat[i]);
+		const std::string	pat_str = as<std::string>(pat[i]);
+		const std::size_t	num_val = static_cast<std::size_t>(num[i]);
 		
 		table.push_back(std::make_tuple(mat_str, pat_str, num_val));
 	}
 	
+	const vector<string>	names_cpp = Rcpp::as<vector<string>>(names);
 	Rcpp::XPtr<Population> mothers_cpp(mothers);
 	Rcpp::XPtr<Population> fathers_cpp(fathers);
 	const BaseInfo	*info = mothers_cpp.get()->get_info();
-	std::string name_base_cpp = as<std::string>(name_base);
 	auto	*pop = Population::cross_by_table(table, *mothers_cpp.get(),
 												*fathers_cpp.get(), info,
-												name_base_cpp, T);
+												names_cpp, T);
 	Rcpp::XPtr<Population> ptr(pop, true);
 	ptr.attr("class") = "Population";
 	return ptr;

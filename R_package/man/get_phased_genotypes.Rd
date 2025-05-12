@@ -10,12 +10,12 @@ get_phased_genotypes(pop)
 \item{pop}{An external pointer to a Population object.}
 }
 \value{
-A matrix of genotypes where rows are samples and columns are markers.
+A matrix of genotypes where rows are individuals and columns are markers.
 }
 \description{
 This function retrieves the genotypes from a given Population object.
 The genotypes are represented in a matrix format where rows correspond to markers
-and columns correspond to samples.
+and columns correspond to individuals.
 }
 \details{
 Genotype is 0|0, 0|1, 1|0, or 1|1

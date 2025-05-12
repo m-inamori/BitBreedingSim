@@ -201,17 +201,17 @@ public:
 										const std::vector<Triplet>& table,
 										const Population& mothers,
 										const Population& fathers);
-	static Population *cross_randomly(std::size_t num_inds, const Population& mothers,
-						const Population& fathers, const BaseInfo *info,
-						const std::string& name_base, int T);
+	static Population *cross_randomly(const Population& mothers,
+								const Population& fathers, const BaseInfo *info,
+								const std::vector<std::string>& names, int T);
 	static Population *cross_by_table(const std::vector<Triplet>& table,
 						const Population& mothers, const Population& fathers,
 						const BaseInfo *info,
-						const std::string& name_base, int T);
+						const std::vector<std::string>& names, int T);
 	static Population *cross(const std::vector<Pair>& pairs,
 							const Population& mothers,
 							const Population& fathers, const BaseInfo *info,
-							const std::string& name_base,
+							const std::vector<std::string>& names,
 							std::mt19937& engine, int T);
 	static void cross_in_thread(void *config);
 	static Population *join(const Population *pop1, const Population *pop2);

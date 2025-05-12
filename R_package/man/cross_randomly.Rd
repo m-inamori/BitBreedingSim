@@ -2,40 +2,56 @@
 % Please edit documentation in R/Population.R
 \name{cross_randomly}
 \alias{cross_randomly}
-\title{Cross two Population randomly}
+\title{Cross Population randomly}
 \usage{
 cross_randomly(
-  num_inds,
   mat_pop,
   pat_pop,
-  name_base = NULL,
   names = NULL,
+  num_inds = NULL,
+  name_base = NULL,
   num_threads = 0
 )
 }
 \arguments{
-\item{num_inds}{An integer. The number of individuals.}
+\item{mat_pop}{A Population object representing the maternal parents.
+This should be an object created using the relevant Population functions in the package.}
 
-\item{mat_pop}{An external pointer to a Population object representing mothers.}
+\item{pat_pop}{A Population object representing the paternal parents.
+This should be an object created using the relevant Population functions in the package.}
 
-\item{pat_pop}{An external pointer to a Population object representing fathers.}
+\item{names}{Optional. A character vector containing specific names for individuals.
+If provided, the length of \code{names} determines the number of offspring.}
 
-\item{name_base}{A character string. The base name for individuals. If not provided, the 'names' parameter must be specified.}
+\item{num_inds}{Optional. A positive integer representing the number of offspring.
+Required if \code{name_base} is specified.}
 
-\item{names}{A character vector. The specific names for individuals. If not provided, the 'name_base' parameter must be specified.}
+\item{name_base}{Optional. A character string used as the base name for generating individual names.
+For example, if \code{name_base = "p"} and \code{num_inds = 3}, the generated names will be
+\code{c("p1", "p2", "p3")}. This parameter must be used in combination with \code{num_inds}.}
 
-\item{num_threads}{Optional. An integer. The number of threads to be used.
-If not specified, the function will use
-the maximum number of available threads.}
+\item{num_threads}{Optional. A positive integer representing the number of threads to use.
+If not specified or set to 0, the maximum number of available threads is used.}
 }
 \value{
-An external pointer to a Population object.
+A Population object with offspring individuals.
 }
 \description{
-Cross two Population randomly
+This function performs random crossing of individuals from two Population objects
+(maternal and paternal parents) to generate a new Population object.
+For each offspring, a parent is randomly selected from each Population
+(one from the maternal Population and one from the paternal Population).
+You can specify either \code{name_base} and \code{num_inds} or provide
+a complete \code{names} vector for the offspring.
 }
 \examples{
-# Assuming 'mothers' and 'fathers' are valid Population objects
-new_population <- cross_randomly(100, mothers, fathers, "prog_")
+# Example using name_base and num_inds
+new_population <- cross_randomly(mothers, fathers, num_inds = 100, name_base = "offspring_")
+
+# Example using predefined names
+names_vector <- c("child1", "child2", "child3")
+new_population <- cross_randomly(mothers, fathers, names = names_vector)
+
+# Summary of the new Population object
 summary(new_population)
 }

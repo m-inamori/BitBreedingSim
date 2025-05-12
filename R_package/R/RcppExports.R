@@ -73,12 +73,12 @@ setSampleNames <- function(names_, pop_ptr) {
     invisible(.Call(`_BitBreedingSim_setSampleNames`, names_, pop_ptr))
 }
 
-crossPopsRandomly <- function(num_inds, mothers, fathers, name_base, names, T) {
-    .Call(`_BitBreedingSim_crossPopsRandomly`, num_inds, mothers, fathers, name_base, names, T)
+crossPopsRandomly <- function(mothers, fathers, names, T) {
+    .Call(`_BitBreedingSim_crossPopsRandomly`, mothers, fathers, names, T)
 }
 
-crossPopsByTable <- function(df, mothers, fathers, name_base, T) {
-    .Call(`_BitBreedingSim_crossPopsByTable`, df, mothers, fathers, name_base, T)
+crossPopsByTable <- function(df, mothers, fathers, names, T) {
+    .Call(`_BitBreedingSim_crossPopsByTable`, df, mothers, fathers, names, T)
 }
 
 writeVCF <- function(pop, filename) {

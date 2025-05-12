@@ -18,8 +18,8 @@ This function does not return a value. It outputs messages if any maternal or pa
 in the cross table are not found in the respective populations.
 }
 \description{
-This function checks whether the maternal and paternal names in the given cross table
-are present in the specified maternal and paternal populations.
+This function checks whether the maternal and paternal names in the given
+cross table are present in the specified maternal and paternal populations.
 }
 \examples{
 # Assuming 'df', 'mat_pop', and 'pat_pop' are valid objects

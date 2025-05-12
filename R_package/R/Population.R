@@ -165,25 +165,25 @@ create_HaploArray_from_pop <- function(pop) {
 	return(.Call('_BitBreedingSim_createHaploArrayFromPop', pop))
 }
 
-#' Set sample names for a Population object
+#' Set individual names for a Population object
 #'
-#' This function assigns names to samples in a Population object. 
+#' This function assigns names to individuals in a Population object. 
 #' The `names` argument must be a character vector, and `pop` must be an object 
 #' of the "Population" class.
 #'
-#' @param names A character vector containing the names of samples to assign.
-#' @param pop A Population object where the sample names will be set.
+#' @param names A character vector containing the names of individuals to assign.
+#' @param pop A Population object where the individual names will be set.
 #' @return None. The function modifies the Population object directly.
 #' @examples
-#' # Create a Population object and set sample names
+#' # Create a Population object and set individual names
 #' info <- create_base_info()
 #' pop <- create_origins(2, info, "ind")
-#' set_sample_names(c("sample1", "sample2"), pop)
+#' set_individual_names(c("sample1", "sample2"), pop)
 #'
-#' # Access the updated sample names
-#' get_sample_names(pop)
+#' # Access the updated individual names
+#' get_individual_names(pop)
 #' @export
-set_sample_names <- function(names, pop) {
+set_individual_names <- function(names, pop) {
 	if(!is.character(names) || !is.vector(names)) {
 		stop("Error: names must be a character vector.")
 	}
@@ -193,32 +193,90 @@ set_sample_names <- function(names, pop) {
 	ret <- get_pop_info(pop)
 	if(ret$num_individuals != length(names)) {
 		stop(paste("Error: length of names (", length(names), 
-			") must match the number of samples in the Population (",
+			") must match the number of individuals in the Population (",
 			num, ")."))
 	}
 	return(.Call('_BitBreedingSim_setSampleNames', names, pop))
 }
 
-#' Cross two Population randomly
+#' Generate names for individuals based on a base name and number of individuals
 #'
-#' @param num_inds An integer. The number of individuals.
-#' @param mat_pop An external pointer to a Population object representing mothers.
-#' @param pat_pop An external pointer to a Population object representing fathers.
-#' @param name_base A character string. The base name for individuals. If not provided, the 'names' parameter must be specified.
-#' @param names A character vector. The specific names for individuals. If not provided, the 'name_base' parameter must be specified.
-#' @param num_threads Optional. An integer. The number of threads to be used.
-#'                             If not specified, the function will use
-#'                             the maximum number of available threads.
-#' @return An external pointer to a Population object.
-#' @export
+#' This function creates a vector of names for individuals when `names` is not provided. 
+#' It uses a base name (`name_base`) and a specified number of individuals (`num_inds`) 
+#' to generate names in the format `name_base1`, `name_base2`, ..., up to the total number.
+#'
+#' @param name_base A character string used as the base for generating names. 
+#'                  For example, `name_base = "p"` will generate names like `"p1", "p2", ...`.
+#' @param num_inds A positive integer indicating the number of names to generate.
+#' @return A character vector of generated names.
 #' @examples
-#' # Assuming 'mothers' and 'fathers' are valid Population objects
-#' new_population <- cross_randomly(100, mothers, fathers, "prog_")
+#' # Generate 3 names with base "p"
+#' generated_names <- generate_names("p", 3)
+#' print(generated_names) # Output: "p1", "p2", "p3"
+generate_names <- function(name_base, num_inds) {
+	# Check inputs
+	if(is.null(name_base) || !is.character(name_base)) {
+		stop("Error: 'name_base' must be a single character string.")
+	}
+	if(is.null(num_inds)) {
+		stop("Error: When 'name_base' is specified, 'num_inds' must also be specified.")
+	}
+	if(!is.numeric(num_inds) || num_inds <= 0 || num_inds %% 1 != 0) {
+		stop("Error: 'num_inds' must be a positive integer.")
+	}
+	
+    # Generate names
+    return(paste0(name_base, 1:num_inds))
+}
+
+#' Cross Population randomly
+#'
+#' This function performs random crossing of individuals from two Population objects 
+#' (maternal and paternal parents) to generate a new Population object.
+#' For each offspring, a parent is randomly selected from each Population 
+#' (one from the maternal Population and one from the paternal Population).
+#' You can specify either `name_base` and `num_inds` or provide 
+#' a complete `names` vector for the offspring.
+#'
+#' @param mat_pop A Population object representing the maternal parents.
+#'                This should be an object created using the relevant Population functions in the package.
+#' @param pat_pop A Population object representing the paternal parents.
+#'                This should be an object created using the relevant Population functions in the package.
+#' @param names Optional. A character vector containing specific names for individuals. 
+#'              If provided, the length of `names` determines the number of offspring.
+#' @param num_inds Optional. A positive integer representing the number of offspring. 
+#'                 Required if `name_base` is specified.
+#' @param name_base Optional. A character string used as the base name for generating individual names. 
+#'                  For example, if `name_base = "p"` and `num_inds = 3`, the generated names will be 
+#'                  `c("p1", "p2", "p3")`. This parameter must be used in combination with `num_inds`.
+#' @param num_threads Optional. A positive integer representing the number of threads to use.
+#'                    If not specified or set to 0, the maximum number of available threads is used.
+#' @return A Population object with offspring individuals.
+#' @examples
+#' # Example using name_base and num_inds
+#' new_population <- cross_randomly(mothers, fathers, num_inds = 100, name_base = "offspring_")
+#'
+#' # Example using predefined names
+#' names_vector <- c("child1", "child2", "child3")
+#' new_population <- cross_randomly(mothers, fathers, names = names_vector)
+#'
+#' # Summary of the new Population object
 #' summary(new_population)
-cross_randomly <- function(num_inds, mat_pop, pat_pop,
-							name_base = NULL, names = NULL, num_threads = 0) {
-	if(is.null(name_base) && is.null(names)) {
-		stop("Either 'name_base' or 'names' must be specified.")
+#' @export
+cross_randomly <- function(mat_pop, pat_pop, names = NULL,
+							num_inds = NULL, name_base = NULL, num_threads = 0) {
+	if(is.null(name_base) == is.null(names)) {
+		stop("Error: Either 'name_base' or 'names' must be specified, but not both.")
+	}
+	if(is.null(names)) {
+		names <- generate_names(name_base, num_inds)
+	}
+	# Check names length vs num_inds and handle mismatch
+	if(!is.null(names) && !is.null(num_inds) && length(names) != num_inds) {
+		warning(paste("Warning: Length mismatch detected.",
+					  sprintf("'names' has %d elements, while 'num_inds' is %d.",
+													length(names), num_inds_value),
+					  "'num_inds' will be ignored."))
 	}
 	if(num_threads < 1) {
 		num_threads <- parallel::detectCores()
@@ -227,19 +285,63 @@ cross_randomly <- function(num_inds, mat_pop, pat_pop,
 	
 	# If names is NULL, pass name_base. Otherwise, pass names.
 	if(is.null(names)) {
-		# Passing an empty character vector if names are not specified
-		names <- character(0)
+		names <- paste0(name_base, 1:num_inds)
 	}
-	pop <- .Call('_BitBreedingSim_crossPopsRandomly', num_inds,
-								mat_pop, pat_pop, name_base, names, num_threads)
+	pop <- .Call('_BitBreedingSim_crossPopsRandomly',
+									mat_pop, pat_pop, names, num_threads)
 	class(pop) <- "Population"
 	return(pop)
 }
 
+#' Validate the structure and content of the data frame used for crossing information
+#'
+#' This function checks if the input data frame `df` meets the required 
+#' structure for the `cross_by_table` function. It ensures that `df` is a valid 
+#' `data.frame`, contains the required columns (`mat`, `pat`, `num`), 
+#' and verifies that the `num` column has positive numeric values.
+#' If any of these checks fail, the function stops execution and displays 
+#' an error message.
+#'
+#' @param df A data frame. Must include the following columns:
+#'           - `mat`: Names of the maternal parents for each cross.
+#'           - `pat`: Names of the paternal parents for each cross.
+#'           - `num`: Number of offspring to generate for each cross. Must contain positive numeric values.
+#' @return No return value. If the validation is successful, the function proceeds silently.
+#'         If the validation fails, the function stops execution and displays an error message.
+#' @examples
+#' # Valid input example
+#' df <- data.frame(mat = c("mat1", "mat2"), pat = c("pat1", "pat2"), num = c(1, 2))
+#' check_dataframe(df) # Passes silently
+#'
+#' # Invalid input example: Missing 'num' column
+#' df_invalid <- data.frame(mat = c("mat1", "mat2"), pat = c("pat1", "pat2"))
+#' check_dataframe(df_invalid) # Throws an error
+check_dataframe <- function(df) {
+	# Check if df is a data.frame
+	if(!is.data.frame(df)) {
+		stop("Error: 'df' must be a data.frame.")
+	}
+	
+	# Required columns
+	required_columns <- c("mat", "pat", "num")
+	
+	# Check if all required columns are in df
+	missing_columns <- setdiff(required_columns, colnames(df))
+	if(length(missing_columns) > 0) {
+		stop(sprintf("Error: Missing required column(s): %s",
+						paste(missing_columns, collapse = ", ")))
+	}
+	
+	# Check if 'num' column contains valid numbers
+	if(!is.numeric(df$num) || any(df$num <= 0)) {
+		stop("Error: 'num' column must contain only positive numeric values.")
+	}
+}
+
 #' Check Parent Existence in Population
 #'
-#' This function checks whether the maternal and paternal names in the given cross table
-#' are present in the specified maternal and paternal populations.
+#' This function checks whether the maternal and paternal names in the given
+#' cross table are present in the specified maternal and paternal populations.
 #'
 #' @param df A data.frame representing the cross table containing 'mat' (maternal names) and 'pat' (paternal names) columns.
 #' @param mat_pop An external pointer to the maternal Population object.
@@ -253,8 +355,8 @@ cross_randomly <- function(num_inds, mat_pop, pat_pop,
 #' check_parent_existance(df, mat_pop, pat_pop)
 check_parent_existance <- function(df, mat_pop, pat_pop) {
 	# Get name data from maternal and paternal Population objects
-	mats <- getPopNames(mat_pop)
-	pats <- getPopNames(pat_pop)
+	mats <- get_individual_names(mat_pop)
+	pats <- get_individual_names(pat_pop)
 	
 	# using env like a hash table
 	name_env <- new.env(hash = TRUE, parent = emptyenv())
@@ -270,8 +372,8 @@ check_parent_existance <- function(df, mat_pop, pat_pop) {
 	# Check each row in the cross table for the existence of maternal
 	# and paternal names
 	for(i in 1:nrow(df)) {
-		mat <- df$mats[i]
-		pat <- df$pats[i]
+		mat <- df$mat[i]
+		pat <- df$pat[i]
 		# If maternal name is not found, output an error message
 		if(!exists(mat, envir=name_env, inherits=FALSE)) {
 			message(paste(mat, "is not found in maternal population."))
@@ -285,33 +387,76 @@ check_parent_existance <- function(df, mat_pop, pat_pop) {
 
 #' Cross populations according to a table
 #'
-#' @param df A data frame. Contains the crossing information with columns for mat, pat, and num.
-#'           The 'mat' column represents the maternal population, 'pat' represents the paternal population,
-#'           and 'num' represents the number of progenies resulting from the cross.
-#' @param mat_pop An external pointer to a Population object representing mothers.
-#' @param pat_pop An external pointer to a Population object representing fathers.
-#' @param name_base A string. The base name for the new individuals.
-#' @param num_threads Optional. An integer. The number of threads to be used.
-#'                             If less than 1, the function will use the maximum number of available threads.
-#' @return An external pointer to a Population object.
-#' @export
+#' This function performs crossing of individuals from two Population objects (maternal and paternal parents)
+#' based on specified crossing information provided in a table. Each row of the table defines a specific
+#' cross, including the number of offspring to generate for that cross.
+#' You can specify either `name_base` or provide a complete `names` vector for the offspring.
+#'
+#' @param df A data frame containing crossing information. It should include the following columns:
+#' \describe{
+#'   \item{`mat`}{Names of the maternal parents for each cross.}
+#'   \item{`pat`}{Names of the paternal parents for each cross.}
+#'   \item{`num`}{Number of offspring to generate for each cross.}
+#' }
+#' @param mat_pop A Population object representing the maternal parents.
+#'                This should be an object created using the relevant Population functions in the package.
+#' @param pat_pop A Population object representing the paternal parents.
+#'                This should be an object created using the relevant Population functions in the package.
+#' @param names Optional. A character vector containing specific names for individuals.
+#'              If provided, the length of `names` should match the total number of offspring specified in `df`.
+#' @param name_base Optional. A character string used as the base name for generating individual names.
+#'                  For example, if `name_base = "prog_"`, the generated names will follow the format 
+#'                  `c("prog_1", "prog_2", ...)`.
+#' @param num_threads Optional. A positive integer representing the number of threads to use.
+#'                    If not specified or set to 0, the maximum number of available threads is used.
+#' @return A Population object with offspring individuals.
 #' @examples
-#' # Assuming 'mat_pop' and 'pat_pop' are valid inputs
-#' mats <- c("mat1", "mat2")
-#' pats <- c("pat1", "pat2")
-#' nums <- c(1, 2)
-#' df <- data.frame(mats, pats, nums)
-#' new_population <- cross_by_table(df, mat_pop, pat_pop, "prog_")
+#' # Example using name_base
+#' df <- data.frame(mat = c("mat1", "mat2"), pat = c("pat1", "pat2"), num = c(1, 2))
+#' new_population <- cross_by_table(df, mat_pop, pat_pop, name_base = "prog_")
+#'
+#' # Example using predefined names
+#' names_vector <- c("child1", "child2", "child3")
+#' new_population <- cross_by_table(df, mat_pop, pat_pop, names = names_vector)
+#'
+#' # Summary of the new Population object
 #' summary(new_population)
-cross_by_table <- function(df, mat_pop, pat_pop, name_base, num_threads = 0) {
+#' @export
+
+cross_by_table <- function(df, mat_pop, pat_pop, names = NULL,
+									name_base = NULL, num_threads = 0) {
+    if(!inherits(mat_pop, "Population")) {
+        stop("Error: mat_pop is not a Population object.")
+	}
+    if(!inherits(pat_pop, "Population")) {
+        stop("Error: pat_pop is not a Population object.")
+	}
+	
+	check_dataframe(df)
+	num_inds <- sum(df[, "num"])
+	
+	if(is.null(name_base) == is.null(names)) {
+		stop("Error: Either 'name_base' or 'names' must be specified, but not both.")
+	}
+	if(is.null(names)) {
+		names <- generate_names(name_base, num_inds)
+	}
+	if(!is.null(names) && length(names) != num_inds) {
+		stop(sprintf(
+			"Error: Length mismatch detected. 'names' has %d elements, while 'num_inds' calculated from the 'num' column in 'df' is %d.",
+			length(names), num_inds
+		))
+	}
+	
 	if(num_threads < 1) {
 		num_threads <- parallel::detectCores()
 	}
 	cat("num_threads :", num_threads, "\n")
+	
 	pop <- NULL		# Initialize pop to NULL in case of error
 	tryCatch({
 		pop <- .Call('_BitBreedingSim_crossPopsByTable', df,
-									mat_pop, pat_pop, name_base, num_threads)
+										mat_pop, pat_pop, names, num_threads)
 		class(pop) <- "Population"
 	}, error = function(e) {
 		message(e$message);
@@ -331,7 +476,7 @@ cross_by_table <- function(df, mat_pop, pat_pop, name_base, num_threads = 0) {
 #' # Assuming 'pop' is a valid Population object
 #' write_VCF(pop, "output.vcf")
 write_VCF <- function(pop, filename) {
-    if (!inherits(pop, "Population")) {
+    if(!inherits(pop, "Population")) {
         stop("Error: pop is not a Population object.")
     }
     tryCatch({
@@ -388,8 +533,8 @@ get_phenotypes <- function(pop, i) {
 #' Get genotypes from a Population object
 #'
 #' This function retrieves the genotypes from a given Population object.
-#' The genotypes are represented in a matrix format where rows correspond to samples
-#' and columns correspond to markers.
+#' The genotypes are represented in a matrix format where rows correspond to
+#' individuals and columns correspond to markers.
 #'
 #' Genotype encoding:\cr
 #' - 0/0 is encoded as -1\cr
@@ -397,7 +542,7 @@ get_phenotypes <- function(pop, i) {
 #' - 1/1 is encoded as 1
 #'
 #' @param pop An external pointer to a Population object.
-#' @return A matrix of genotypes where rows are samples and columns are markers.
+#' @return A matrix of genotypes where rows are individuals and columns are markers.
 #' @export
 get_genotypes <- function(pop) {
 	if(!inherits(pop, "Population")) {
@@ -410,8 +555,8 @@ get_genotypes <- function(pop) {
 #' Get genotypes from a Population object (slow version)
 #'
 #' This function retrieves the genotypes from a given Population object.
-#' The genotypes are represented in a matrix format where rows correspond to samples
-#' and columns correspond to markers.
+#' The genotypes are represented in a matrix format where rows correspond to
+#' individuals and columns correspond to markers.
 #'
 #' Genotype encoding:\cr
 #' - 0/0 is encoded as -1\cr
@@ -419,7 +564,7 @@ get_genotypes <- function(pop) {
 #' - 1/1 is encoded as 1
 #'
 #' @param pop An external pointer to a Population object.
-#' @return A matrix of genotypes where rows are samples and columns are markers.
+#' @return A matrix of genotypes where rows are individuals and columns are markers.
 #' @export
 #' @noRd
 get_genotypes_naive <- function(pop) {
@@ -434,12 +579,12 @@ get_genotypes_naive <- function(pop) {
 #'
 #' This function retrieves the genotypes from a given Population object.
 #' The genotypes are represented in a matrix format where rows correspond to markers
-#' and columns correspond to samples.
+#' and columns correspond to individuals.
 #'
 #' Genotype is 0|0, 0|1, 1|0, or 1|1
 #'
 #' @param pop An external pointer to a Population object.
-#' @return A matrix of genotypes where rows are samples and columns are markers.
+#' @return A matrix of genotypes where rows are individuals and columns are markers.
 #' @export
 get_phased_genotypes <- function(pop) {
 	if(!inherits(pop, "Population")) {
@@ -452,15 +597,16 @@ get_phased_genotypes <- function(pop) {
 #' Get phased integer genotypes from a Population object
 #'
 #' This function retrieves the genotypes from a given Population object.
-#' The genotypes are represented in a matrix format where rows correspond to samples
-#' and columns correspond to markers. Each sample has two rows: the first row
-#' represents the maternal allele and the second row represents the paternal allele.
+#' The genotypes are represented in a matrix format where rows correspond to
+#' individuals and columns correspond to markers. Each individual has two rows:
+#' the first row represents the maternal allele and the second row represents
+#' the paternal allele.
 #'
 #' Genotype is represented as integers: 0 or 1
 #'
 #' @param pop An external pointer to a Population object.
-#' @return A matrix of genotypes where rows are samples and columns are markers.
-#'         Each sample has two rows: the first row is the maternal allele and the
+#' @return A matrix of genotypes where rows are individuals and columns are markers.
+#'         Each individual has two rows: the first row is the maternal allele and the
 #'         second row is the paternal allele.
 #' @export
 get_phased_int_genotypes <- function(pop) {
@@ -537,9 +683,9 @@ join_pops <- function(...) {
 #' @export
 #' @examples
 #' # Assuming 'pop' is a valid Population object
-#' name_data <- get_sample_names(pop)
+#' name_data <- get_individual_names(pop)
 #' print(name_data)
-get_sample_names <- function(pop) {
+get_individual_names <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: pop must be a Population object.")
 	}

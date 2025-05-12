@@ -4,34 +4,57 @@
 \alias{cross_by_table}
 \title{Cross populations according to a table}
 \usage{
-cross_by_table(df, mat_pop, pat_pop, name_base, num_threads = 0)
+cross_by_table(
+  df,
+  mat_pop,
+  pat_pop,
+  names = NULL,
+  name_base = NULL,
+  num_threads = 0
+)
 }
 \arguments{
-\item{df}{A data frame. Contains the crossing information with columns for mat, pat, and num.
-The 'mat' column represents the maternal population, 'pat' represents the paternal population,
-and 'num' represents the number of progenies resulting from the cross.}
+\item{df}{A data frame containing crossing information. It should include the following columns:
+\describe{
+\item{\code{mat}}{Names of the maternal parents for each cross.}
+\item{\code{pat}}{Names of the paternal parents for each cross.}
+\item{\code{num}}{Number of offspring to generate for each cross.}
+}}
 
-\item{mat_pop}{An external pointer to a Population object representing mothers.}
+\item{mat_pop}{A Population object representing the maternal parents.
+This should be an object created using the relevant Population functions in the package.}
 
-\item{pat_pop}{An external pointer to a Population object representing fathers.}
+\item{pat_pop}{A Population object representing the paternal parents.
+This should be an object created using the relevant Population functions in the package.}
 
-\item{name_base}{A string. The base name for the new individuals.}
+\item{names}{Optional. A character vector containing specific names for individuals.
+If provided, the length of \code{names} should match the total number of offspring specified in \code{df}.}
 
-\item{num_threads}{Optional. An integer. The number of threads to be used.
-If less than 1, the function will use the maximum number of available threads.}
+\item{name_base}{Optional. A character string used as the base name for generating individual names.
+For example, if \code{name_base = "prog_"}, the generated names will follow the format
+\code{c("prog_1", "prog_2", ...)}.}
+
+\item{num_threads}{Optional. A positive integer representing the number of threads to use.
+If not specified or set to 0, the maximum number of available threads is used.}
 }
 \value{
-An external pointer to a Population object.
+A Population object with offspring individuals.
 }
 \description{
-Cross populations according to a table
+This function performs crossing of individuals from two Population objects (maternal and paternal parents)
+based on specified crossing information provided in a table. Each row of the table defines a specific
+cross, including the number of offspring to generate for that cross.
+You can specify either \code{name_base} or provide a complete \code{names} vector for the offspring.
 }
 \examples{
-# Assuming 'mat_pop' and 'pat_pop' are valid inputs
-mats <- c("mat1", "mat2")
-pats <- c("pat1", "pat2")
-nums <- c(1, 2)
-df <- data.frame(mats, pats, nums)
-new_population <- cross_by_table(df, mat_pop, pat_pop, "prog_")
+# Example using name_base
+df <- data.frame(mat = c("mat1", "mat2"), pat = c("pat1", "pat2"), num = c(1, 2))
+new_population <- cross_by_table(df, mat_pop, pat_pop, name_base = "prog_")
+
+# Example using predefined names
+names_vector <- c("child1", "child2", "child3")
+new_population <- cross_by_table(df, mat_pop, pat_pop, names = names_vector)
+
+# Summary of the new Population object
 summary(new_population)
 }

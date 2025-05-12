@@ -233,33 +233,31 @@ BEGIN_RCPP
 END_RCPP
 }
 // crossPopsRandomly
-SEXP crossPopsRandomly(SEXP num_inds, SEXP mothers, SEXP fathers, SEXP name_base, Rcpp::CharacterVector names, int T);
-RcppExport SEXP _BitBreedingSim_crossPopsRandomly(SEXP num_indsSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP name_baseSEXP, SEXP namesSEXP, SEXP TSEXP) {
+SEXP crossPopsRandomly(SEXP mothers, SEXP fathers, Rcpp::CharacterVector names, int T);
+RcppExport SEXP _BitBreedingSim_crossPopsRandomly(SEXP mothersSEXP, SEXP fathersSEXP, SEXP namesSEXP, SEXP TSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type num_inds(num_indsSEXP);
     Rcpp::traits::input_parameter< SEXP >::type mothers(mothersSEXP);
     Rcpp::traits::input_parameter< SEXP >::type fathers(fathersSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type name_base(name_baseSEXP);
     Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type names(namesSEXP);
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
-    rcpp_result_gen = Rcpp::wrap(crossPopsRandomly(num_inds, mothers, fathers, name_base, names, T));
+    rcpp_result_gen = Rcpp::wrap(crossPopsRandomly(mothers, fathers, names, T));
     return rcpp_result_gen;
 END_RCPP
 }
 // crossPopsByTable
-SEXP crossPopsByTable(DataFrame df, SEXP mothers, SEXP fathers, SEXP name_base, int T);
-RcppExport SEXP _BitBreedingSim_crossPopsByTable(SEXP dfSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP name_baseSEXP, SEXP TSEXP) {
+SEXP crossPopsByTable(DataFrame df, SEXP mothers, SEXP fathers, Rcpp::CharacterVector names, int T);
+RcppExport SEXP _BitBreedingSim_crossPopsByTable(SEXP dfSEXP, SEXP mothersSEXP, SEXP fathersSEXP, SEXP namesSEXP, SEXP TSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< DataFrame >::type df(dfSEXP);
     Rcpp::traits::input_parameter< SEXP >::type mothers(mothersSEXP);
     Rcpp::traits::input_parameter< SEXP >::type fathers(fathersSEXP);
-    Rcpp::traits::input_parameter< SEXP >::type name_base(name_baseSEXP);
+    Rcpp::traits::input_parameter< Rcpp::CharacterVector >::type names(namesSEXP);
     Rcpp::traits::input_parameter< int >::type T(TSEXP);
-    rcpp_result_gen = Rcpp::wrap(crossPopsByTable(df, mothers, fathers, name_base, T));
+    rcpp_result_gen = Rcpp::wrap(crossPopsByTable(df, mothers, fathers, names, T));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -418,7 +416,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_createPopFromHaploArray", (DL_FUNC) &_BitBreedingSim_createPopFromHaploArray, 2},
     {"_BitBreedingSim_createHaploArrayFromPop", (DL_FUNC) &_BitBreedingSim_createHaploArrayFromPop, 1},
     {"_BitBreedingSim_setSampleNames", (DL_FUNC) &_BitBreedingSim_setSampleNames, 2},
-    {"_BitBreedingSim_crossPopsRandomly", (DL_FUNC) &_BitBreedingSim_crossPopsRandomly, 6},
+    {"_BitBreedingSim_crossPopsRandomly", (DL_FUNC) &_BitBreedingSim_crossPopsRandomly, 4},
     {"_BitBreedingSim_crossPopsByTable", (DL_FUNC) &_BitBreedingSim_crossPopsByTable, 5},
     {"_BitBreedingSim_writeVCF", (DL_FUNC) &_BitBreedingSim_writeVCF, 2},
     {"_BitBreedingSim_getNumInds", (DL_FUNC) &_BitBreedingSim_getNumInds, 1},
