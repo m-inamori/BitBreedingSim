@@ -25,3 +25,9 @@ Genotype encoding:\cr
 \item 1/1 is encoded as 1
 }
 }
+\examples{
+info <- create_base_info()
+pop <- create_origins(info, num_inds = 2, names = c("p1", "p2"))
+geno <- get_genotypes(pop)
+geno[, 1:5]
+}

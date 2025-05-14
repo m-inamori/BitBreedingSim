@@ -9,6 +9,8 @@
 
 namespace GC = GenomicsCommon;
 
+class Population;
+
 using STRVEC = std::vector<std::string>;
 
 
@@ -54,10 +56,15 @@ public:
 	}
 	const std::string& chrom(std::size_t i) const { return data[i][0]; }
 	
+	VCF *add_pop(const Population *pop) const;
+	
+	void write_header(std::ostream& os) const;
+	void write(std::ostream& os) const;
+	
 	static VCF *read(const std::string& path);
 	
-	static void write_header(std::ostream& os,
-							const std::vector<std::string>& samples);
+	static void write_default_header(std::ostream& os,
+									const std::vector<std::string>& samples);
 	static void write_data_line(std::ostream& os, const std::string& chr,
 							int pos, const std::vector<std::string>& gts);
 };

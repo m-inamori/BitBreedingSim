@@ -10,6 +10,7 @@
 #include "GenomicsCommon.h"
 
 class BaseInfo;
+class Trait;
 class VCF;
 
 namespace GC = GenomicsCommon;

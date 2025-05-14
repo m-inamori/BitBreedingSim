@@ -7,12 +7,23 @@
 get_pop_info(pop)
 }
 \arguments{
-\item{pop}{An external pointer to a BaseInfo object.}
+\item{pop}{A Population object. This should be an object created using the relevant Population functions in the package.}
 }
 \value{
-A list containing the number of individuals
-and the number of chromosomes in the population.
+A list containing:
+- \code{num_individuals}: The number of individuals in the population.
+- \code{num_chromosomes}: The number of chromosomes in the population.
+- \code{num_markers}: The number of markers in the population.
 }
 \description{
-Get information for a Population object
+This function retrieves detailed information about a Population object, including the number
+of individuals, the number of chromosomes, and the number of markers in the population.
+}
+\examples{
+# Create base information
+info <- create_base_info()
+# Create a population with 2 individuals
+pop <- create_origins(info, num_inds = 2, names = c("p1", "p2"))
+# Retrieve population information
+get_pop_info(pop)
 }

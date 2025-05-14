@@ -182,7 +182,7 @@ create_pop_from_HaploArray <- function(haploArray, info) {
 #'   )
 #' )
 #' pop <- create_pop_from_HaploArray(haploArray, info)
-#' prog <- cross_randomly(5, pop, pop, "prog_")
+#' prog <- cross_randomly(pop, pop, num_inds = 5, name_base = "prog_")
 #' haploArrayProg <- create_HaploArray_from_pop(prog)
 create_HaploArray_from_pop <- function(pop) {
 	if(!inherits(pop, "Population")) {
@@ -203,7 +203,7 @@ create_HaploArray_from_pop <- function(pop) {
 #' @examples
 #' # Create a Population object and set individual names
 #' info <- create_base_info()
-#' pop <- create_origins(2, info, "ind")
+#' pop <- create_origins(info, num_inds = 2, name_base = "ind")
 #' set_individual_names(c("sample1", "sample2"), pop)
 #'
 #' # Access the updated individual names
@@ -222,7 +222,7 @@ set_individual_names <- function(names, pop) {
 			") must match the number of individuals in the Population (",
 			num, ")."))
 	}
-	return(.Call('_BitBreedingSim_setSampleNames', names, pop))
+	.Call('_BitBreedingSim_setSampleNames', names, pop)
 }
 
 #' Generate names for individuals based on a base name and number of individuals
@@ -448,7 +448,6 @@ check_parent_existance <- function(df, mat_pop, pat_pop) {
 #' # Summary of the new Population object
 #' summary(new_population)
 #' @export
-
 cross_by_table <- function(df, mat_pop, pat_pop, names = NULL,
 									name_base = NULL, num_threads = 0) {
     if(!inherits(mat_pop, "Population")) {
@@ -491,33 +490,24 @@ cross_by_table <- function(df, mat_pop, pat_pop, names = NULL,
 	return(pop)
 }
 
-#' Write Population to VCF file
-#'
-#' This function writes a Population object to a VCF file.
-#'
-#' @param pop An external pointer to a Population object.
-#' @param filename A string specifying the path to the output VCF file.
-#' @export
-#' @examples
-#' # Assuming 'pop' is a valid Population object
-#' write_VCF(pop, "output.vcf")
-write_VCF <- function(pop, filename) {
-    if(!inherits(pop, "Population")) {
-        stop("Error: pop is not a Population object.")
-    }
-    tryCatch({
-        .Call('_BitBreedingSim_writeVCF', pop, filename)
-    }, error = function(e) {
-        message("Error: Unable to write to file '", filename, "'. ", e$message)
-    })
-}
-
 #' Get information for a Population object
 #'
-#' @param pop An external pointer to a BaseInfo object.
-#' @return A list containing the number of individuals
-#'         and the number of chromosomes in the population.
+#' This function retrieves detailed information about a Population object, including the number
+#' of individuals, the number of chromosomes, and the number of markers in the population.
+#'
+#' @param pop A Population object. This should be an object created using the relevant Population functions in the package.
+#' @return A list containing:
+#'         - `num_individuals`: The number of individuals in the population.
+#'         - `num_chromosomes`: The number of chromosomes in the population.
+#'         - `num_markers`: The number of markers in the population.
 #' @export
+#' @examples
+#' # Create base information
+#' info <- create_base_info()
+#' # Create a population with 2 individuals
+#' pop <- create_origins(info, num_inds = 2, names = c("p1", "p2"))
+#' # Retrieve population information
+#' get_pop_info(pop)
 get_pop_info <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: info is not a BaseInfo object.")
@@ -525,8 +515,11 @@ get_pop_info <- function(pop) {
 	
 	num_inds <- .Call('_BitBreedingSim_getNumInds', pop)
 	num_chroms <- .Call('_BitBreedingSim_getNumChromsPop', pop)
+	num_markers <- .Call('_BitBreedingSim_getNumMarkersPop', pop)
 	
-	return(list(num_individuals = num_inds, num_chromosomes = num_chroms))
+	return(list(num_individuals = num_inds,
+				num_chromosomes = num_chroms,
+				num_markers = num_markers))
 }
 
 #' Get phenotypes from a Population object
@@ -570,6 +563,11 @@ get_phenotypes <- function(pop, i) {
 #' @param pop An external pointer to a Population object.
 #' @return A matrix of genotypes where rows are individuals and columns are markers.
 #' @export
+#' @examples
+#' info <- create_base_info()
+#' pop <- create_origins(info, num_inds = 2, names = c("p1", "p2"))
+#' geno <- get_genotypes(pop)
+#' geno[, 1:5]
 get_genotypes <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: info is not a BaseInfo object.")
@@ -612,6 +610,11 @@ get_genotypes_naive <- function(pop) {
 #' @param pop An external pointer to a Population object.
 #' @return A matrix of genotypes where rows are individuals and columns are markers.
 #' @export
+#' @examples
+#' info <- create_base_info()
+#' pop <- create_origins(info, num_inds = 2, names = c("p1", "p2"))
+#' geno <- get_phased_genotypes(pop)
+#' geno[, 1:5]
 get_phased_genotypes <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: info is not a BaseInfo object.")
@@ -635,6 +638,11 @@ get_phased_genotypes <- function(pop) {
 #'         Each individual has two rows: the first row is the maternal allele and the
 #'         second row is the paternal allele.
 #' @export
+#' @examples
+#' info <- create_base_info()
+#' pop <- create_origins(info, num_inds = 2, names = c("p1", "p2"))
+#' geno <- get_phased_int_genotypes(pop)
+#' geno[, 1:5]
 get_phased_int_genotypes <- function(pop) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: info must be a BaseInfo object.")

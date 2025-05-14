@@ -420,7 +420,7 @@ void Population::cross_in_thread(void *config) {
 }
 
 void Population::write_VCF(ostream& os) const {
-	VCF::write_header(os, names);
+	VCF::write_default_header(os, names);
 	for(auto p = chr_populations.begin(); p != chr_populations.end(); ++p)
 		(*p)->write(os);
 }
@@ -767,7 +767,7 @@ SEXP crossPopsByTable(DataFrame df, SEXP mothers, SEXP fathers,
 }
 
 // [[Rcpp::export]]
-void writeVCF(SEXP pop, const std::string& filename) {
+void writePopToVCF(SEXP pop, const std::string& filename) {
 	Rcpp::XPtr<Population> popCpp(pop);
 	std::ofstream	ofs(filename);
 	if(!ofs.is_open()) {
@@ -787,6 +787,12 @@ int getNumInds(SEXP pop) {
 int getNumChromsPop(SEXP pop) {
 	Rcpp::XPtr<Population> pop_cpp(pop);
 	return static_cast<int>(pop_cpp.get()->num_chroms());
+}
+
+// [[Rcpp::export]]
+int getNumMarkersPop(SEXP pop) {
+	Rcpp::XPtr<Population> pop_cpp(pop);
+	return static_cast<int>(pop_cpp.get()->num_markers());
 }
 
 // [[Rcpp::export]]

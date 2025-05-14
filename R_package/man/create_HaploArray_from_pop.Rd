@@ -49,6 +49,6 @@ haploArray <- array(
   )
 )
 pop <- create_pop_from_HaploArray(haploArray, info)
-prog <- cross_randomly(5, pop, pop, "prog_")
+prog <- cross_randomly(pop, pop, num_inds = 5, name_base = "prog_")
 haploArrayProg <- create_HaploArray_from_pop(prog)
 }

@@ -22,7 +22,7 @@ of the "Population" class.
 \examples{
 # Create a Population object and set individual names
 info <- create_base_info()
-pop <- create_origins(2, info, "ind")
+pop <- create_origins(info, num_inds = 2, name_base = "ind")
 set_individual_names(c("sample1", "sample2"), pop)
 
 # Access the updated individual names

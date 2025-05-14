@@ -24,3 +24,9 @@ the paternal allele.
 \details{
 Genotype is represented as integers: 0 or 1
 }
+\examples{
+info <- create_base_info()
+pop <- create_origins(info, num_inds = 2, names = c("p1", "p2"))
+geno <- get_phased_int_genotypes(pop)
+geno[, 1:5]
+}

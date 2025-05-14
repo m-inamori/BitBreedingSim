@@ -20,3 +20,9 @@ and columns correspond to individuals.
 \details{
 Genotype is 0|0, 0|1, 1|0, or 1|1
 }
+\examples{
+info <- create_base_info()
+pop <- create_origins(info, num_inds = 2, names = c("p1", "p2"))
+geno <- get_phased_genotypes(pop)
+geno[, 1:5]
+}

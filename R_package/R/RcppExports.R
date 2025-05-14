@@ -53,6 +53,22 @@ readVCF <- function(filename) {
     .Call(`_BitBreedingSim_readVCF`, filename)
 }
 
+getNumIndsVCF <- function(vcf) {
+    .Call(`_BitBreedingSim_getNumIndsVCF`, vcf)
+}
+
+getNumMarkersVCF <- function(vcf) {
+    .Call(`_BitBreedingSim_getNumMarkersVCF`, vcf)
+}
+
+addPopToVCF <- function(vcf, pop) {
+    .Call(`_BitBreedingSim_addPopToVCF`, vcf, pop)
+}
+
+writeVCF <- function(vcf, filename) {
+    invisible(.Call(`_BitBreedingSim_writeVCF`, vcf, filename))
+}
+
 createOrigins <- function(info, names) {
     .Call(`_BitBreedingSim_createOrigins`, info, names)
 }
@@ -81,8 +97,8 @@ crossPopsByTable <- function(df, mothers, fathers, names, T) {
     .Call(`_BitBreedingSim_crossPopsByTable`, df, mothers, fathers, names, T)
 }
 
-writeVCF <- function(pop, filename) {
-    invisible(.Call(`_BitBreedingSim_writeVCF`, pop, filename))
+writePopToVCF <- function(pop, filename) {
+    invisible(.Call(`_BitBreedingSim_writePopToVCF`, pop, filename))
 }
 
 getNumInds <- function(pop) {
@@ -91,6 +107,10 @@ getNumInds <- function(pop) {
 
 getNumChromsPop <- function(pop) {
     .Call(`_BitBreedingSim_getNumChromsPop`, pop)
+}
+
+getNumMarkersPop <- function(pop) {
+    .Call(`_BitBreedingSim_getNumMarkersPop`, pop)
 }
 
 getPhenotypesCpp <- function(pop, i) {

@@ -173,6 +173,51 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getNumIndsVCF
+int getNumIndsVCF(SEXP vcf);
+RcppExport SEXP _BitBreedingSim_getNumIndsVCF(SEXP vcfSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vcf(vcfSEXP);
+    rcpp_result_gen = Rcpp::wrap(getNumIndsVCF(vcf));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getNumMarkersVCF
+int getNumMarkersVCF(SEXP vcf);
+RcppExport SEXP _BitBreedingSim_getNumMarkersVCF(SEXP vcfSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vcf(vcfSEXP);
+    rcpp_result_gen = Rcpp::wrap(getNumMarkersVCF(vcf));
+    return rcpp_result_gen;
+END_RCPP
+}
+// addPopToVCF
+SEXP addPopToVCF(SEXP vcf, SEXP pop);
+RcppExport SEXP _BitBreedingSim_addPopToVCF(SEXP vcfSEXP, SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vcf(vcfSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(addPopToVCF(vcf, pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// writeVCF
+void writeVCF(SEXP vcf, const std::string& filename);
+RcppExport SEXP _BitBreedingSim_writeVCF(SEXP vcfSEXP, SEXP filenameSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type vcf(vcfSEXP);
+    Rcpp::traits::input_parameter< const std::string& >::type filename(filenameSEXP);
+    writeVCF(vcf, filename);
+    return R_NilValue;
+END_RCPP
+}
 // createOrigins
 SEXP createOrigins(SEXP info, const CharacterVector& names);
 RcppExport SEXP _BitBreedingSim_createOrigins(SEXP infoSEXP, SEXP namesSEXP) {
@@ -260,14 +305,14 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// writeVCF
-void writeVCF(SEXP pop, const std::string& filename);
-RcppExport SEXP _BitBreedingSim_writeVCF(SEXP popSEXP, SEXP filenameSEXP) {
+// writePopToVCF
+void writePopToVCF(SEXP pop, const std::string& filename);
+RcppExport SEXP _BitBreedingSim_writePopToVCF(SEXP popSEXP, SEXP filenameSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
     Rcpp::traits::input_parameter< const std::string& >::type filename(filenameSEXP);
-    writeVCF(pop, filename);
+    writePopToVCF(pop, filename);
     return R_NilValue;
 END_RCPP
 }
@@ -290,6 +335,17 @@ BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
     rcpp_result_gen = Rcpp::wrap(getNumChromsPop(pop));
+    return rcpp_result_gen;
+END_RCPP
+}
+// getNumMarkersPop
+int getNumMarkersPop(SEXP pop);
+RcppExport SEXP _BitBreedingSim_getNumMarkersPop(SEXP popSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    rcpp_result_gen = Rcpp::wrap(getNumMarkersPop(pop));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -410,6 +466,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getMapInfo", (DL_FUNC) &_BitBreedingSim_getMapInfo, 1},
     {"_BitBreedingSim_getMapCpp", (DL_FUNC) &_BitBreedingSim_getMapCpp, 1},
     {"_BitBreedingSim_readVCF", (DL_FUNC) &_BitBreedingSim_readVCF, 1},
+    {"_BitBreedingSim_getNumIndsVCF", (DL_FUNC) &_BitBreedingSim_getNumIndsVCF, 1},
+    {"_BitBreedingSim_getNumMarkersVCF", (DL_FUNC) &_BitBreedingSim_getNumMarkersVCF, 1},
+    {"_BitBreedingSim_addPopToVCF", (DL_FUNC) &_BitBreedingSim_addPopToVCF, 2},
+    {"_BitBreedingSim_writeVCF", (DL_FUNC) &_BitBreedingSim_writeVCF, 2},
     {"_BitBreedingSim_createOrigins", (DL_FUNC) &_BitBreedingSim_createOrigins, 2},
     {"_BitBreedingSim_createInfoAndPopFromVCF", (DL_FUNC) &_BitBreedingSim_createInfoAndPopFromVCF, 2},
     {"_BitBreedingSim_createPopFromHaploArray", (DL_FUNC) &_BitBreedingSim_createPopFromHaploArray, 2},
@@ -417,9 +477,10 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_setSampleNames", (DL_FUNC) &_BitBreedingSim_setSampleNames, 2},
     {"_BitBreedingSim_crossPopsRandomly", (DL_FUNC) &_BitBreedingSim_crossPopsRandomly, 4},
     {"_BitBreedingSim_crossPopsByTable", (DL_FUNC) &_BitBreedingSim_crossPopsByTable, 5},
-    {"_BitBreedingSim_writeVCF", (DL_FUNC) &_BitBreedingSim_writeVCF, 2},
+    {"_BitBreedingSim_writePopToVCF", (DL_FUNC) &_BitBreedingSim_writePopToVCF, 2},
     {"_BitBreedingSim_getNumInds", (DL_FUNC) &_BitBreedingSim_getNumInds, 1},
     {"_BitBreedingSim_getNumChromsPop", (DL_FUNC) &_BitBreedingSim_getNumChromsPop, 1},
+    {"_BitBreedingSim_getNumMarkersPop", (DL_FUNC) &_BitBreedingSim_getNumMarkersPop, 1},
     {"_BitBreedingSim_getPhenotypesCpp", (DL_FUNC) &_BitBreedingSim_getPhenotypesCpp, 2},
     {"_BitBreedingSim_selectPop", (DL_FUNC) &_BitBreedingSim_selectPop, 2},
     {"_BitBreedingSim_getGenotypes", (DL_FUNC) &_BitBreedingSim_getGenotypes, 1},
