@@ -7,6 +7,7 @@
 #include "../include/common.h"
 
 using namespace std;
+using namespace Rcpp;
 
 
 //////////////////// Trait ////////////////////
@@ -19,6 +20,35 @@ Trait::Locus Trait::get_locus(std::size_t k, const Positions& positions) {
 		k -= positions[i].size();
 	}
 	return Trait::Locus(0, 0);	// not come here
+}
+
+// std::pairをRcppのリストに変換する関数
+Rcpp::List wrap_pair(const Trait::Locus& p) {
+	return Rcpp::List::create(_["first"] = p.first, _["second"] = p.second);
+}
+
+Rcpp::List Trait::get_info() const {
+	// Convert Locus vector to Rcpp lists
+	const std::vector<Trait::Locus>& loci = get_loci();
+	Rcpp::List	loci_list(loci.size());
+	for (std::size_t j = 0; j < loci.size(); ++j) {
+		loci_list[j] = wrap_pair(loci[j]);
+	}
+	
+	Rcpp::List	trait_list = Rcpp::List::create(
+		_["name"] = get_name(),
+		_["type"] = get_type(),
+		_["mean"] = get_mean(),
+		_["sd"] = get_sd(),
+		_["h2"] = h2(),
+		_["H2"] = H2(),
+		_["loci"] = loci_list,
+		_["additives"] = get_addivtives(),
+		_["dominants"] = get_dominants(),
+		_["hasdominants"] = has_dominants()
+	);
+	trait_list.attr("class") = "Trait";
+	return trait_list;
 }
 
 size_t Trait::count_all_markers(const Positions& positions) {
@@ -287,6 +317,34 @@ vector<double> TraitAOne::get_dominants() const {
 	return vector<double>(1, 0.0);
 }
 
+const Trait	*TraitAOne::modify_trait_h2(double h2) const {
+	const double	new_esd = sqrt(1.0 - h2) * additive_effect / sqrt(2 * h2);
+	return new TraitAOne(name, chr_index, marker_index,
+								additive_effect, mean, new_esd);
+}
+
+const Trait	*TraitAOne::modify_trait_h2_a(double h2,
+											const vector<double>& a) const {
+	const double	new_esd = sqrt(1.0 - h2) * a[0] / sqrt(2 * h2);
+	return new TraitAOne(name, chr_index, marker_index, a[0], mean, new_esd);
+}
+
+const Trait	*TraitAOne::modify_trait_h2_am(double h2, double am) const {
+	const double	ae = additive_effect * am;
+	const double	new_esd = sqrt(1.0 - h2) * ae / sqrt(2 * h2);
+	return new TraitAOne(name, chr_index, marker_index, ae, mean, new_esd);
+}
+
+const Trait *TraitAOne::modify_trait_a(const vector<double>& a) const {
+	return new TraitAOne(name, chr_index, marker_index,
+									a[0], mean, error_std_dev);
+}
+
+const Trait	*TraitAOne::modify_trait_am(double am) const {
+	return new TraitAOne(name, chr_index, marker_index,
+								additive_effect * am, mean, error_std_dev);
+}
+
 
 //////////////////// TraitADOne ////////////////////
 
@@ -332,6 +390,39 @@ vector<double> TraitADOne::get_dominants() const {
 	return vector<double>(1, dominant_effect);
 }
 
+const Trait	*TraitADOne::modify_trait_h2(double h2) const {
+	const double	ae = additive_effect;
+	const double	de = dominant_effect;
+	const double	new_esd = sqrt((1.0-h2)*ae*ae - de*de*h2/2) / sqrt(2*h2);
+	return new TraitADOne(name, chr_index, marker_index, ae, de, mean, new_esd);
+}
+
+const Trait	*TraitADOne::modify_trait_h2_a(double h2,
+											const vector<double>& a) const {
+	const double	ae = a[0];
+	const double	de = dominant_effect;
+	const double	new_esd = sqrt((1.0-h2)*ae*ae - de*de*h2/2) / sqrt(2*h2);
+	return new TraitADOne(name, chr_index, marker_index,
+									a[0], de, mean, new_esd);
+}
+
+const Trait	*TraitADOne::modify_trait_h2_am(double h2, double am) const {
+	const double	ae = additive_effect * am;
+	const double	de = dominant_effect;
+	const double	new_esd = sqrt((1.0-h2)*ae*ae - de*de*h2/2) / sqrt(2*h2);
+	return new TraitADOne(name, chr_index, marker_index, ae, de, mean, new_esd);
+}
+
+const Trait *TraitADOne::modify_trait_a(const vector<double>& a) const {
+	return new TraitADOne(name, chr_index, marker_index,
+							a[0], dominant_effect, mean, error_std_dev);
+}
+
+const Trait	*TraitADOne::modify_trait_am(double am) const {
+	return new TraitADOne(name, chr_index, marker_index, additive_effect * am,
+										dominant_effect, mean, error_std_dev);
+}
+
 
 //////////////////// TraitAMulti ////////////////////
 
@@ -372,6 +463,42 @@ vector<double> TraitAMulti::get_addivtives() const {
 
 vector<double> TraitAMulti::get_dominants() const {
 	return vector<double>(num_QTLs(), 0.0);
+}
+
+const Trait	*TraitAMulti::modify_trait_h2(double h2) const {
+	const double	ae2 = Common::dot_product(additive_effects,
+												additive_effects);
+	const double	new_esd = sqrt((1.0 - h2) * ae2) / sqrt(2 * h2);
+	return new TraitAMulti(name, loci, additive_effects, mean, new_esd);
+}
+
+const Trait	*TraitAMulti::modify_trait_h2_a(double h2,
+											const vector<double>& a) const {
+	const double	ae2 = Common::dot_product(a, a);
+	const double	new_esd = sqrt((1.0 - h2) * ae2) / sqrt(2 * h2);
+	return new TraitAMulti(name, loci, a, mean, new_esd);
+}
+
+const Trait	*TraitAMulti::modify_trait_h2_am(double h2, double am) const {
+	vector<double>	a(additive_effects.size());
+	for(size_t i = 0; i < additive_effects.size(); ++i) {
+		a[i] = additive_effects[i] * am;
+	}
+	const double	ae2 = Common::dot_product(a, a);
+	const double	new_esd = sqrt((1.0 - h2) * ae2) / sqrt(2 * h2);
+	return new TraitAMulti(name, loci, a, mean, new_esd);
+}
+
+const Trait *TraitAMulti::modify_trait_a(const vector<double>& a) const {
+	return new TraitAMulti(name, loci, a, mean, error_std_dev);
+}
+
+const Trait	*TraitAMulti::modify_trait_am(double am) const {
+	vector<double>	a(additive_effects.size());
+	for(size_t i = 0; i < additive_effects.size(); ++i) {
+		a[i] = additive_effects[i] * am;
+	}
+	return new TraitAMulti(name, loci, a, mean, error_std_dev);
 }
 
 
@@ -435,6 +562,52 @@ vector<double> TraitADMulti::get_addivtives() const {
 
 vector<double> TraitADMulti::get_dominants() const {
 	return dominant_effects;
+}
+
+const Trait	*TraitADMulti::modify_trait_h2(double h2) const {
+	const auto&	ae = additive_effects;
+	const auto&	de = dominant_effects;
+	const double	ae2 = Common::dot_product(ae, ae);
+	const double	de2 = Common::dot_product(de, de);
+	const double	new_esd = sqrt((1.0-h2)*ae2 - de2*h2/2) / sqrt(2*h2);
+	return new TraitADMulti(name, loci, ae, de, intercept, new_esd);
+}
+
+const Trait	*TraitADMulti::modify_trait_h2_a(double h2,
+												const vector<double>& a) const {
+	const double	ae2 = Common::dot_product(a, a);
+	const double	de2 = Common::dot_product(dominant_effects,
+												dominant_effects);
+	const double	new_esd = sqrt((1.0-h2)*ae2 - de2*h2/2) / sqrt(2*h2);
+	return new TraitADMulti(name, loci, a, dominant_effects,
+												intercept, new_esd);
+}
+
+const Trait	*TraitADMulti::modify_trait_h2_am(double h2, double am) const {
+	vector<double>	a(additive_effects.size());
+	for(size_t i = 0; i < a.size(); ++i) {
+		a[i] = additive_effects[i] * am;
+	}
+	const double	ae2 = Common::dot_product(a, a);
+	const double	de2 = Common::dot_product(dominant_effects,
+												dominant_effects);
+	const double	new_esd = sqrt((1.0-h2)*ae2 - de2*h2/2) / sqrt(2*h2);
+	return new TraitADMulti(name, loci, a, dominant_effects,
+												intercept, new_esd);
+}
+
+const Trait *TraitADMulti::modify_trait_a(const vector<double>& a) const {
+	return new TraitADMulti(name, loci, a, dominant_effects,
+												intercept, error_std_dev);
+}
+
+const Trait	*TraitADMulti::modify_trait_am(double am) const {
+	vector<double>	a(additive_effects.size());
+	for(size_t i = 0; i < additive_effects.size(); ++i) {
+		a[i] = additive_effects[i] * am;
+	}
+	return new TraitADMulti(name, loci, a, dominant_effects,
+												intercept, error_std_dev);
 }
 
 

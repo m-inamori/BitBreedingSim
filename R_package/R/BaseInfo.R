@@ -154,7 +154,7 @@ get_info <- function(info) {
 #' summary(trait)
 get_trait <- function(info, i) {
 	if(!inherits(info, "BaseInfo")) {
-		stop("Error: info is not a BaseInfo object.")
+		stop("Error: info must be a BaseInfo object.")
 	}
 	
 	num_traits <- .Call('_BitBreedingSim_getNumTraits', info)
@@ -186,7 +186,7 @@ get_trait <- function(info, i) {
 #' @export
 get_map <- function(info) {
 	if(!inherits(info, "BaseInfo")) {
-		stop("Error: info is not a BaseInfo object.")
+		stop("Error: info must be a BaseInfo object.")
 	}
 	
 	.Call('_BitBreedingSim_getMapfromInfo', info)
@@ -218,7 +218,7 @@ get_map <- function(info) {
 add_trait_A <- function(info, name, mean, h2, sd = NULL, a = NULL,
 												loci = NULL, num_loci = 1) {
 	if(!inherits(info, "BaseInfo")) {
-		stop("Error: info is not a BaseInfo object.")
+		stop("Error: info must be a BaseInfo object.")
 	}
 	else if(is.null(sd) && is.null(a)) {
 		stop("Error: Both 'sd' and 'a' cannot be NULL at the same time.")
@@ -277,7 +277,7 @@ add_trait_A <- function(info, name, mean, h2, sd = NULL, a = NULL,
 add_trait_AD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
 								a = NULL, d = NULL, loci = NULL, num_loci = 1) {
 	if(!inherits(info, "BaseInfo")) {
-		stop("Error: info is not a BaseInfo object.")
+		stop("Error: info must be a BaseInfo object.")
 	}
 	else if(!is.null(a) && !is.null(d)) {
 		if(is.null(sd) && is.null(h2) && is.null(H2)) {
@@ -370,5 +370,91 @@ add_trait_AD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
 	add_Trait_AD_wrapper(info, name, mean, sd, h2, H2, a, d, loci, num_loci)
 	num = getNumTraits(info)
 	trait <- get_trait(info, num)
+	summary_trait(trait)
+}
+
+#' Modify Trait Parameters
+#'
+#' This function allows modifying the parameters of a specified trait in a `BaseInfo` object.
+#' At least one of `h2`, `a`, or `additive_multiplier` must be provided. The function
+#' ensures that only valid parameter combinations are specified.
+#' 
+#' @param info A `BaseInfo` object that contains the trait information.
+#' @param i An integer index of the trait to be modified.
+#' @param h2 (Optional) Narrow-sense heritability. If only `h2` is specified, the additive effect 
+#' remains unchanged, and the error variance is adjusted to match the specified `h2`.
+#' @param a (Optional) A numeric vector specifying the additive effects for each QTL. If `a` is 
+#' provided with `h2`, the error variance is adjusted to match the specified `h2`, while the 
+#' additive effects remain as specified.
+#' @param additive_multiplier (Optional) A scalar to scale the current additive effect. If provided
+#' with `h2`, the error variance is adjusted to match the specified `h2`, while the 
+#' additive effects remain as specified.
+#'
+#' **Note:** Only one of `a` or `additive_multiplier` can be specified at the same time.
+#' 
+#' - If only `h2` is specified, it adjusts the error variance to match the specified `h2` while keeping the additive effects unchanged.
+#' - If `a` or `additive_multiplier` is specified alongside `h2`, both the additive effects and the error variance are adjusted.
+#' - If only `a` or `additive_multiplier` is specified, only the additive effects are modified.
+#'
+#' @return No return value. The function modifies the parameters of the specified trait directly.
+#' @export
+#'
+#' @examples
+#' info <- create_base_info()
+#' add_trait_A(info, "Trait1", mean = 100.0, h2 = 0.6, sd = 10.0, num_loci = 1)
+#' 
+#' # Modify heritability only
+#' modify_trait_parameters(info, 1, h2 = 0.7)
+#'
+#' # Modify heritability and additive effects
+#' modify_trait_parameters(info, 1, h2 = 0.7, a = c(11))
+#'
+#' # Modify heritability and scale additive effects
+#' modify_trait_parameters(info, 1, h2 = 0.7, additive_multiplier = 1.1)
+#'
+#' # Modify additive effects only
+#' modify_trait_parameters(info, 1, a = c(11))
+#'
+#' # Scale additive effects only
+#' modify_trait_parameters(info, 1, additive_multiplier = 1.1)
+modify_trait_parameters <- function(info, i, h2 = NULL, a = NULL,
+										additive_multiplier = NULL) {
+	if(!inherits(info, "BaseInfo")) {
+		stop("Error: info must be a BaseInfo object.")
+	}
+	
+	num_traits <- .Call('_BitBreedingSim_getNumTraits', info)
+	if(!is.numeric(i) || i %% 1 != 0 || i < 1) {
+		stop("Error: i must be a positive integer.")
+	}
+	else if(i > num_traits) {
+		stop(paste("Index out of bounds: i should be between 1 and",
+												num_traits, "but got", i))
+	}
+	
+	if(is.null(h2) && is.null(a) && is.null(additive_multiplier)) {
+		message <- "Error: At least one of 'h2', 'a', or 'additive_multiplier'"
+		message <- paste(message, "must be provided.")
+		stop(message)
+	}
+	else if(!is.null(a) && !is.null(additive_multiplier)) {
+		message <- "Error: Both 'a' and 'additive_multiplier'"
+		message <- paste(message, "cannot be provided simultaneously.")
+		stop(message)
+	}
+	else if(!is.null(a) && !(is.vector(a) && is.numeric(a))) {
+		stop("Error: a must be a numeric vector.")
+	}
+	else if(!is.null(a) && is.vector(a)) {
+		trait <- get_trait(info, i)
+		num_QTL <- length(trait$loci)
+		if(length(a) != num_QTL) {
+			stop(sprintf("Error: The length of 'a' must be %d, but it is %d.",
+															num_QTL, length(a)))
+		}
+	}
+	
+	modify_Trait_Params_wrapper(info, i, h2, a, additive_multiplier)
+	trait <- get_trait(info, i)
 	summary_trait(trait)
 }

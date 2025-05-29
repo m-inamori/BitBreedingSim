@@ -8,7 +8,7 @@
 #' @param trait A Trait object containing the following elements:
 #' \describe{
 #'   \item{name}{The name of the trait as a character string.}
-#'   \item{type}{The type of the trait (e.g., "quantitative" or "binary").}
+#'   \item{type}{The type of the trait (e.g., "Additive Effect Only").}
 #'   \item{mean}{The mean value of the trait as a numeric.}
 #'   \item{sd}{The standard deviation of the trait as a numeric.}
 #'   \item{h2}{The narrow-sense heritability of the trait as a numeric (between 0 and 1).}

@@ -24,6 +24,8 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 install:
 	R CMD INSTALL .
+	rm src/*.o
+	rm src/*.so
 
 clean:
 	rm -rf $(BUILD_DIR)

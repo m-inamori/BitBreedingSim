@@ -1,7 +1,7 @@
 CXX = g++
 include build/Makevars
 
-BUILD_DIR = build/release
+BUILD_DIR = src
 SRC_DIR = src
 PKG_LIBS = -L$(LDFLAGS) -lBitBreedingSim
 TARGET = $(BUILD_DIR)/BitBreedingSim.so
@@ -21,7 +21,8 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 install:
-	R CMD INSTALL .
+	R CMD INSTALL --no-configure .
+	rm src/*.o src/*.so
 
 clean:
 	rm -rf $(BUILD_DIR)

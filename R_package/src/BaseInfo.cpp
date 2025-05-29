@@ -144,6 +144,42 @@ void BaseInfo::add_AD(const std::string& name, double mean, double H2,
 	traits.push_back(trait);
 }
 
+
+///// modify Trait /////
+
+void BaseInfo::modify_trait_h2(size_t i, double h2) {
+	const Trait	*trait = traits[i]->modify_trait_h2(h2);
+	delete traits[i];
+	traits[i] = trait;
+}
+
+void BaseInfo::modify_trait_h2_a(size_t i, double h2, const vector<double>& a) {
+	const Trait	*trait = traits[i]->modify_trait_h2_a(h2, a);
+	delete traits[i];
+	traits[i] = trait;
+}
+
+void BaseInfo::modify_trait_h2_am(size_t i, double h2, double am) {
+	const Trait	*trait = traits[i]->modify_trait_h2_am(h2, am);
+	delete traits[i];
+	traits[i] = trait;
+}
+
+void BaseInfo::modify_trait_a(size_t i, const vector<double>& a) {
+	const Trait	*trait = traits[i]->modify_trait_a(a);
+	delete traits[i];
+	traits[i] = trait;
+}
+
+void BaseInfo::modify_trait_am(size_t i, double am) {
+	const Trait	*trait = traits[i]->modify_trait_am(am);
+	delete traits[i];
+	traits[i] = trait;
+}
+
+
+///// misc /////
+
 vector<double> BaseInfo::compute_phenotypes(const Population& pop,
 												size_t trait_index) const {
 	vector<double>	phenotypes(pop.num_inds());
@@ -222,37 +258,11 @@ int getNumMarkers(SEXP ptr, std::size_t i) {
 	return baseInfo->get_num_markers(i);
 }
 
-// std::pairをRcppのリストに変換する関数
-List wrap_pair(const Trait::Locus& p) {
-	return List::create(_["first"] = p.first, _["second"] = p.second);
-}
-
 // [[Rcpp::export]]
 SEXP getTraitCpp(SEXP baseInfoPtr, std::size_t i) {
 	Rcpp::XPtr<BaseInfo>	ptr_info(baseInfoPtr);
 	const Trait	*trait = ptr_info->get_trait(i);
-	
-	// Convert Locus vector to Rcpp lists
-	std::vector<Trait::Locus> loci = trait->get_loci();
-	List	loci_list(loci.size());
-	for (std::size_t j = 0; j < loci.size(); ++j) {
-		loci_list[j] = wrap_pair(loci[j]);
-	}
-	
-	Rcpp::List	trait_list = Rcpp::List::create(
-		_["name"] = trait->get_name(),
-		_["type"] = trait->get_type(),
-		_["mean"] = trait->get_mean(),
-		_["sd"] = trait->get_sd(),
-		_["h2"] = trait->h2(),
-		_["H2"] = trait->H2(),
-		_["loci"] = loci_list,
-		_["additives"] = trait->get_addivtives(),
-		_["dominants"] = trait->get_dominants(),
-		_["hasdominants"] = trait->has_dominants()
-	);
-	trait_list.attr("class") = "Trait";
-	return trait_list;
+	return trait->get_info();
 }
 
 // [[Rcpp::export]]
@@ -369,6 +379,41 @@ void add_Trait_AD_wrapper(SEXP baseInfoPtr, std::string name, double mean,
 			const double	h2 = as<double>(h2_);
 			const double	H2 = as<double>(H2_);
 			baseInfo->add_AD_adl_randomly(name, num_loci, mean, sd, h2, H2);
+		}
+	}
+}
+
+///// modify A Trait /////
+
+// [[Rcpp::export]]
+void modify_Trait_Params_wrapper(SEXP baseInfoPtr, size_t i,
+									Nullable<double> h2_ = R_NilValue,
+									Nullable<NumericVector> a_ = R_NilValue,
+									Nullable<double> am_ = R_NilValue) {
+	Rcpp::XPtr<BaseInfo> baseInfo(baseInfoPtr);
+	
+	if(h2_.isNotNull()) {
+		const double	h2 = as<double>(h2_);
+		if(a_.isNull() && am_.isNull()) {
+			baseInfo->modify_trait_h2(i-1, h2);
+		}
+		else if(a_.isNotNull()) {
+			const std::vector<double> a = as<std::vector<double>>(a_);
+			baseInfo->modify_trait_h2_a(i-1, h2, a);
+		}
+		else if(am_.isNotNull()) {
+			const double	am = as<double>(am_);
+			baseInfo->modify_trait_h2_am(i-1, h2, am);
+		}
+	}
+	else {
+		if(a_.isNotNull()) {
+			const std::vector<double> a = as<std::vector<double>>(a_);
+			baseInfo->modify_trait_a(i-1, a);
+		}
+		else if(am_.isNotNull()) {
+			const double	am = as<double>(am_);
+			baseInfo->modify_trait_am(i-1, am);
 		}
 	}
 }

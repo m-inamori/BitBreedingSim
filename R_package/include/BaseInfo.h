@@ -95,6 +95,14 @@ public:
 										const std::vector<double>& ds,
 										const std::vector<Trait::Locus>& loci);
 	
+	///// modify Trait /////
+	void modify_trait_h2(std::size_t i, double h2);
+	void modify_trait_h2_a(std::size_t i, double h2,
+							const std::vector<double>& a);
+	void modify_trait_h2_am(std::size_t i, double h2, double am);
+	void modify_trait_a(std::size_t i, const std::vector<double>& a);
+	void modify_trait_am(std::size_t i, double am);
+
 public:
 	static BaseInfo *create_default(
 						const std::vector<std::vector<GC::Pos>>& positions,

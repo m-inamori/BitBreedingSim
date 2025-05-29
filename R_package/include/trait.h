@@ -22,7 +22,7 @@ public:
 	using Locus = std::pair<std::size_t, std::size_t>;
 	using Positions = std::vector<std::vector<GC::Pos>>;
 	
-private:
+protected:
 	const std::string	name;
 	
 public:
@@ -30,6 +30,8 @@ public:
 	virtual ~Trait() { }
 	
 	const std::string& get_name() const { return name; }
+	Rcpp::List get_info() const;
+	
 	virtual const std::string get_type() const = 0;
 	virtual double phenotype(std::size_t ind_index, const Population& pop,
 											std::mt19937& engine) const = 0;
@@ -42,6 +44,14 @@ public:
 	virtual std::vector<double> get_addivtives() const = 0;
 	virtual std::vector<double> get_dominants() const = 0;
 	virtual bool has_dominants() const = 0;
+	
+	///// modify Trait /////
+	virtual const Trait	*modify_trait_h2(double h2) const = 0;
+	virtual const Trait	*modify_trait_h2_a(double h2,
+										const std::vector<double>& a) const = 0;
+	virtual const Trait	*modify_trait_h2_am(double h2, double am) const = 0;
+	virtual const Trait *modify_trait_a(const std::vector<double>& a) const = 0;
+	virtual const Trait	*modify_trait_am(double am) const = 0;
 	
 public:
 	///// helper /////
@@ -157,6 +167,13 @@ public:
 	std::vector<double> get_addivtives() const;
 	std::vector<double> get_dominants() const;
 	bool has_dominants() const { return false; }
+	
+	const Trait	*modify_trait_h2(double h2) const;
+	const Trait	*modify_trait_h2_a(double h2,
+									const std::vector<double>& a) const;
+	const Trait	*modify_trait_h2_am(double h2, double am) const;
+	const Trait *modify_trait_a(const std::vector<double>& a) const;
+	const Trait	*modify_trait_am(double am) const;
 };
 
 
@@ -194,6 +211,13 @@ public:
 	std::vector<double> get_addivtives() const;
 	std::vector<double> get_dominants() const;
 	bool has_dominants() const { return true; }
+	
+	const Trait	*modify_trait_h2(double h2) const;
+	const Trait	*modify_trait_h2_a(double h2,
+									const std::vector<double>& a) const;
+	const Trait	*modify_trait_h2_am(double h2, double am) const;
+	const Trait *modify_trait_a(const std::vector<double>& a) const;
+	const Trait	*modify_trait_am(double am) const;
 };
 
 
@@ -226,6 +250,13 @@ public:
 	std::vector<double> get_addivtives() const;
 	std::vector<double> get_dominants() const;
 	bool has_dominants() const { return false; }
+	
+	const Trait	*modify_trait_h2(double h2) const;
+	const Trait	*modify_trait_h2_a(double h2,
+									const std::vector<double>& a) const;
+	const Trait	*modify_trait_h2_am(double h2, double am) const;
+	const Trait *modify_trait_a(const std::vector<double>& a) const;
+	const Trait	*modify_trait_am(double am) const;
 };
 
 
@@ -263,4 +294,11 @@ public:
 	std::vector<double> get_addivtives() const;
 	std::vector<double> get_dominants() const;
 	bool has_dominants() const { return true; }
+	
+	const Trait	*modify_trait_h2(double h2) const;
+	const Trait	*modify_trait_h2_a(double h2,
+									const std::vector<double>& a) const;
+	const Trait	*modify_trait_h2_am(double h2, double am) const;
+	const Trait *modify_trait_a(const std::vector<double>& a) const;
+	const Trait	*modify_trait_am(double am) const;
 };
