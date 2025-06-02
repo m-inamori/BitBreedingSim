@@ -12,7 +12,19 @@ get_trait(info, i)
 \item{i}{An integer. The index of the trait to retrieve.}
 }
 \value{
-The trait at the specified index.
+A \code{Trait} object containing the following elements:
+\describe{
+\item{name}{The name of the trait as a character string.}
+\item{type}{The type of the trait, such as "Additive Effect Only".}
+\item{mean}{The mean value of the trait as a numeric.}
+\item{sd}{The standard deviation of the trait as a numeric.}
+\item{h2}{The narrow-sense heritability of the trait as a numeric (between 0 and 1).}
+\item{H2}{(Optional) The broad-sense heritability of the trait as a numeric.}
+\item{hasdominants}{A logical value indicating whether the trait includes dominant effects.}
+\item{loci}{A list of loci associated with the trait. Each element is a pair containing detailed information about a locus.}
+\item{additives}{The additive effects for each locus as a numeric vector.}
+\item{dominants}{The dominant effects for each locus as a numeric vector (if applicable).}
+}
 }
 \description{
 Get a trait from a BaseInfo object
@@ -21,4 +33,8 @@ Get a trait from a BaseInfo object
 # Assume 'info' is a valid BaseInfo object
 trait <- get_trait(info, 1)
 summary(trait)
+
+# Access specific trait properties
+print(trait$name)  # Print the name of the trait
+print(trait$loci)  # Print the list of loci
 }

@@ -140,9 +140,9 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// modify_Trait_Params_wrapper
-void modify_Trait_Params_wrapper(SEXP baseInfoPtr, size_t i, Nullable<double> h2_, Nullable<NumericVector> a_, Nullable<double> am_);
-RcppExport SEXP _BitBreedingSim_modify_Trait_Params_wrapper(SEXP baseInfoPtrSEXP, SEXP iSEXP, SEXP h2_SEXP, SEXP a_SEXP, SEXP am_SEXP) {
+// modify_Trait_Params_A_wrapper
+void modify_Trait_Params_A_wrapper(SEXP baseInfoPtr, size_t i, Nullable<double> h2_, Nullable<NumericVector> a_, Nullable<double> am_);
+RcppExport SEXP _BitBreedingSim_modify_Trait_Params_A_wrapper(SEXP baseInfoPtrSEXP, SEXP iSEXP, SEXP h2_SEXP, SEXP a_SEXP, SEXP am_SEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type baseInfoPtr(baseInfoPtrSEXP);
@@ -150,7 +150,23 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Nullable<double> >::type h2_(h2_SEXP);
     Rcpp::traits::input_parameter< Nullable<NumericVector> >::type a_(a_SEXP);
     Rcpp::traits::input_parameter< Nullable<double> >::type am_(am_SEXP);
-    modify_Trait_Params_wrapper(baseInfoPtr, i, h2_, a_, am_);
+    modify_Trait_Params_A_wrapper(baseInfoPtr, i, h2_, a_, am_);
+    return R_NilValue;
+END_RCPP
+}
+// modify_Trait_Params_AD_wrapper
+void modify_Trait_Params_AD_wrapper(SEXP baseInfoPtr, size_t i, Nullable<double> h2_, Nullable<NumericVector> a_, Nullable<double> am_, Nullable<NumericVector> d_, Nullable<double> dm_);
+RcppExport SEXP _BitBreedingSim_modify_Trait_Params_AD_wrapper(SEXP baseInfoPtrSEXP, SEXP iSEXP, SEXP h2_SEXP, SEXP a_SEXP, SEXP am_SEXP, SEXP d_SEXP, SEXP dm_SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type baseInfoPtr(baseInfoPtrSEXP);
+    Rcpp::traits::input_parameter< size_t >::type i(iSEXP);
+    Rcpp::traits::input_parameter< Nullable<double> >::type h2_(h2_SEXP);
+    Rcpp::traits::input_parameter< Nullable<NumericVector> >::type a_(a_SEXP);
+    Rcpp::traits::input_parameter< Nullable<double> >::type am_(am_SEXP);
+    Rcpp::traits::input_parameter< Nullable<NumericVector> >::type d_(d_SEXP);
+    Rcpp::traits::input_parameter< Nullable<double> >::type dm_(dm_SEXP);
+    modify_Trait_Params_AD_wrapper(baseInfoPtr, i, h2_, a_, am_, d_, dm_);
     return R_NilValue;
 END_RCPP
 }
@@ -477,7 +493,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getMapfromInfo", (DL_FUNC) &_BitBreedingSim_getMapfromInfo, 1},
     {"_BitBreedingSim_add_Trait_A_wrapper", (DL_FUNC) &_BitBreedingSim_add_Trait_A_wrapper, 8},
     {"_BitBreedingSim_add_Trait_AD_wrapper", (DL_FUNC) &_BitBreedingSim_add_Trait_AD_wrapper, 10},
-    {"_BitBreedingSim_modify_Trait_Params_wrapper", (DL_FUNC) &_BitBreedingSim_modify_Trait_Params_wrapper, 5},
+    {"_BitBreedingSim_modify_Trait_Params_A_wrapper", (DL_FUNC) &_BitBreedingSim_modify_Trait_Params_A_wrapper, 5},
+    {"_BitBreedingSim_modify_Trait_Params_AD_wrapper", (DL_FUNC) &_BitBreedingSim_modify_Trait_Params_AD_wrapper, 7},
     {"_BitBreedingSim_getMapInfo", (DL_FUNC) &_BitBreedingSim_getMapInfo, 1},
     {"_BitBreedingSim_getMapCpp", (DL_FUNC) &_BitBreedingSim_getMapCpp, 1},
     {"_BitBreedingSim_readVCF", (DL_FUNC) &_BitBreedingSim_readVCF, 1},

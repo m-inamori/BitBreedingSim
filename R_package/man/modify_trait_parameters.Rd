@@ -9,30 +9,47 @@ modify_trait_parameters(
   i,
   h2 = NULL,
   a = NULL,
-  additive_multiplier = NULL
+  additive_multiplier = NULL,
+  d = NULL,
+  dominant_multiplier = NULL
 )
 }
 \arguments{
-\item{info}{A \code{BaseInfo} object that contains the trait information.}
+\item{info}{A \code{BaseInfo} object containing the trait information.}
 
-\item{i}{An integer index of the trait to be modified.}
+\item{i}{An integer index of the trait to be modified. Must be a positive integer within the valid range.}
 
-\item{h2}{(Optional) Narrow-sense heritability. If only \code{h2} is specified, the additive effect
-remains unchanged, and the error variance is adjusted to match the specified \code{h2}.}
+\item{h2}{(Optional) Narrow-sense heritability. If only \code{h2} is specified, the additive and dominant effects
+remain unchanged, and the error variance is adjusted to match the specified \code{h2}.}
 
-\item{a}{(Optional) A numeric vector specifying the additive effects for each QTL. If \code{a} is
-provided with \code{h2}, the error variance is adjusted to match the specified \code{h2}, while the
-additive effects remain as specified.}
+\item{a}{(Optional) A numeric vector specifying the additive effects for each QTL. If \code{a} is provided
+with \code{h2}, the error variance is adjusted to match the specified \code{h2}, while the additive effects remain as specified.}
 
-\item{additive_multiplier}{(Optional) A scalar to scale the current additive effect. If provided
-with \code{h2}, the error variance is adjusted to match the specified \code{h2}, while the
-additive effects remain as specified.
+\item{additive_multiplier}{(Optional) A scalar to scale the current additive effects. If provided
+with \code{h2}, the error variance is adjusted to match the specified \code{h2}, while the additive effects remain scaled.}
 
-\strong{Note:} Only one of \code{a} or \code{additive_multiplier} can be specified at the same time.
+\item{d}{(Optional) A numeric vector specifying the dominant effects for each QTL. If \code{d} is provided
+with \code{h2}, the error variance is adjusted to match the specified \code{h2}, while the dominant effects remain as specified.}
+
+\item{dominant_multiplier}{(Optional) A scalar to scale the current dominant effects. If provided
+with \code{h2}, the error variance is adjusted to match the specified \code{h2}, while the dominant effects remain scaled.
+
+\strong{Notes:}
 \itemize{
-\item If only \code{h2} is specified, it adjusts the error variance to match the specified \code{h2} while keeping the additive effects unchanged.
-\item If \code{a} or \code{additive_multiplier} is specified alongside \code{h2}, both the additive effects and the error variance are adjusted.
-\item If only \code{a} or \code{additive_multiplier} is specified, only the additive effects are modified.
+\item Only one of \code{a} or \code{additive_multiplier} can be specified at the same time.
+\item Similarly, only one of \code{d} or \code{dominant_multiplier} can be specified at the same time.
+}
+
+\strong{Behavior:}
+\itemize{
+\item If only \code{h2} is specified, it adjusts the error variance to match the specified \code{h2} while keeping
+the additive and dominant effects unchanged.
+\item If \code{a} or \code{additive_multiplier} is specified alongside \code{h2}, the error variance is adjusted to match the
+specified \code{h2}, while the additive effects are updated accordingly.
+\item If \code{d} or \code{dominant_multiplier} is specified alongside \code{h2}, the error variance is adjusted to match the
+specified \code{h2}, while the dominant effects are updated accordingly.
+\item If only \code{a}, \code{additive_multiplier}, \code{d}, or \code{dominant_multiplier} is specified, the respective effects are
+updated without altering heritability.
 }}
 }
 \value{
@@ -40,6 +57,32 @@ No return value. The function modifies the parameters of the specified trait dir
 }
 \description{
 This function allows modifying the parameters of a specified trait in a \code{BaseInfo} object.
-At least one of \code{h2}, \code{a}, or \code{additive_multiplier} must be provided. The function
-ensures that only valid parameter combinations are specified.
+At least one of \code{h2}, \code{a}, \code{additive_multiplier}, \code{d}, or \code{dominant_multiplier} must be provided.
+The function ensures that only valid parameter combinations are specified and updates the
+heritability, additive effects, and/or dominant effects accordingly.
+}
+\examples{
+info <- create_base_info()
+add_trait_AD(info, "Trait1", mean = 100.0, h2 = 0.6, sd = 10.0, num_loci = 2, hasdominants = TRUE)
+
+# Modify heritability only
+modify_trait_parameters(info, 1, h2 = 0.7)
+
+# Modify heritability and additive effects
+modify_trait_parameters(info, 1, h2 = 0.7, a = c(11, 12))
+
+# Modify heritability and dominant effects
+modify_trait_parameters(info, 1, h2 = 0.7, d = c(3, 4))
+
+# Modify heritability and scale additive effects
+modify_trait_parameters(info, 1, h2 = 0.7, additive_multiplier = 1.1)
+
+# Modify heritability and scale dominant effects
+modify_trait_parameters(info, 1, h2 = 0.7, dominant_multiplier = 1.2)
+
+# Modify additive effects only
+modify_trait_parameters(info, 1, a = c(11, 12))
+
+# Scale dominant effects only
+modify_trait_parameters(info, 1, dominant_multiplier = 1.2)
 }

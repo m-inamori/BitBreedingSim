@@ -41,8 +41,12 @@ add_Trait_AD_wrapper <- function(baseInfoPtr, name, mean, sd_ = NULL, h2_ = NULL
     invisible(.Call(`_BitBreedingSim_add_Trait_AD_wrapper`, baseInfoPtr, name, mean, sd_, h2_, H2_, a, ds, loci, num_loci))
 }
 
-modify_Trait_Params_wrapper <- function(baseInfoPtr, i, h2_ = NULL, a_ = NULL, am_ = NULL) {
-    invisible(.Call(`_BitBreedingSim_modify_Trait_Params_wrapper`, baseInfoPtr, i, h2_, a_, am_))
+modify_Trait_Params_A_wrapper <- function(baseInfoPtr, i, h2_ = NULL, a_ = NULL, am_ = NULL) {
+    invisible(.Call(`_BitBreedingSim_modify_Trait_Params_A_wrapper`, baseInfoPtr, i, h2_, a_, am_))
+}
+
+modify_Trait_Params_AD_wrapper <- function(baseInfoPtr, i, h2_ = NULL, a_ = NULL, am_ = NULL, d_ = NULL, dm_ = NULL) {
+    invisible(.Call(`_BitBreedingSim_modify_Trait_Params_AD_wrapper`, baseInfoPtr, i, h2_, a_, am_, d_, dm_))
 }
 
 getMapInfo <- function(mapPtr) {

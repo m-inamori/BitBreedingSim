@@ -59,6 +59,15 @@ namespace Common {
 	}
 	
 	template<typename T>
+	std::vector<T> multiply_by_constant(const std::vector<T>& v, T a) {
+		std::vector<T>	w(v.size());
+		for(size_t i = 0; i < v.size(); ++i) {
+			w[i] = v[i] * a;
+		}
+		return w;
+	}
+	
+	template<typename T>
 	void connect_vector(const std::vector<T>& v, const std::vector<T>& w,
 													std::vector<T>& dest) {
 		dest.reserve(v.size() + w.size());

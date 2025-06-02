@@ -146,12 +146,29 @@ get_info <- function(info) {
 #'
 #' @param info An external pointer to a BaseInfo object.
 #' @param i An integer. The index of the trait to retrieve.
-#' @return The trait at the specified index.
+#' @return A `Trait` object containing the following elements:
+#' \describe{
+#'   \item{name}{The name of the trait as a character string.}
+#'   \item{type}{The type of the trait, such as "Additive Effect Only".}
+#'   \item{mean}{The mean value of the trait as a numeric.}
+#'   \item{sd}{The standard deviation of the trait as a numeric.}
+#'   \item{h2}{The narrow-sense heritability of the trait as a numeric (between 0 and 1).}
+#'   \item{H2}{(Optional) The broad-sense heritability of the trait as a numeric.}
+#'   \item{hasdominants}{A logical value indicating whether the trait includes dominant effects.}
+#'   \item{loci}{A list of loci associated with the trait. Each element is a pair containing detailed information about a locus.}
+#'   \item{additives}{The additive effects for each locus as a numeric vector.}
+#'   \item{dominants}{The dominant effects for each locus as a numeric vector (if applicable).}
+#' }
+#'
 #' @export
 #' @examples
 #' # Assume 'info' is a valid BaseInfo object
 #' trait <- get_trait(info, 1)
 #' summary(trait)
+#'
+#' # Access specific trait properties
+#' print(trait$name)  # Print the name of the trait
+#' print(trait$loci)  # Print the list of loci
 get_trait <- function(info, i) {
 	if(!inherits(info, "BaseInfo")) {
 		stop("Error: info must be a BaseInfo object.")
@@ -373,65 +390,8 @@ add_trait_AD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
 	summary_trait(trait)
 }
 
-#' Modify Trait Parameters
-#'
-#' This function allows modifying the parameters of a specified trait in a `BaseInfo` object.
-#' At least one of `h2`, `a`, or `additive_multiplier` must be provided. The function
-#' ensures that only valid parameter combinations are specified.
-#' 
-#' @param info A `BaseInfo` object that contains the trait information.
-#' @param i An integer index of the trait to be modified.
-#' @param h2 (Optional) Narrow-sense heritability. If only `h2` is specified, the additive effect 
-#' remains unchanged, and the error variance is adjusted to match the specified `h2`.
-#' @param a (Optional) A numeric vector specifying the additive effects for each QTL. If `a` is 
-#' provided with `h2`, the error variance is adjusted to match the specified `h2`, while the 
-#' additive effects remain as specified.
-#' @param additive_multiplier (Optional) A scalar to scale the current additive effect. If provided
-#' with `h2`, the error variance is adjusted to match the specified `h2`, while the 
-#' additive effects remain as specified.
-#'
-#' **Note:** Only one of `a` or `additive_multiplier` can be specified at the same time.
-#' 
-#' - If only `h2` is specified, it adjusts the error variance to match the specified `h2` while keeping the additive effects unchanged.
-#' - If `a` or `additive_multiplier` is specified alongside `h2`, both the additive effects and the error variance are adjusted.
-#' - If only `a` or `additive_multiplier` is specified, only the additive effects are modified.
-#'
-#' @return No return value. The function modifies the parameters of the specified trait directly.
-#' @export
-#'
-#' @examples
-#' info <- create_base_info()
-#' add_trait_A(info, "Trait1", mean = 100.0, h2 = 0.6, sd = 10.0, num_loci = 1)
-#' 
-#' # Modify heritability only
-#' modify_trait_parameters(info, 1, h2 = 0.7)
-#'
-#' # Modify heritability and additive effects
-#' modify_trait_parameters(info, 1, h2 = 0.7, a = c(11))
-#'
-#' # Modify heritability and scale additive effects
-#' modify_trait_parameters(info, 1, h2 = 0.7, additive_multiplier = 1.1)
-#'
-#' # Modify additive effects only
-#' modify_trait_parameters(info, 1, a = c(11))
-#'
-#' # Scale additive effects only
-#' modify_trait_parameters(info, 1, additive_multiplier = 1.1)
-modify_trait_parameters <- function(info, i, h2 = NULL, a = NULL,
-										additive_multiplier = NULL) {
-	if(!inherits(info, "BaseInfo")) {
-		stop("Error: info must be a BaseInfo object.")
-	}
-	
-	num_traits <- .Call('_BitBreedingSim_getNumTraits', info)
-	if(!is.numeric(i) || i %% 1 != 0 || i < 1) {
-		stop("Error: i must be a positive integer.")
-	}
-	else if(i > num_traits) {
-		stop(paste("Index out of bounds: i should be between 1 and",
-												num_traits, "but got", i))
-	}
-	
+check_arguments_error_A <- function(trait, h2 = NULL,
+										a = NULL, additive_multiplier = NULL) {
 	if(is.null(h2) && is.null(a) && is.null(additive_multiplier)) {
 		message <- "Error: At least one of 'h2', 'a', or 'additive_multiplier'"
 		message <- paste(message, "must be provided.")
@@ -446,15 +406,185 @@ modify_trait_parameters <- function(info, i, h2 = NULL, a = NULL,
 		stop("Error: a must be a numeric vector.")
 	}
 	else if(!is.null(a) && is.vector(a)) {
-		trait <- get_trait(info, i)
 		num_QTL <- length(trait$loci)
 		if(length(a) != num_QTL) {
 			stop(sprintf("Error: The length of 'a' must be %d, but it is %d.",
 															num_QTL, length(a)))
 		}
 	}
+}
+
+calc_new_additive_effects <- function(trait, a = NULL,
+										additive_multiplier = NULL) {
+	if(!is.null(a)) {
+		return(a)
+	}
+	else if(!is.null(additive_multiplier)) {
+		return(trait$additives * additive_multiplier)
+	}
+	else {
+		return(trait$additives)
+	}
+}
+
+calc_new_dominant_effects <- function(trait, d = NULL,
+										dominant_multiplier = NULL) {
+	if(!is.null(d)) {
+		return(d)
+	}
+	else if(!is.null(dominant_multiplier)) {
+		return(trait$dominants * dominant_multiplier)
+	}
+	else {
+		return(trait$dominants)
+	}
+}
+
+check_arguments_error_AD <- function(trait, h2 = NULL,
+										a = NULL, additive_multiplier = NULL,
+										d = NULL, dominant_multiplier = NULL) {
+	if(is.null(h2) && is.null(a) && is.null(additive_multiplier) &&
+						is.null(d) && is.null(dominant_multiplier)) {
+		message <- "Error: At least one of 'h2', 'a', 'additive_multiplier',"
+		message <- paste(message, "'d' or 'dominant_multiplier'")
+		message <- paste(message, "must be provided.")
+		stop(message)
+	}
+	else if(!is.null(a) && !is.null(additive_multiplier)) {
+		message <- "Error: Both 'a' and 'additive_multiplier'"
+		message <- paste(message, "cannot be provided simultaneously.")
+		stop(message)
+	}
+	else if(!is.null(d) && !is.null(dominant_multiplier)) {
+		message <- "Error: Both 'd' and 'dominant_multiplier'"
+		message <- paste(message, "cannot be provided simultaneously.")
+		stop(message)
+	}
+	else if(!is.null(a) && !(is.vector(a) && is.numeric(a))) {
+		stop("Error: a must be a numeric vector.")
+	}
+	else if(!is.null(d) && !(is.vector(d) && is.numeric(d))) {
+		stop("Error: d must be a numeric vector.")
+	}
+	else if(!is.null(a) && is.vector(a)) {
+		num_QTL <- length(trait$loci)
+		if(length(a) != num_QTL) {
+			stop(sprintf("Error: The length of 'a' must be %d, but it is %d.",
+															num_QTL, length(a)))
+		}
+	}
+	else if(!is.null(d) && is.vector(d)) {
+		num_QTL <- length(trait$loci)
+		if(length(d) != num_QTL) {
+			stop(sprintf("Error: The length of 'd' must be %d, but it is %d.",
+															num_QTL, length(a)))
+		}
+	}
 	
-	modify_Trait_Params_wrapper(info, i, h2, a, additive_multiplier)
+	# d is too large
+	h2_ = ifelse(!is.null(h2), h2, trait$h2)
+	add <- calc_new_additive_effects(trait, a, additive_multiplier)
+	dom <- calc_new_dominant_effects(trait, d, dominant_multiplier)
+	ae2 <- sum(add * add)
+	de2 <- sum(dom * dom)
+	if((1.0-h2_)*ae2 < de2*h2_/2) {
+		stop("Error: dominants effect is too large.")
+	}
+	
+	if(!is.null(h2) && (h2 < 0.0 || 1.0 < h2)) {
+		stop(sprintf("Error: 'h2' must be between 0 and 1, but it is %f.", h2))
+	}
+}
+
+#' Modify Trait Parameters
+#'
+#' This function allows modifying the parameters of a specified trait in a `BaseInfo` object.
+#' At least one of `h2`, `a`, `additive_multiplier`, `d`, or `dominant_multiplier` must be provided. 
+#' The function ensures that only valid parameter combinations are specified and updates the 
+#' heritability, additive effects, and/or dominant effects accordingly.
+#'
+#' @param info A `BaseInfo` object containing the trait information.
+#' @param i An integer index of the trait to be modified. Must be a positive integer within the valid range.
+#' @param h2 (Optional) Narrow-sense heritability. If only `h2` is specified, the additive and dominant effects 
+#' remain unchanged, and the error variance is adjusted to match the specified `h2`.
+#' @param a (Optional) A numeric vector specifying the additive effects for each QTL. If `a` is provided 
+#' with `h2`, the error variance is adjusted to match the specified `h2`, while the additive effects remain as specified.
+#' @param additive_multiplier (Optional) A scalar to scale the current additive effects. If provided 
+#' with `h2`, the error variance is adjusted to match the specified `h2`, while the additive effects remain scaled.
+#' @param d (Optional) A numeric vector specifying the dominant effects for each QTL. If `d` is provided 
+#' with `h2`, the error variance is adjusted to match the specified `h2`, while the dominant effects remain as specified.
+#' @param dominant_multiplier (Optional) A scalar to scale the current dominant effects. If provided 
+#' with `h2`, the error variance is adjusted to match the specified `h2`, while the dominant effects remain scaled.
+#'
+#' **Notes:**
+#' - Only one of `a` or `additive_multiplier` can be specified at the same time.
+#' - Similarly, only one of `d` or `dominant_multiplier` can be specified at the same time.
+#'
+#' **Behavior:**
+#' - If only `h2` is specified, it adjusts the error variance to match the specified `h2` while keeping 
+#' the additive and dominant effects unchanged.
+#' - If `a` or `additive_multiplier` is specified alongside `h2`, the error variance is adjusted to match the 
+#' specified `h2`, while the additive effects are updated accordingly.
+#' - If `d` or `dominant_multiplier` is specified alongside `h2`, the error variance is adjusted to match the 
+#' specified `h2`, while the dominant effects are updated accordingly.
+#' - If only `a`, `additive_multiplier`, `d`, or `dominant_multiplier` is specified, the respective effects are 
+#' updated without altering heritability.
+#'
+#' @return No return value. The function modifies the parameters of the specified trait directly.
+#' @export
+#'
+#' @examples
+#' info <- create_base_info()
+#' add_trait_AD(info, "Trait1", mean = 100.0, h2 = 0.6, sd = 10.0, num_loci = 2, hasdominants = TRUE)
+#'
+#' # Modify heritability only
+#' modify_trait_parameters(info, 1, h2 = 0.7)
+#'
+#' # Modify heritability and additive effects
+#' modify_trait_parameters(info, 1, h2 = 0.7, a = c(11, 12))
+#'
+#' # Modify heritability and dominant effects
+#' modify_trait_parameters(info, 1, h2 = 0.7, d = c(3, 4))
+#'
+#' # Modify heritability and scale additive effects
+#' modify_trait_parameters(info, 1, h2 = 0.7, additive_multiplier = 1.1)
+#'
+#' # Modify heritability and scale dominant effects
+#' modify_trait_parameters(info, 1, h2 = 0.7, dominant_multiplier = 1.2)
+#'
+#' # Modify additive effects only
+#' modify_trait_parameters(info, 1, a = c(11, 12))
+#'
+#' # Scale dominant effects only
+#' modify_trait_parameters(info, 1, dominant_multiplier = 1.2)
+modify_trait_parameters <- function(info, i, h2 = NULL,
+									a = NULL, additive_multiplier = NULL,
+									d = NULL, dominant_multiplier = NULL) {
+	if(!inherits(info, "BaseInfo")) {
+		stop("Error: info must be a BaseInfo object.")
+	}
+	
+	num_traits <- .Call('_BitBreedingSim_getNumTraits', info)
+	if(!is.numeric(i) || i %% 1 != 0 || i < 1) {
+		stop("Error: i must be a positive integer.")
+	}
+	else if(i > num_traits) {
+		stop(paste("Index out of bounds: i should be between 1 and",
+												num_traits, "but got", i))
+	}
+	
 	trait <- get_trait(info, i)
-	summary_trait(trait)
+	if(!trait$hasdominants) {
+		check_arguments_error_A(trait, h2, a, additive_multiplier)
+		modify_Trait_Params_A_wrapper(info, i, h2, a, additive_multiplier)
+	}
+	else {
+		check_arguments_error_AD(trait, h2, a, additive_multiplier,
+													d, dominant_multiplier)
+		modify_Trait_Params_AD_wrapper(info, i, h2, a, additive_multiplier,
+													d, dominant_multiplier)
+	}
+	
+	modified_trait <- get_trait(info, i)
+	summary_trait(modified_trait)
 }

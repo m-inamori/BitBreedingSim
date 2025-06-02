@@ -145,39 +145,6 @@ void BaseInfo::add_AD(const std::string& name, double mean, double H2,
 }
 
 
-///// modify Trait /////
-
-void BaseInfo::modify_trait_h2(size_t i, double h2) {
-	const Trait	*trait = traits[i]->modify_trait_h2(h2);
-	delete traits[i];
-	traits[i] = trait;
-}
-
-void BaseInfo::modify_trait_h2_a(size_t i, double h2, const vector<double>& a) {
-	const Trait	*trait = traits[i]->modify_trait_h2_a(h2, a);
-	delete traits[i];
-	traits[i] = trait;
-}
-
-void BaseInfo::modify_trait_h2_am(size_t i, double h2, double am) {
-	const Trait	*trait = traits[i]->modify_trait_h2_am(h2, am);
-	delete traits[i];
-	traits[i] = trait;
-}
-
-void BaseInfo::modify_trait_a(size_t i, const vector<double>& a) {
-	const Trait	*trait = traits[i]->modify_trait_a(a);
-	delete traits[i];
-	traits[i] = trait;
-}
-
-void BaseInfo::modify_trait_am(size_t i, double am) {
-	const Trait	*trait = traits[i]->modify_trait_am(am);
-	delete traits[i];
-	traits[i] = trait;
-}
-
-
 ///// misc /////
 
 vector<double> BaseInfo::compute_phenotypes(const Population& pop,
@@ -383,37 +350,154 @@ void add_Trait_AD_wrapper(SEXP baseInfoPtr, std::string name, double mean,
 	}
 }
 
-///// modify A Trait /////
+///// modify Trait /////
 
 // [[Rcpp::export]]
-void modify_Trait_Params_wrapper(SEXP baseInfoPtr, size_t i,
+void modify_Trait_Params_A_wrapper(SEXP baseInfoPtr, size_t i,
 									Nullable<double> h2_ = R_NilValue,
 									Nullable<NumericVector> a_ = R_NilValue,
 									Nullable<double> am_ = R_NilValue) {
-	Rcpp::XPtr<BaseInfo> baseInfo(baseInfoPtr);
+	Rcpp::XPtr<BaseInfo> info(baseInfoPtr);
 	
+	const Trait	*old_trait = info->get_trait(i-1);
+	const auto	add = old_trait->get_addivtives();
 	if(h2_.isNotNull()) {
 		const double	h2 = as<double>(h2_);
 		if(a_.isNull() && am_.isNull()) {
-			baseInfo->modify_trait_h2(i-1, h2);
+			info->set_trait(i-1, old_trait->modify_h2(h2));
 		}
 		else if(a_.isNotNull()) {
 			const std::vector<double> a = as<std::vector<double>>(a_);
-			baseInfo->modify_trait_h2_a(i-1, h2, a);
+			info->set_trait(i-1, old_trait->modify_h2_a(h2, a));
 		}
 		else if(am_.isNotNull()) {
 			const double	am = as<double>(am_);
-			baseInfo->modify_trait_h2_am(i-1, h2, am);
+			const auto	a = Common::multiply_by_constant(add, am);
+			info->set_trait(i-1, old_trait->modify_h2_a(h2, a));
 		}
 	}
 	else {
 		if(a_.isNotNull()) {
 			const std::vector<double> a = as<std::vector<double>>(a_);
-			baseInfo->modify_trait_a(i-1, a);
+			info->set_trait(i-1, old_trait->modify_a(a));
 		}
 		else if(am_.isNotNull()) {
 			const double	am = as<double>(am_);
-			baseInfo->modify_trait_am(i-1, am);
+			const auto	a = Common::multiply_by_constant(add, am);
+			info->set_trait(i-1, old_trait->modify_a(a));
 		}
+	}
+	delete old_trait;
+}
+
+// [[Rcpp::export]]
+void modify_Trait_Params_AD_wrapper(SEXP baseInfoPtr, size_t i,
+									Nullable<double> h2_ = R_NilValue,
+									Nullable<NumericVector> a_ = R_NilValue,
+									Nullable<double> am_ = R_NilValue,
+									Nullable<NumericVector> d_ = R_NilValue,
+									Nullable<double> dm_ = R_NilValue) {
+	Rcpp::XPtr<BaseInfo> info(baseInfoPtr);
+	const Trait	*old_trait = info->get_trait(i-1);
+	const auto	add = old_trait->get_addivtives();
+	const auto	dom = old_trait->get_dominants();
+	const Trait	*new_trait = nullptr;
+	
+	if(h2_.isNotNull()) {
+		const double	h2 = as<double>(h2_);
+		if(a_.isNull() && am_.isNull() && d_.isNull() && dm_.isNull()) {
+			new_trait = old_trait->modify_h2(h2);
+		}
+		else if(a_.isNotNull() && d_.isNull() && dm_.isNull()) {
+			const std::vector<double> a = as<std::vector<double>>(a_);
+			new_trait = old_trait->modify_h2_a(h2, a);
+		}
+		else if(am_.isNotNull() && d_.isNull() && dm_.isNull()) {
+			const double	am = as<double>(am_);
+			const auto	a = Common::multiply_by_constant(add, am);
+			new_trait = old_trait->modify_h2_a(h2, a);
+		}
+		else if(d_.isNotNull() && a_.isNull() && am_.isNull()) {
+			const std::vector<double> d = as<std::vector<double>>(d_);
+			new_trait = old_trait->modify_h2_d(h2, d);
+		}
+		else if(dm_.isNotNull() && a_.isNotNull() && dm_.isNotNull()) {
+			const double	dm = as<double>(dm_);
+			const auto	d = Common::multiply_by_constant(dom, dm);
+			new_trait = old_trait->modify_h2_d(h2, d);
+		}
+		else if(a_.isNotNull() && d_.isNotNull()) {
+			const std::vector<double> a = as<std::vector<double>>(a_);
+			const std::vector<double> d = as<std::vector<double>>(d_);
+			new_trait = old_trait->modify_h2_a_d(h2, a, d);
+		}
+		else if(a_.isNotNull() && dm_.isNotNull()) {
+			const std::vector<double> a = as<std::vector<double>>(a_);
+			const double	dm = as<double>(dm_);
+			const auto	d = Common::multiply_by_constant(dom, dm);
+			new_trait = old_trait->modify_h2_a_d(h2, a, d);
+		}
+		else if(am_.isNotNull() && d_.isNotNull()) {
+			const double	am = as<double>(am_);
+			const auto	a = Common::multiply_by_constant(add, am);
+			const std::vector<double> d = as<std::vector<double>>(d_);
+			new_trait = old_trait->modify_h2_a_d(h2, a, d);
+		}
+		else if(a_.isNotNull() && dm_.isNotNull()) {
+			const double	am = as<double>(am_);
+			const double	dm = as<double>(dm_);
+			const auto	a = Common::multiply_by_constant(add, am);
+			const auto	d = Common::multiply_by_constant(dom, dm);
+			new_trait = old_trait->modify_h2_a_d(h2, a, d);
+		}
+	}
+	else {
+		if(a_.isNotNull() && d_.isNull() && dm_.isNull()) {
+			const std::vector<double> a = as<std::vector<double>>(a_);
+			new_trait = old_trait->modify_a(a);
+		}
+		else if(am_.isNotNull() && d_.isNull() && dm_.isNull()) {
+			const double	am = as<double>(am_);
+			const auto	a = Common::multiply_by_constant(add, am);
+			new_trait = old_trait->modify_a(a);
+		}
+		else if(d_.isNotNull() && a_.isNull() && am_.isNull()) {
+			const std::vector<double> d = as<std::vector<double>>(d_);
+			new_trait = old_trait->modify_d(d);
+		}
+		else if(dm_.isNotNull() && a_.isNull() && am_.isNull()) {
+			const double	dm = as<double>(dm_);
+			const auto	d = Common::multiply_by_constant(dom, dm);
+			new_trait = old_trait->modify_d(d);
+		}
+		else if(a_.isNotNull() && d_.isNotNull()) {
+			const std::vector<double> a = as<std::vector<double>>(a_);
+			const std::vector<double> d = as<std::vector<double>>(d_);
+			new_trait = old_trait->modify_a_d(a, d);
+		}
+		else if(a_.isNotNull() && dm_.isNotNull()) {
+			const std::vector<double> a = as<std::vector<double>>(a_);
+			const double	dm = as<double>(dm_);
+			const auto	d = Common::multiply_by_constant(dom, dm);
+			new_trait = old_trait->modify_a_d(a, d);
+		}
+		else if(am_.isNotNull() && d_.isNotNull()) {
+			const double	am = as<double>(am_);
+			const auto	a = Common::multiply_by_constant(add, am);
+			const std::vector<double> d = as<std::vector<double>>(d_);
+			new_trait = old_trait->modify_a_d(a, d);
+		}
+		else if(am_.isNotNull() && dm_.isNotNull()) {
+			const double	am = as<double>(am_);
+			const double	dm = as<double>(dm_);
+			const auto	a = Common::multiply_by_constant(add, am);
+			const auto	d = Common::multiply_by_constant(dom, dm);
+			new_trait = old_trait->modify_a_d(a, d);
+		}
+	}
+	
+	if(new_trait) {
+		delete old_trait;
+		info->set_trait(i-1, new_trait);
 	}
 }

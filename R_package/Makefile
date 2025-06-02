@@ -25,4 +25,5 @@ install:
 	rm src/*.o src/*.so
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm src/*.o
+	rm src/*.o
