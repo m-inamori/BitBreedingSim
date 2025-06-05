@@ -1,3 +1,130 @@
+check_arguments_error_A <- function(trait, h2 = NULL,
+										a = NULL, additive_multiplier = NULL) {
+	if(is.null(h2) && is.null(a) && is.null(additive_multiplier)) {
+		message <- "Error: At least one of 'h2', 'a', or 'additive_multiplier'"
+		message <- paste(message, "must be provided.")
+		stop(message)
+	}
+	else if(!is.null(a) && !is.null(additive_multiplier)) {
+		message <- "Error: Both 'a' and 'additive_multiplier'"
+		message <- paste(message, "cannot be provided simultaneously.")
+		stop(message)
+	}
+	else if(!is.null(a) && !(is.vector(a) && is.numeric(a))) {
+		stop("Error: a must be a numeric vector.")
+	}
+	else if(!is.null(a) && is.vector(a)) {
+		num_QTL <- length(trait$loci)
+		if(length(a) != num_QTL) {
+			stop(sprintf("Error: The length of 'a' must be %d, but it is %d.",
+															num_QTL, length(a)))
+		}
+	}
+}
+
+is_at_most_one_valid <- function(a, b, c) {
+	counter_valid <- 0
+	if(!is.null(a)) { counter_valid <- counter_valid + 1 }
+	if(!is.null(b)) { counter_valid <- counter_valid + 1 }
+	if(!is.null(c)) { counter_valid <- counter_valid + 1 }
+	return(counter_valid <= 1)
+}
+
+calc_new_additive_effects <- function(trait, a = NULL,
+										additive_multiplier = NULL) {
+	if(!is.null(a)) {
+		return(a)
+	}
+	else if(!is.null(additive_multiplier)) {
+		return(trait$additives * additive_multiplier)
+	}
+	else {
+		return(trait$additives)
+	}
+}
+
+calc_new_dominant_effects <- function(trait, d = NULL,
+										dominant_multiplier = NULL) {
+	if(!is.null(d)) {
+		return(d)
+	}
+	else if(!is.null(dominant_multiplier)) {
+		return(trait$dominants * dominant_multiplier)
+	}
+	else {
+		return(trait$dominants)
+	}
+}
+
+check_arguments_error_AD <- function(trait, h2 = NULL, H2 = NULL,
+										a = NULL, additive_multiplier = NULL,
+										d = NULL, dominant_multiplier = NULL) {
+	if(is.null(h2) && is.null(H2) &&
+						is.null(a) && is.null(additive_multiplier) &&
+						is.null(d) && is.null(dominant_multiplier)) {
+		message <- "Error: At least one of 'h2', 'a', 'additive_multiplier',"
+		message <- paste(message, "'d' or 'dominant_multiplier'")
+		message <- paste(message, "must be provided.")
+		stop(message)
+	}
+	else if(!is.null(a) && !is.null(additive_multiplier)) {
+		message <- "Error: Both 'a' and 'additive_multiplier'"
+		message <- paste(message, "cannot be provided simultaneously.")
+		stop(message)
+	}
+	else if(!is_at_most_one_valid(d, dominant_multiplier, H2)) {
+		message <- "Error: Both 'd' and 'dominant_multiplier' and 'H2'"
+		message <- paste(message, "cannot be provided simultaneously.")
+		stop(message)
+	}
+	else if(!is.null(h2) && !(is.numeric(h2) && length(h2) == 1)) {
+		stop("Error: h2 must be a scalar numeric.")
+	}
+	else if(!is.null(h2) && (h2 < 0.0 || 1.0 < h2)) {
+		stop("Error: h2 must be between 0 and 1.")
+	}
+	else if(!is.null(H2) && !(is.numeric(H2) && length(H2) == 1)) {
+		stop("Error: H2 must be a scalar numeric.")
+	}
+	else if(!is.null(H2) && (H2 < 0.0 || 1.0 < H2)) {
+		stop("Error: H2 must be between 0 and 1.")
+	}
+	else if(!is.null(a) && !(is.vector(a) && is.numeric(a))) {
+		stop("Error: a must be a numeric vector.")
+	}
+	else if(!is.null(d) && !(is.vector(d) && is.numeric(d))) {
+		stop("Error: d must be a numeric vector.")
+	}
+	else if(!is.null(a) && is.vector(a)) {
+		num_QTL <- length(trait$loci)
+		if(length(a) != num_QTL) {
+			stop(sprintf("Error: The length of 'a' must be %d, but it is %d.",
+															num_QTL, length(a)))
+		}
+	}
+	else if(!is.null(d) && is.vector(d)) {
+		num_QTL <- length(trait$loci)
+		if(length(d) != num_QTL) {
+			stop(sprintf("Error: The length of 'd' must be %d, but it is %d.",
+															num_QTL, length(d)))
+		}
+	}
+	
+	# dominat effect is too large
+	h2_ = ifelse(!is.null(h2), h2, trait$h2)
+	H2_ = ifelse(!is.null(H2), H2, trait$H2)
+	if(!is.null(h2) && !is.null(H2) && H2_ < h2_) {
+		stop("Error: H2 must be less than h2.")
+	}
+	add <- calc_new_additive_effects(trait, a, additive_multiplier)
+	dom <- calc_new_dominant_effects(trait, d, dominant_multiplier)
+	ae2 <- sum(add * add)
+	de2 <- sum(dom * dom)
+	if((1.0-h2_)*ae2 < de2*h2_/2) {
+		stop("Error: dominant effect is too large.")
+	}
+}
+
 #' Summarize the details of a Trait object
 #'
 #' This function provides a formatted summary of a Trait object. A Trait object represents

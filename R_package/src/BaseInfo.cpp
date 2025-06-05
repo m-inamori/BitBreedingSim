@@ -352,6 +352,20 @@ void add_Trait_AD_wrapper(SEXP baseInfoPtr, std::string name, double mean,
 
 ///// modify Trait /////
 
+vector<double> calc_a(const Trait *trait,
+							Nullable<NumericVector> a_ = R_NilValue,
+							Nullable<double> am_ = R_NilValue) {
+	// Either a_ or am_ is valid
+	if(a_.isNotNull()) {
+		return as<std::vector<double>>(a_);
+	}
+	else {
+		const auto		add = trait->get_addivtives();
+		const double	am = as<double>(am_);
+		return Common::multiply_by_constant(add, am);
+	}
+}
+
 // [[Rcpp::export]]
 void modify_Trait_Params_A_wrapper(SEXP baseInfoPtr, size_t i,
 									Nullable<double> h2_ = R_NilValue,
@@ -361,38 +375,114 @@ void modify_Trait_Params_A_wrapper(SEXP baseInfoPtr, size_t i,
 	
 	const Trait	*old_trait = info->get_trait(i-1);
 	const auto	add = old_trait->get_addivtives();
-	if(h2_.isNotNull()) {
+	
+	// If both h2 and a(or am) are specified, all variant varies
+	if(h2_.isNotNull() && (a_.isNotNull() || am_.isNotNull())) {
 		const double	h2 = as<double>(h2_);
-		if(a_.isNull() && am_.isNull()) {
-			info->set_trait(i-1, old_trait->modify_h2(h2));
-		}
-		else if(a_.isNotNull()) {
-			const std::vector<double> a = as<std::vector<double>>(a_);
-			info->set_trait(i-1, old_trait->modify_h2_a(h2, a));
-		}
-		else if(am_.isNotNull()) {
-			const double	am = as<double>(am_);
-			const auto	a = Common::multiply_by_constant(add, am);
-			info->set_trait(i-1, old_trait->modify_h2_a(h2, a));
-		}
+		const vector<double>	a = calc_a(old_trait, a_, am_);
+		info->set_trait(i-1, old_trait->modify_h2_a(h2, a));
+	}
+	else if(a_.isNotNull()) {
+		const std::vector<double> a = as<std::vector<double>>(a_);
+		info->set_trait(i-1, old_trait->modify_a(a));
+	}
+	else if(am_.isNotNull()) {
+		const double	am = as<double>(am_);
+		const auto	a = Common::multiply_by_constant(add, am);
+		info->set_trait(i-1, old_trait->modify_a(a));
 	}
 	else {
-		if(a_.isNotNull()) {
-			const std::vector<double> a = as<std::vector<double>>(a_);
-			info->set_trait(i-1, old_trait->modify_a(a));
-		}
-		else if(am_.isNotNull()) {
-			const double	am = as<double>(am_);
-			const auto	a = Common::multiply_by_constant(add, am);
-			info->set_trait(i-1, old_trait->modify_a(a));
-		}
+		// Additive effects also vary with heritability
+		const double	h2 = as<double>(h2_);
+		const double	old_h2 = old_trait->h2();
+		const double	am = sqrt(h2 / old_h2);
+		const auto		old_a = old_trait->get_addivtives();
+		const auto		a = Common::multiply_by_constant(old_a, am);
+		info->set_trait(i-1, old_trait->modify_a(a));
 	}
 	delete old_trait;
+}
+
+vector<double> calc_a(const Trait *trait,
+						Nullable<double> h2_ = R_NilValue,
+						Nullable<NumericVector> a_ = R_NilValue,
+						Nullable<double> am_ = R_NilValue) {
+	if(h2_.isNotNull()) {
+		const double	h2 = as<double>(h2_);
+		const vector<double>	old_a = trait->get_addivtives();
+		const double	old_a2 = Common::dot_product(old_a, old_a);
+		const double	all_var = trait->calc_var();
+		const double	a2 = all_var * h2 * 2;
+		const double	am = sqrt(a2 / old_a2);
+		return Common::multiply_by_constant(old_a, am);
+	}
+	if(a_.isNotNull()) {
+		return as<std::vector<double>>(a_);
+	}
+	else if(am_.isNotNull()) {
+		const vector<double>	old_a = trait->get_addivtives();
+		const double	am = as<double>(am_);
+		return Common::multiply_by_constant(old_a, am);
+	}
+	else {
+		return trait->get_addivtives();
+	}
+}
+
+vector<double> calc_d(const Trait *trait, double h2, const vector<double>& a,
+										Nullable<NumericVector> d_ = R_NilValue,
+										Nullable<double> dm_ = R_NilValue,
+										Nullable<double> H2_ = R_NilValue) {
+	if(d_.isNotNull()) {
+		return as<std::vector<double>>(d_);
+	}
+	else if(dm_.isNotNull()) {
+		const double	dm = as<double>(dm_);
+		const auto	dom = trait->get_dominants();
+		return Common::multiply_by_constant(dom, dm);
+	}
+	else {
+		const double	H2 = as<double>(H2_);
+		const double	a2 = Common::dot_product(a, a);
+		const double	all_var = a2 / (2 * h2);
+		const double	d2 = all_var * (H2 - h2) * 4;
+		const auto		old_d = trait->get_dominants();
+		const double	old_d2 = Common::dot_product(old_d, old_d);
+		const double	dm = sqrt(d2 / old_d2);
+		return Common::multiply_by_constant(old_d, dm);
+	}
+}
+
+vector<double> calc_d(const Trait *trait, const vector<double>& a,
+							Nullable<NumericVector> d_ = R_NilValue,
+							Nullable<double> dm_ = R_NilValue,
+							Nullable<double> H2_ = R_NilValue) {
+	if(d_.isNotNull()) {
+		return as<std::vector<double>>(d_);
+	}
+	else if(dm_.isNotNull()) {
+		const double	dm = as<double>(dm_);
+		const auto	old_d = trait->get_dominants();
+		return Common::multiply_by_constant(old_d, dm);
+	}
+	else {
+		// all variance is not varied
+		const double	H2 = as<double>(H2_);
+		const double	all_var = trait->calc_var();
+		const double	a2 = Common::dot_product(a, a);
+		const double	h2 = a2 / 2 / all_var;
+		const double	d2 = all_var * (H2 - h2) * 4;
+		const auto		old_d = trait->get_dominants();
+		const double	old_d2 = Common::dot_product(old_d, old_d);
+		const double	dm = sqrt(d2 / old_d2);
+		return Common::multiply_by_constant(old_d, dm);
+	}
 }
 
 // [[Rcpp::export]]
 void modify_Trait_Params_AD_wrapper(SEXP baseInfoPtr, size_t i,
 									Nullable<double> h2_ = R_NilValue,
+									Nullable<double> H2_ = R_NilValue,
 									Nullable<NumericVector> a_ = R_NilValue,
 									Nullable<double> am_ = R_NilValue,
 									Nullable<NumericVector> d_ = R_NilValue,
@@ -403,95 +493,27 @@ void modify_Trait_Params_AD_wrapper(SEXP baseInfoPtr, size_t i,
 	const auto	dom = old_trait->get_dominants();
 	const Trait	*new_trait = nullptr;
 	
-	if(h2_.isNotNull()) {
+	// If both h2 and a(or am) are specified, all variant varies
+	if(h2_.isNotNull() && (a_.isNotNull() || am_.isNotNull())) {
 		const double	h2 = as<double>(h2_);
-		if(a_.isNull() && am_.isNull() && d_.isNull() && dm_.isNull()) {
-			new_trait = old_trait->modify_h2(h2);
-		}
-		else if(a_.isNotNull() && d_.isNull() && dm_.isNull()) {
-			const std::vector<double> a = as<std::vector<double>>(a_);
+		const vector<double>	a = calc_a(old_trait, a_, am_);
+		if(d_.isNull() && dm_.isNull() && H2_.isNull()) {
+			// dominant effect not change
 			new_trait = old_trait->modify_h2_a(h2, a);
 		}
-		else if(am_.isNotNull() && d_.isNull() && dm_.isNull()) {
-			const double	am = as<double>(am_);
-			const auto	a = Common::multiply_by_constant(add, am);
-			new_trait = old_trait->modify_h2_a(h2, a);
-		}
-		else if(d_.isNotNull() && a_.isNull() && am_.isNull()) {
-			const std::vector<double> d = as<std::vector<double>>(d_);
-			new_trait = old_trait->modify_h2_d(h2, d);
-		}
-		else if(dm_.isNotNull() && a_.isNotNull() && dm_.isNotNull()) {
-			const double	dm = as<double>(dm_);
-			const auto	d = Common::multiply_by_constant(dom, dm);
-			new_trait = old_trait->modify_h2_d(h2, d);
-		}
-		else if(a_.isNotNull() && d_.isNotNull()) {
-			const std::vector<double> a = as<std::vector<double>>(a_);
-			const std::vector<double> d = as<std::vector<double>>(d_);
-			new_trait = old_trait->modify_h2_a_d(h2, a, d);
-		}
-		else if(a_.isNotNull() && dm_.isNotNull()) {
-			const std::vector<double> a = as<std::vector<double>>(a_);
-			const double	dm = as<double>(dm_);
-			const auto	d = Common::multiply_by_constant(dom, dm);
-			new_trait = old_trait->modify_h2_a_d(h2, a, d);
-		}
-		else if(am_.isNotNull() && d_.isNotNull()) {
-			const double	am = as<double>(am_);
-			const auto	a = Common::multiply_by_constant(add, am);
-			const std::vector<double> d = as<std::vector<double>>(d_);
-			new_trait = old_trait->modify_h2_a_d(h2, a, d);
-		}
-		else if(a_.isNotNull() && dm_.isNotNull()) {
-			const double	am = as<double>(am_);
-			const double	dm = as<double>(dm_);
-			const auto	a = Common::multiply_by_constant(add, am);
-			const auto	d = Common::multiply_by_constant(dom, dm);
+		else {
+			const auto	d = calc_d(old_trait, h2, a, d_, dm_, H2_);
 			new_trait = old_trait->modify_h2_a_d(h2, a, d);
 		}
 	}
 	else {
-		if(a_.isNotNull() && d_.isNull() && dm_.isNull()) {
-			const std::vector<double> a = as<std::vector<double>>(a_);
+		const vector<double>	a = calc_a(old_trait, h2_, a_, am_);
+		if(d_.isNull() && dm_.isNull() && H2_.isNull()) {
+			// dominant effect not change
 			new_trait = old_trait->modify_a(a);
 		}
-		else if(am_.isNotNull() && d_.isNull() && dm_.isNull()) {
-			const double	am = as<double>(am_);
-			const auto	a = Common::multiply_by_constant(add, am);
-			new_trait = old_trait->modify_a(a);
-		}
-		else if(d_.isNotNull() && a_.isNull() && am_.isNull()) {
-			const std::vector<double> d = as<std::vector<double>>(d_);
-			new_trait = old_trait->modify_d(d);
-		}
-		else if(dm_.isNotNull() && a_.isNull() && am_.isNull()) {
-			const double	dm = as<double>(dm_);
-			const auto	d = Common::multiply_by_constant(dom, dm);
-			new_trait = old_trait->modify_d(d);
-		}
-		else if(a_.isNotNull() && d_.isNotNull()) {
-			const std::vector<double> a = as<std::vector<double>>(a_);
-			const std::vector<double> d = as<std::vector<double>>(d_);
-			new_trait = old_trait->modify_a_d(a, d);
-		}
-		else if(a_.isNotNull() && dm_.isNotNull()) {
-			const std::vector<double> a = as<std::vector<double>>(a_);
-			const double	dm = as<double>(dm_);
-			const auto	d = Common::multiply_by_constant(dom, dm);
-			new_trait = old_trait->modify_a_d(a, d);
-		}
-		else if(am_.isNotNull() && d_.isNotNull()) {
-			const double	am = as<double>(am_);
-			const auto	a = Common::multiply_by_constant(add, am);
-			const std::vector<double> d = as<std::vector<double>>(d_);
-			new_trait = old_trait->modify_a_d(a, d);
-		}
-		else if(am_.isNotNull() && dm_.isNotNull()) {
-			const double	am = as<double>(am_);
-			const double	dm = as<double>(dm_);
-			const auto	a = Common::multiply_by_constant(add, am);
-			const auto	d = Common::multiply_by_constant(dom, dm);
+		else {
+			const auto	d = calc_d(old_trait, a, d_, dm_, H2_);
 			new_trait = old_trait->modify_a_d(a, d);
 		}
 	}

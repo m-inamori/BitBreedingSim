@@ -8,7 +8,7 @@ SRC_DIR = src
 PKG_LIBS = -L$(LDFLAGS) -lBitBreedingSim
 TARGET = $(BUILD_DIR)/BitBreedingSim.so
 
-CXXFLAGS = -std=gnu++17 $(PKG_CPPFLAGS) -g3 -O0 -fno-inline -DDEBUG -fpic
+CXXFLAGS = -std=gnu++17 $(PKG_CPPFLAGS) -g3 -O0 -fno-inline -DDEBUG -fpic -lz
 
 SOURCES = $(wildcard src/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))

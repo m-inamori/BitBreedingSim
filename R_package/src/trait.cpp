@@ -282,8 +282,6 @@ const Trait *Trait::create_AD(const string& name, double mean, double H2,
 											as[0], ds[0], mean, error_std_dev);
 	}
 	else {
-		double	sum_d = std::accumulate(ds.begin(), ds.end(), 0.0);
-		const double	intercept = mean - sum_d / 2;
-		return new TraitADMulti(name, loci, as, ds, intercept, error_std_dev);
+		return new TraitADMulti(name, loci, as, ds, mean, error_std_dev);
 	}
 }

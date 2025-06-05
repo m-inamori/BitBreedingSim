@@ -18,10 +18,14 @@ double TraitADOne::phenotype(size_t ind_index, const Population& pop,
 		return gt * additive_effect + mean - dominant_effect / 2 + dist(engine);
 }
 
+double TraitADOne::calc_var() const {
+	return error_std_dev * error_std_dev +
+			additive_effect * additive_effect / 2 +
+			dominant_effect * dominant_effect / 4;
+}
+
 double TraitADOne::get_sd() const {
-	return sqrt(error_std_dev * error_std_dev +
-				additive_effect * additive_effect / 2 +
-				dominant_effect * dominant_effect / 4);
+	return sqrt(calc_var());
 }
 
 double TraitADOne::h2() const {
@@ -50,41 +54,33 @@ vector<double> TraitADOne::get_dominants() const {
 	return vector<double>(1, dominant_effect);
 }
 
-const Trait *TraitADOne::modify(double h2_, double a, double d) const {
-	const double	new_var = ((1.0-h2_)*a*a - d*d*h2_/2) / (2*h2_*h2_);
-	const double	new_esd = sqrt(new_var);
+const Trait	*TraitADOne::modify(double a, double d) const {
+	const double	new_esd = sqrt(calc_var() - a * a / 2 - d * d / 4);
 	return new TraitADOne(name, chr_index, marker_index, a, d, mean, new_esd);
 }
 
-const Trait	*TraitADOne::modify_h2(double h2_) const {
-	return modify(h2_, additive_effect, dominant_effect);
+const Trait	*TraitADOne::modify_a(const vector<double>& a) const {
+	return modify(a[0], dominant_effect);
+}
+
+const Trait *TraitADOne::modify_a_d(const vector<double>& a,
+									const vector<double>& d) const {
+	return modify(a[0], d[0]);
+}
+
+const Trait	*TraitADOne::modify2(double h2_, double a, double d) const {
+	const double	new_all_var = a * a / (h2_ * 2);
+	const double	new_esd = sqrt(new_all_var - a * a / 2 - d * d / 4);
+	return new TraitADOne(name, chr_index, marker_index, a, d, mean, new_esd);
 }
 
 const Trait	*TraitADOne::modify_h2_a(double h2_,
-										const vector<double>& a) const {
-	return modify(h2_, a[0], dominant_effect);
-}
-
-const Trait *TraitADOne::modify_a(const vector<double>& a) const {
-	return modify(h2(), a[0], dominant_effect);
-}
-
-const Trait *TraitADOne::modify_h2_d(double h2_,
-										const vector<double>& d) const {
-	return modify(h2_, additive_effect, d[0]);
+									const vector<double>& a) const {
+	return modify2(h2_, a[0], dominant_effect);
 }
 
 const Trait *TraitADOne::modify_h2_a_d(double h2_,
 										const vector<double>& a,
 										const vector<double>& d) const {
-	return modify(h2_, a[0], d[0]);
-}
-
-const Trait *TraitADOne::modify_d(const vector<double>& d) const {
-	return modify(h2(), additive_effect, d[0]);
-}
-
-const Trait *TraitADOne::modify_a_d(const vector<double>& a,
-									const vector<double>& d) const {
-	return modify(h2(), a[0], d[0]);
+	return modify2(h2_, a[0], d[0]);
 }

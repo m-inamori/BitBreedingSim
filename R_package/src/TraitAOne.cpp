@@ -15,9 +15,13 @@ double TraitAOne::phenotype(size_t ind_index, const Population& pop,
 	return gt * additive_effect + mean + dist(engine);
 }
 
+double TraitAOne::calc_var() const {
+	return error_std_dev * error_std_dev +
+			additive_effect * additive_effect / 2;
+}
+
 double TraitAOne::get_sd() const {
-	return sqrt(error_std_dev * error_std_dev +
-				additive_effect * additive_effect / 2);
+	return sqrt(calc_var());
 }
 
 double TraitAOne::h2() const {
@@ -38,39 +42,25 @@ vector<double> TraitAOne::get_dominants() const {
 	return vector<double>(1, 0.0);
 }
 
-const Trait	*TraitAOne::modify(double h2_, double a) const {
-	const double	new_esd = sqrt(1.0 - h2_) * a / sqrt(2 * h2_);
-	return new TraitAOne(name, chr_index, marker_index, a, mean, new_esd);
+const Trait	*TraitAOne::modify_a(const vector<double>& a) const {
+	const double	new_esd = sqrt(calc_var() - a[0] * a[0] / 2);
+	return new TraitAOne(name, chr_index, marker_index, a[0], mean, new_esd);
 }
 
-const Trait	*TraitAOne::modify_h2(double h2_) const {
-	return modify(h2_, additive_effect);
+const Trait *TraitAOne::modify_a_d(const vector<double>& a,
+									const vector<double>& d) const {
+	return modify_a(a);
 }
 
 const Trait	*TraitAOne::modify_h2_a(double h2_,
 									const vector<double>& a) const {
-	return modify(h2_, a[0]);
-}
-
-const Trait *TraitAOne::modify_a(const vector<double>& a) const {
-	return modify(h2(), a[0]);
-}
-
-const Trait *TraitAOne::modify_h2_d(double h2_, const vector<double>& d) const {
-	return modify(h2_, additive_effect);
+	const double	new_all_var = a[0] * a[0] / (h2_ * 2);
+	const double	new_esd = sqrt(new_all_var * (1.0 - h2_));
+	return new TraitAOne(name, chr_index, marker_index, a[0], mean, new_esd);
 }
 
 const Trait *TraitAOne::modify_h2_a_d(double h2_,
-											const vector<double>& a,
-											const vector<double>& d) const {
-	return modify(h2_, a[0]);
-}
-
-const Trait *TraitAOne::modify_d(const vector<double>& d) const {
-	return modify(h2(), additive_effect);
-}
-
-const Trait *TraitAOne::modify_a_d(const vector<double>& a,
-											const vector<double>& d) const {
-	return modify(h2(), a[0]);
+										const vector<double>& a,
+										const vector<double>& d) const {
+	return modify_h2_a(h2_, a);
 }

@@ -9,7 +9,7 @@ TARGET = $(BUILD_DIR)/BitBreedingSim.so
 SOURCES = $(wildcard src/*.cpp)
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SOURCES))
 
-CXXFLAGS = -std=gnu++17 $(PKG_CPPFLAGS) -O3 -fpic
+CXXFLAGS = -std=gnu++17 $(PKG_CPPFLAGS) -O3 -fpic -lz
 
 all: $(TARGET)
 

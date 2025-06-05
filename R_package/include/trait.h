@@ -36,6 +36,7 @@ public:
 	virtual double phenotype(std::size_t ind_index, const Population& pop,
 											std::mt19937& engine) const = 0;
 	virtual double get_mean() const = 0;
+	virtual double calc_var() const = 0;
 	virtual double get_sd() const = 0;
 	virtual double h2() const = 0;
 	virtual double H2() const = 0;
@@ -46,18 +47,14 @@ public:
 	virtual bool has_dominants() const = 0;
 	
 	///// modify Trait /////
-	virtual const Trait	*modify_h2(double h2) const = 0;
 	virtual const Trait	*modify_h2_a(double h2,
 										const std::vector<double>& a) const = 0;
-	virtual const Trait *modify_a(const std::vector<double>& a) const = 0;
-	virtual const Trait *modify_h2_d(double h2,
-										const std::vector<double>& d) const = 0;
 	virtual const Trait *modify_h2_a_d(double h2,
 										const std::vector<double>& a,
 										const std::vector<double>& d) const = 0;
-	virtual const Trait *modify_d(const std::vector<double>& d) const = 0;
+	virtual const Trait *modify_a(const std::vector<double>& a) const = 0;
 	virtual const Trait *modify_a_d(const std::vector<double>& a,
-										const std::vector<double>& d) const = 0;
+									const std::vector<double>& d) const = 0;
 	
 public:
 	///// helper /////

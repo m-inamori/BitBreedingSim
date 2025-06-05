@@ -390,155 +390,49 @@ add_trait_AD <- function(info, name, mean, sd = NULL, h2 = NULL, H2 = NULL,
 	summary_trait(trait)
 }
 
-check_arguments_error_A <- function(trait, h2 = NULL,
-										a = NULL, additive_multiplier = NULL) {
-	if(is.null(h2) && is.null(a) && is.null(additive_multiplier)) {
-		message <- "Error: At least one of 'h2', 'a', or 'additive_multiplier'"
-		message <- paste(message, "must be provided.")
-		stop(message)
-	}
-	else if(!is.null(a) && !is.null(additive_multiplier)) {
-		message <- "Error: Both 'a' and 'additive_multiplier'"
-		message <- paste(message, "cannot be provided simultaneously.")
-		stop(message)
-	}
-	else if(!is.null(a) && !(is.vector(a) && is.numeric(a))) {
-		stop("Error: a must be a numeric vector.")
-	}
-	else if(!is.null(a) && is.vector(a)) {
-		num_QTL <- length(trait$loci)
-		if(length(a) != num_QTL) {
-			stop(sprintf("Error: The length of 'a' must be %d, but it is %d.",
-															num_QTL, length(a)))
-		}
-	}
-}
-
-calc_new_additive_effects <- function(trait, a = NULL,
-										additive_multiplier = NULL) {
-	if(!is.null(a)) {
-		return(a)
-	}
-	else if(!is.null(additive_multiplier)) {
-		return(trait$additives * additive_multiplier)
-	}
-	else {
-		return(trait$additives)
-	}
-}
-
-calc_new_dominant_effects <- function(trait, d = NULL,
-										dominant_multiplier = NULL) {
-	if(!is.null(d)) {
-		return(d)
-	}
-	else if(!is.null(dominant_multiplier)) {
-		return(trait$dominants * dominant_multiplier)
-	}
-	else {
-		return(trait$dominants)
-	}
-}
-
-check_arguments_error_AD <- function(trait, h2 = NULL,
-										a = NULL, additive_multiplier = NULL,
-										d = NULL, dominant_multiplier = NULL) {
-	if(is.null(h2) && is.null(a) && is.null(additive_multiplier) &&
-						is.null(d) && is.null(dominant_multiplier)) {
-		message <- "Error: At least one of 'h2', 'a', 'additive_multiplier',"
-		message <- paste(message, "'d' or 'dominant_multiplier'")
-		message <- paste(message, "must be provided.")
-		stop(message)
-	}
-	else if(!is.null(a) && !is.null(additive_multiplier)) {
-		message <- "Error: Both 'a' and 'additive_multiplier'"
-		message <- paste(message, "cannot be provided simultaneously.")
-		stop(message)
-	}
-	else if(!is.null(d) && !is.null(dominant_multiplier)) {
-		message <- "Error: Both 'd' and 'dominant_multiplier'"
-		message <- paste(message, "cannot be provided simultaneously.")
-		stop(message)
-	}
-	else if(!is.null(a) && !(is.vector(a) && is.numeric(a))) {
-		stop("Error: a must be a numeric vector.")
-	}
-	else if(!is.null(d) && !(is.vector(d) && is.numeric(d))) {
-		stop("Error: d must be a numeric vector.")
-	}
-	else if(!is.null(a) && is.vector(a)) {
-		num_QTL <- length(trait$loci)
-		if(length(a) != num_QTL) {
-			stop(sprintf("Error: The length of 'a' must be %d, but it is %d.",
-															num_QTL, length(a)))
-		}
-	}
-	else if(!is.null(d) && is.vector(d)) {
-		num_QTL <- length(trait$loci)
-		if(length(d) != num_QTL) {
-			stop(sprintf("Error: The length of 'd' must be %d, but it is %d.",
-															num_QTL, length(a)))
-		}
-	}
-	
-	# d is too large
-	h2_ = ifelse(!is.null(h2), h2, trait$h2)
-	add <- calc_new_additive_effects(trait, a, additive_multiplier)
-	dom <- calc_new_dominant_effects(trait, d, dominant_multiplier)
-	ae2 <- sum(add * add)
-	de2 <- sum(dom * dom)
-	if((1.0-h2_)*ae2 < de2*h2_/2) {
-		stop("Error: dominants effect is too large.")
-	}
-	
-	if(!is.null(h2) && (h2 < 0.0 || 1.0 < h2)) {
-		stop(sprintf("Error: 'h2' must be between 0 and 1, but it is %f.", h2))
-	}
-}
-
 #' Modify Trait Parameters
 #'
 #' This function allows modifying the parameters of a specified trait in a `BaseInfo` object.
-#' At least one of `h2`, `a`, `additive_multiplier`, `d`, or `dominant_multiplier` must be provided. 
+#' At least one of `h2`, `H2`, `a`, `additive_multiplier`, `d`, or `dominant_multiplier` must be provided. 
 #' The function ensures that only valid parameter combinations are specified and updates the 
 #' heritability, additive effects, and/or dominant effects accordingly.
 #'
 #' @param info A `BaseInfo` object containing the trait information.
 #' @param i An integer index of the trait to be modified. Must be a positive integer within the valid range.
-#' @param h2 (Optional) Narrow-sense heritability. If only `h2` is specified, the additive and dominant effects 
-#' remain unchanged, and the error variance is adjusted to match the specified `h2`.
-#' @param a (Optional) A numeric vector specifying the additive effects for each QTL. If `a` is provided 
-#' with `h2`, the error variance is adjusted to match the specified `h2`, while the additive effects remain as specified.
-#' @param additive_multiplier (Optional) A scalar to scale the current additive effects. If provided 
-#' with `h2`, the error variance is adjusted to match the specified `h2`, while the additive effects remain scaled.
-#' @param d (Optional) A numeric vector specifying the dominant effects for each QTL. If `d` is provided 
-#' with `h2`, the error variance is adjusted to match the specified `h2`, while the dominant effects remain as specified.
-#' @param dominant_multiplier (Optional) A scalar to scale the current dominant effects. If provided 
-#' with `h2`, the error variance is adjusted to match the specified `h2`, while the dominant effects remain scaled.
+#' @param h2 (Optional) Narrow-sense heritability. If specified, it adjusts the variance components according to the provided value.
+#' @param H2 (Optional) Broad-sense heritability. Can be specified alongside `h2`, and may also be combined with `a` or `additive_multiplier`. However, it cannot be specified with `d` or `dominant_multiplier`.
+#' @param a (Optional) A numeric vector specifying the additive effects for each QTL. If specified alongside `h2`,
+#' the total variance (additive, dominant, and error variance) is updated.
+#' @param additive_multiplier (Optional) A scalar to scale the current additive effects. If specified alongside `h2`,
+#' the total variance is updated while keeping the additive effects scaled.
+#' @param d (Optional) A numeric vector specifying the dominant effects for each QTL. Cannot be specified with `H2`.
+#' @param dominant_multiplier (Optional) A scalar to scale the current dominant effects. Cannot be specified with `H2`.
 #'
 #' **Notes:**
 #' - Only one of `a` or `additive_multiplier` can be specified at the same time.
 #' - Similarly, only one of `d` or `dominant_multiplier` can be specified at the same time.
+#' - `H2`, `d`, and `dominant_multiplier` are mutually exclusive; at most one of these parameters can be provided at a time.
 #'
 #' **Behavior:**
-#' - If only `h2` is specified, it adjusts the error variance to match the specified `h2` while keeping 
-#' the additive and dominant effects unchanged.
-#' - If `a` or `additive_multiplier` is specified alongside `h2`, the error variance is adjusted to match the 
-#' specified `h2`, while the additive effects are updated accordingly.
-#' - If `d` or `dominant_multiplier` is specified alongside `h2`, the error variance is adjusted to match the 
-#' specified `h2`, while the dominant effects are updated accordingly.
+#' - If only `h2` is specified, it adjusts the error variance to match the specified `h2`. Additionally, the additive effects are scaled proportionally (vector multiplied by a constant) to achieve the specified `h2`, while the dominant effects remain unchanged.
+#' - If `a` or `additive_multiplier` is specified alongside `h2`, the total variance (additive, dominant, and error variance) is updated accordingly.
+#' - If `d` or `dominant_multiplier` is specified alongside `h2`, the total variance remains unchanged, 
+#' and only dominant effects are updated.
 #' - If only `a`, `additive_multiplier`, `d`, or `dominant_multiplier` is specified, the respective effects are 
-#' updated without altering heritability.
+#' updated, and heritability is adjusted accordingly. 
 #'
 #' @return No return value. The function modifies the parameters of the specified trait directly.
 #' @export
 #'
 #' @examples
 #' info <- create_base_info()
-#' add_trait_AD(info, "Trait1", mean = 100.0, h2 = 0.6, sd = 10.0, num_loci = 2, hasdominants = TRUE)
+#' add_trait_AD(info, "Trait1", mean = 100.0, h2 = 0.6, H2 = 0.7, sd = 10.0, num_loci = 2)
 #'
-#' # Modify heritability only
+#' # Modify narrow-sense heritability only
 #' modify_trait_parameters(info, 1, h2 = 0.7)
+#'
+#' # Modify broad-sense heritability only
+#' modify_trait_parameters(info, 1, H2 = 0.8)
 #'
 #' # Modify heritability and additive effects
 #' modify_trait_parameters(info, 1, h2 = 0.7, a = c(11, 12))
@@ -557,7 +451,10 @@ check_arguments_error_AD <- function(trait, h2 = NULL,
 #'
 #' # Scale dominant effects only
 #' modify_trait_parameters(info, 1, dominant_multiplier = 1.2)
-modify_trait_parameters <- function(info, i, h2 = NULL,
+#'
+#' # Modify heritability, additive effects, and dominant effects together
+#' modify_trait_parameters(info, 1, h2 = 0.75, a = c(10, 12), d = c(5, 6))
+modify_trait_parameters <- function(info, i, h2 = NULL, H2 = NULL,
 									a = NULL, additive_multiplier = NULL,
 									d = NULL, dominant_multiplier = NULL) {
 	if(!inherits(info, "BaseInfo")) {
@@ -579,10 +476,10 @@ modify_trait_parameters <- function(info, i, h2 = NULL,
 		modify_Trait_Params_A_wrapper(info, i, h2, a, additive_multiplier)
 	}
 	else {
-		check_arguments_error_AD(trait, h2, a, additive_multiplier,
+		check_arguments_error_AD(trait, h2, H2, a, additive_multiplier,
 													d, dominant_multiplier)
-		modify_Trait_Params_AD_wrapper(info, i, h2, a, additive_multiplier,
-													d, dominant_multiplier)
+		modify_Trait_Params_AD_wrapper(info, i, h2, H2, a, additive_multiplier,
+														d, dominant_multiplier)
 	}
 	
 	modified_trait <- get_trait(info, i)

@@ -22,11 +22,14 @@ double TraitAMulti::phenotype(size_t ind_index, const Population& pop,
 	std::normal_distribution<> dist(0.0, error_std_dev);
 	return value + dist(engine);
 }
-
-double TraitAMulti::get_sd() const {
+double TraitAMulti::calc_var() const {
 	const double	ae2 = Common::dot_product(additive_effects,
 												additive_effects);
-	return sqrt(error_std_dev * error_std_dev + ae2 / 2);
+	return error_std_dev * error_std_dev + ae2 / 2;
+}
+
+double TraitAMulti::get_sd() const {
+	return sqrt(calc_var());
 }
 
 double TraitAMulti::h2() const {
@@ -48,41 +51,27 @@ vector<double> TraitAMulti::get_dominants() const {
 	return vector<double>(num_QTLs(), 0.0);
 }
 
-const Trait	*TraitAMulti::modify(double h2_, const vector<double>& a) const {
-	const double	ae2 = Common::dot_product(a, a);
-	const double	new_esd = sqrt((1.0 - h2_) * ae2) / sqrt(2 * h2_);
+const Trait	*TraitAMulti::modify_a(const vector<double>& a) const {
+	const double	a2 = Common::dot_product(a, a);
+	const double	new_esd = sqrt(calc_var() - a2 / 2);
 	return new TraitAMulti(name, loci, a, mean, new_esd);
 }
 
-const Trait	*TraitAMulti::modify_h2(double h2_) const {
-	return modify(h2_, additive_effects);
+const Trait *TraitAMulti::modify_a_d(const vector<double>& a,
+									const vector<double>& d) const {
+	return modify_a(a);
 }
 
 const Trait	*TraitAMulti::modify_h2_a(double h2_,
-										const vector<double>& a) const {
-	return modify(h2_, a);
-}
-
-const Trait *TraitAMulti::modify_a(const vector<double>& a) const {
-	return modify(h2(), a);
-}
-
-const Trait *TraitAMulti::modify_h2_d(double h2_,
-										const vector<double>& d) const {
-	return modify(h2_, additive_effects);
+									const vector<double>& a) const {
+	const double	a2 = Common::dot_product(a, a);
+	const double	new_all_var = a2 / (h2_ * 2);
+	const double	new_esd = sqrt(new_all_var * (1.0 - h2_));
+	return new TraitAMulti(name, loci, a, mean, new_esd);
 }
 
 const Trait *TraitAMulti::modify_h2_a_d(double h2_,
 										const vector<double>& a,
 										const vector<double>& d) const {
-	return modify(h2_, a);
-}
-
-const Trait *TraitAMulti::modify_d(const vector<double>& d) const {
-	return modify(h2(), additive_effects);
-}
-
-const Trait *TraitAMulti::modify_a_d(const vector<double>& a,
-										const vector<double>& d) const {
-	return modify(h2(), a);
+	return modify_h2_a(h2_, a);
 }
