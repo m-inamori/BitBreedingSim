@@ -77,8 +77,8 @@ writeVCF <- function(vcf, filename) {
     invisible(.Call(`_BitBreedingSim_writeVCF`, vcf, filename))
 }
 
-createOrigins <- function(info, names) {
-    .Call(`_BitBreedingSim_createOrigins`, info, names)
+createOrigins <- function(info, gratio_, names) {
+    .Call(`_BitBreedingSim_createOrigins`, info, gratio_, names)
 }
 
 createInfoAndPopFromVCF <- function(vcf, seed) {

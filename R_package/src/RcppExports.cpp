@@ -250,14 +250,15 @@ BEGIN_RCPP
 END_RCPP
 }
 // createOrigins
-SEXP createOrigins(SEXP info, const CharacterVector& names);
-RcppExport SEXP _BitBreedingSim_createOrigins(SEXP infoSEXP, SEXP namesSEXP) {
+SEXP createOrigins(SEXP info, NumericVector gratio_, const CharacterVector& names);
+RcppExport SEXP _BitBreedingSim_createOrigins(SEXP infoSEXP, SEXP gratio_SEXP, SEXP namesSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< SEXP >::type info(infoSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type gratio_(gratio_SEXP);
     Rcpp::traits::input_parameter< const CharacterVector& >::type names(namesSEXP);
-    rcpp_result_gen = Rcpp::wrap(createOrigins(info, names));
+    rcpp_result_gen = Rcpp::wrap(createOrigins(info, gratio_, names));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -503,7 +504,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getNumMarkersVCF", (DL_FUNC) &_BitBreedingSim_getNumMarkersVCF, 1},
     {"_BitBreedingSim_addPopToVCF", (DL_FUNC) &_BitBreedingSim_addPopToVCF, 2},
     {"_BitBreedingSim_writeVCF", (DL_FUNC) &_BitBreedingSim_writeVCF, 2},
-    {"_BitBreedingSim_createOrigins", (DL_FUNC) &_BitBreedingSim_createOrigins, 2},
+    {"_BitBreedingSim_createOrigins", (DL_FUNC) &_BitBreedingSim_createOrigins, 3},
     {"_BitBreedingSim_createInfoAndPopFromVCF", (DL_FUNC) &_BitBreedingSim_createInfoAndPopFromVCF, 2},
     {"_BitBreedingSim_createPopFromHaploArray", (DL_FUNC) &_BitBreedingSim_createPopFromHaploArray, 2},
     {"_BitBreedingSim_createHaploArrayFromPop", (DL_FUNC) &_BitBreedingSim_createHaploArrayFromPop, 1},

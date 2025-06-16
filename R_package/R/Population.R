@@ -2,7 +2,13 @@
 #'
 #' @param num_inds An integer. The number of individuals.
 #' @param info An external pointer to a BaseInfo object.
+#' @param genotype_ratio A numeric vector of length 3 representing the desired ratio of genotypes (0/0, 0/1, 1/1). 
+#'   All elements must be non-negative, and the vector must not be all zeros. 
+#'   The values will be normalized to sum to 1.
+#'   Default is `c(0.25, 0.5, 0.25)`.
 #' @param name_base A string. The base name for individuals.
+#' @param names A character vector. The names of individuals. Either `names` or `name_base` must be provided, but not both.
+
 #' @return An external pointer to a Population object.
 #' @export
 #' @examples
@@ -13,11 +19,32 @@
 #' # Example 2: Generate individual names using name_base and num_inds
 #' pop2 <- create_origins(info, num_inds = 2, name_base = "q")
 #' get_individual_names(pop2)
-create_origins <- function(info, names = NULL,
-								num_inds = NULL, name_base = NULL) {
+#'
+#' # Example 3: Specify genotype_ratio explicitly
+#' pop3 <- create_origins(info, genotype_ratio = c(1, 1, 1), num_inds = 3, name_base = "g")
+#' get_individual_names(pop3)
+create_origins <- function(info, genotype_ratio = NULL,
+							names = NULL, num_inds = NULL, name_base = NULL) {
+	if(is.null(genotype_ratio)) {
+		genotype_ratio <- c(0.25, 0.5, 0.25)
+	}
+	else if(!is.numeric(genotype_ratio) || !is.vector(genotype_ratio) ||
+												length(genotype_ratio) != 3) {
+		stop("Error: genotype_ratio must be a numeric vector of length 3.")
+	}
+	else if(any(genotype_ratio < 0)) {
+		stop("Error: genotype_ratio must be zero or positive.")
+	}
+	else if(all(genotype_ratio == 0)) {
+		stop("Error: genotype_ratio must not be a zero vector.")
+	}
+	# normalize
+	gratio <- genotype_ratio / sum(genotype_ratio)
+	
 	if(is.null(name_base) == is.null(names)) {
 		stop("Error: Either 'name_base' or 'names' must be specified, but not both.")
 	}
+	
 	if(is.null(names)) {
 		names <- generate_names(name_base, num_inds)
 	}
@@ -32,7 +59,7 @@ create_origins <- function(info, names = NULL,
 	if(is.null(names)) {
 		names <- paste0(name_base, 1:num_inds)
 	}
-	pop <- .Call('_BitBreedingSim_createOrigins', info, names)
+	pop <- .Call('_BitBreedingSim_createOrigins', info, gratio, names)
 	class(pop) <- "Population"
 	return(pop)
 }

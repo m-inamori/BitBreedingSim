@@ -4,10 +4,23 @@
 \alias{create_origins}
 \title{Create origins for a Population object}
 \usage{
-create_origins(info, names = NULL, num_inds = NULL, name_base = NULL)
+create_origins(
+  info,
+  genotype_ratio = NULL,
+  names = NULL,
+  num_inds = NULL,
+  name_base = NULL
+)
 }
 \arguments{
 \item{info}{An external pointer to a BaseInfo object.}
+
+\item{genotype_ratio}{A numeric vector of length 3 representing the desired ratio of genotypes (0/0, 0/1, 1/1).
+All elements must be non-negative, and the vector must not be all zeros.
+The values will be normalized to sum to 1.
+Default is \code{c(0.25, 0.5, 0.25)}.}
+
+\item{names}{A character vector. The names of individuals. Either \code{names} or \code{name_base} must be provided, but not both.}
 
 \item{num_inds}{An integer. The number of individuals.}
 
@@ -27,4 +40,8 @@ get_individual_names(pop)
 # Example 2: Generate individual names using name_base and num_inds
 pop2 <- create_origins(info, num_inds = 2, name_base = "q")
 get_individual_names(pop2)
+
+# Example 3: Specify genotype_ratio explicitly
+pop3 <- create_origins(info, genotype_ratio = c(1, 1, 1), num_inds = 3, name_base = "g")
+get_individual_names(pop3)
 }

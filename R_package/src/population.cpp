@@ -16,17 +16,36 @@ using namespace Rcpp;
 //////////////////// BitChrPopulation ////////////////////
 
 const BitChrPopulation *BitChrPopulation::create_origins(size_t num_inds,
-													const vector<GC::Pos>& ps,
-													const ChromMap& cmap,
-													std::mt19937_64& engine) {
-	std::uniform_int_distribution<uint64_t> dist(0, ULLONG_MAX);
+												const vector<GC::Pos>& ps,
+												const ChromMap& cmap,
+												const vector<double>& gratio,
+												std::mt19937_64& engine) {
 	
 	const size_t	num_markers = ps.size();
 	const size_t	num_elements = (num_markers + 63) / 64;
-	vector<uint64_t>	genos(num_elements * num_inds * 2);
-	// 端数は気にしなくてもよい
-	for(size_t i = 0; i < num_elements * num_inds * 2; ++i) {
-		genos[i] = dist(engine);
+	vector<uint64_t>	genos(num_elements * num_inds * 2, 0);
+	// For compatibility with older versions,
+	// use the old way when using default ratios.
+	if(gratio[0] == 0.25 && gratio[2] == 0.25) {
+		// You don't need to worry about the excess part at the end
+		// because you won't be using it.
+		std::uniform_int_distribution<uint64_t> dist(0, ULLONG_MAX);
+		for(size_t i = 0; i < num_elements * num_inds * 2; ++i) {
+			genos[i] = dist(engine);
+		}
+	}
+	else {
+		vector<double> weights = { gratio[0], gratio[1]/2,
+											gratio[1]/2, gratio[2] };
+		std::discrete_distribution<>	dist(weights.begin(), weights.end());
+		for(size_t i = 0; i < num_inds; ++i) {
+			for(size_t j = 0; j < num_markers; ++j) {
+				const uint64_t	gt = dist(engine);
+				const uint64_t	r = j % 64;
+				genos[num_elements*i*2+j/64] |= (gt & 1) << r;
+				genos[num_elements*(i*2+1)+j/64] |= (gt >> 1) << r;
+			}
+		}
 	}
 	return new BitChrPopulation(genos, ps, num_inds, cmap);
 }
@@ -242,6 +261,7 @@ vector<vector<double>> Population::compute_phenotypes(const BaseInfo *info,
 }
 
 Population *Population::create_origins(const BaseInfo *info,
+										const vector<double>& gratio,
 										const vector<string>& names) {
 	const size_t	num_inds = names.size();
 	const Map&	gmap = info->get_map();
@@ -251,8 +271,8 @@ Population *Population::create_origins(const BaseInfo *info,
 	for(size_t i = 0; i < gmap.num_chroms(); ++i) {
 		const auto&	cmap = gmap.get_chr(i);
 		const auto&	ps = info->get_positions(i);
-		chr_pops[i] = BitChrPopulation::create_origins(num_inds, ps,
-														cmap, engine64);
+		chr_pops[i] = BitChrPopulation::create_origins(num_inds, ps, cmap,
+															gratio, engine64);
 	}
 	
 	vector<string>	mats(num_inds, "0");
@@ -583,10 +603,13 @@ Population *Population::create_from_VCF(const VCF *vcf, int seed) {
 }
 
 // [[Rcpp::export]]
-SEXP createOrigins(SEXP info, const CharacterVector& names) {
+SEXP createOrigins(SEXP info, NumericVector gratio_,
+								const CharacterVector& names) {
+	std::vector<double> gratio = as<std::vector<double>>(gratio_);
 	const vector<string>	names_cpp = Rcpp::as<vector<string>>(names);
 	Rcpp::XPtr<BaseInfo> info_cpp(info);
-	auto	*pop = Population::create_origins(info_cpp.get(), names_cpp);
+	auto	*pop = Population::create_origins(info_cpp.get(),
+												gratio, names_cpp);
 	Rcpp::XPtr<Population> ptr(pop, true);
 	ptr.attr("class") = "Population";
 	return ptr;

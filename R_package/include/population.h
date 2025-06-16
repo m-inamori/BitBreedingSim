@@ -73,9 +73,10 @@ public:
 	
 public:
 	static const BitChrPopulation *create_origins(std::size_t num_inds,
-												const std::vector<GC::Pos>& ps,
-												const ChromMap& cmap,
-												std::mt19937_64& engine);
+											const std::vector<GC::Pos>& ps,
+											const ChromMap& cmap,
+											const std::vector<double>& gratio,
+											std::mt19937_64& engine);
 	static std::vector<int> create_genotypes(std::size_t num_markers);
 	static std::vector<GC::Pos> extract_positions_from_VCF(const VCF *vcf);
 	static std::vector<uint64_t> create_genotypes_from_VCF(const VCF *vcf);
@@ -188,6 +189,7 @@ private:
 	
 public:
 	static Population *create_origins(const BaseInfo *info,
+										const std::vector<double>& gratio,
 										const std::vector<std::string>& names);
 	static Population *create_from_HaploArray(
 								const std::vector<std::vector<uint64_t>>& genos,
