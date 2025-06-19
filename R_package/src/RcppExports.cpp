@@ -405,6 +405,30 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// removePopByIndices
+SEXP removePopByIndices(SEXP pop, NumericVector indices_R);
+RcppExport SEXP _BitBreedingSim_removePopByIndices(SEXP popSEXP, SEXP indices_RSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type indices_R(indices_RSEXP);
+    rcpp_result_gen = Rcpp::wrap(removePopByIndices(pop, indices_R));
+    return rcpp_result_gen;
+END_RCPP
+}
+// removePopByNames
+SEXP removePopByNames(SEXP pop, CharacterVector names_R);
+RcppExport SEXP _BitBreedingSim_removePopByNames(SEXP popSEXP, SEXP names_RSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< CharacterVector >::type names_R(names_RSEXP);
+    rcpp_result_gen = Rcpp::wrap(removePopByNames(pop, names_R));
+    return rcpp_result_gen;
+END_RCPP
+}
 // getGenotypes
 NumericMatrix getGenotypes(SEXP pop);
 RcppExport SEXP _BitBreedingSim_getGenotypes(SEXP popSEXP) {
@@ -517,6 +541,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getNumMarkersPop", (DL_FUNC) &_BitBreedingSim_getNumMarkersPop, 1},
     {"_BitBreedingSim_getPhenotypesCpp", (DL_FUNC) &_BitBreedingSim_getPhenotypesCpp, 2},
     {"_BitBreedingSim_selectPop", (DL_FUNC) &_BitBreedingSim_selectPop, 2},
+    {"_BitBreedingSim_removePopByIndices", (DL_FUNC) &_BitBreedingSim_removePopByIndices, 2},
+    {"_BitBreedingSim_removePopByNames", (DL_FUNC) &_BitBreedingSim_removePopByNames, 2},
     {"_BitBreedingSim_getGenotypes", (DL_FUNC) &_BitBreedingSim_getGenotypes, 1},
     {"_BitBreedingSim_getGenotypes_naive", (DL_FUNC) &_BitBreedingSim_getGenotypes_naive, 1},
     {"_BitBreedingSim_getPhasedGenotypes", (DL_FUNC) &_BitBreedingSim_getPhasedGenotypes, 1},

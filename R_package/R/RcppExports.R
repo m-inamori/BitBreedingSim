@@ -129,6 +129,14 @@ selectPop <- function(pop, indices_R) {
     .Call(`_BitBreedingSim_selectPop`, pop, indices_R)
 }
 
+removePopByIndices <- function(pop, indices_R) {
+    .Call(`_BitBreedingSim_removePopByIndices`, pop, indices_R)
+}
+
+removePopByNames <- function(pop, names_R) {
+    .Call(`_BitBreedingSim_removePopByNames`, pop, names_R)
+}
+
 getGenotypes <- function(pop) {
     .Call(`_BitBreedingSim_getGenotypes`, pop)
 }

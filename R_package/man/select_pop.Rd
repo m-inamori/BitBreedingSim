@@ -22,5 +22,5 @@ Select individuals from a Population object
 \examples{
 # Assuming 'pop' is a valid Population object and indices are valid
 selected_pop <- select_pop(pop, c(1, 2, 3))
-print(selected_pop)
+get_individual_names(selected_pop)
 }

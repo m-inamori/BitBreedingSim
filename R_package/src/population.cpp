@@ -519,7 +519,7 @@ Population *Population::select(const vector<size_t>& indices) const {
 	vector<string>	new_pats(indices.size());
 	std::transform(indices.begin(), indices.end(), new_mats.begin(),
 							[this](const size_t& i) { return this->mats[i]; });
-	std::transform(indices.begin(), indices.end(), new_mats.begin(),
+	std::transform(indices.begin(), indices.end(), new_pats.begin(),
 							[this](const size_t& i) { return this->pats[i]; });
 	
 	Population	*new_pop = new Population(new_chr_pops, info,
@@ -834,6 +834,39 @@ SEXP selectPop(SEXP pop, NumericVector indices_R) {
         indices_cpp[i] = static_cast<size_t>(indices_R[i]-1);
     }
 	Rcpp::XPtr<Population> ptr(pop_cpp.get()->select(indices_cpp), true);
+	return ptr;
+}
+
+// [[Rcpp::export]]
+SEXP removePopByIndices(SEXP pop, NumericVector indices_R) {
+	Rcpp::XPtr<Population> pop_cpp(pop);
+	const Population	*ptr_pop = pop_cpp.get();
+	set<size_t> set_indices;
+	for(size_t i = 0; i < indices_R.size(); ++i) {
+		set_indices.insert(static_cast<size_t>(indices_R[i]-1));
+	}
+	
+	vector<size_t> selected_indices;
+	for(size_t i = 0; i < ptr_pop->num_inds(); ++i) {
+		if(set_indices.find(i) == set_indices.end())
+			selected_indices.push_back(i);
+    }
+	Rcpp::XPtr<Population> ptr(pop_cpp.get()->select(selected_indices), true);
+	return ptr;
+}
+
+// [[Rcpp::export]]
+SEXP removePopByNames(SEXP pop, CharacterVector names_R) {
+	Rcpp::XPtr<Population> pop_cpp(pop);
+	const Population	*ptr_pop = pop_cpp.get();
+	set<string> set_names(names_R.begin(), names_R.end());
+    
+	vector<size_t> selected_indices;
+    for(size_t i = 0; i < ptr_pop->num_inds(); ++i) {
+		if(set_names.find(ptr_pop->get_name(i)) == set_names.end())
+        	selected_indices.push_back(i);
+    }
+	Rcpp::XPtr<Population> ptr(pop_cpp.get()->select(selected_indices), true);
 	return ptr;
 }
 

@@ -4,7 +4,7 @@
 			summary_trait(object, ...)
 		}
 		else if(inherits(object, "Population")) {
-			summary_opulation(object, ...)
+			summary_population(object, ...)
 		}
 		else {
 			base::summary(object, ...)

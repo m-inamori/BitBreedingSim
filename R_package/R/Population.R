@@ -689,7 +689,7 @@ get_phased_int_genotypes <- function(pop) {
 #' @examples
 #' # Assuming 'pop' is a valid Population object and indices are valid
 #' selected_pop <- select_pop(pop, c(1, 2, 3))
-#' print(selected_pop)
+#' get_individual_names(selected_pop)
 select_pop <- function(pop, indices) {
 	if(!inherits(pop, "Population")) {
 		stop("Error: pop must be a Population object.")
@@ -700,10 +700,53 @@ select_pop <- function(pop, indices) {
 		error_indices <- indices[indices < 1 | indices > num_inds]
 		stop(paste("Index out of bounds: indices should be between 1 and",
 					num_inds, "but got", paste(error_indices, collapse = ", ")))
-    }
-    new.pop <- .Call('_BitBreedingSim_selectPop', pop, indices)
-    class(new_pop) <- "Population"
-    return (new_pop)
+	}
+	new_pop <- .Call('_BitBreedingSim_selectPop', pop, indices)
+	class(new_pop) <- "Population"
+	return (new_pop)
+}
+
+#' Remove individuals from a Population object
+#'
+#' @param pop An external pointer to a Population object.
+#' @param samples A vector of either integer indices or character names
+#'        representing the individuals to be removed.
+#' @return An external pointer to a new Population object
+#'        with the specified individuals removed.
+#' @export
+#' @examples
+#' # Assuming 'pop' is a valid Population object
+#' # Remove individuals by index
+#' new_pop <- remove_pop(pop, c(1, 2, 3))
+#' get_individual_names(new_pop)
+#'
+#' # Remove individuals by name
+#' new_pop2 <- remove_pop(pop, c("ind1", "ind2"))
+#' get_individual_names(new_pop2)
+remove_pop <- function(pop, samples) {
+	if(!inherits(pop, "Population")) {
+		stop("Error: pop must be a Population object.")
+	}
+	
+	if(!is.vector(samples)) {
+		stop("Error: samples must be a name vector or an index vector.")
+	}
+	
+	pop_info <- get_pop_info(pop)
+	num <- pop_info$num_individuals
+	if(is.numeric(samples) && all(samples %% 1 == 0)) {
+		# indices
+		new_pop <- .Call('_BitBreedingSim_removePopByIndices', pop, samples)
+	}
+	else if(is.character(samples)) {
+		# names
+		new_pop <- .Call('_BitBreedingSim_removePopByNames', pop, samples)
+	}
+	else {
+		stop("Error: samples must be a name vector or an index vector.")
+	}
+	class(new_pop) <- "Population"
+	return (new_pop)
 }
 
 #' Join multiple Population objects
