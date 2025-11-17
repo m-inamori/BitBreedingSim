@@ -751,26 +751,71 @@ remove_pop <- function(pop, samples) {
 
 #' Join multiple Population objects
 #'
-#' @param ... External pointers to Population objects.
-#' @return An external pointer to a new Population object
-#'         containing the combined individuals.
+#' This function takes two or more Population objects and merges them
+#' into a single Population. Inputs may be passed as separate arguments,
+#' as a vector (e.g., `c(pop1, pop2)`), or as a list.
+#'
+#' @param ... Population objects or collections (list/vector) of Population objects.
+#'
+#' @return A new Population object containing all individuals from
+#'         the provided populations.
+#'
+#' @details
+#' Inputs are flattened so that the following forms are equivalent:
+#' \itemize{
+#'   \item \code{join_pops(pop1, pop2, pop3)}
+#'   \item \code{join_pops(c(pop1, pop2, pop3))}
+#'   \item \code{join_pops(list(pop1, pop2, pop3))}
+#'   \item \code{do.call(join_pops, list(pop1, pop2, pop3))}
+#' }
+#'
+#' All elements are checked to ensure they inherit from the "Population" class.
+#'
 #' @export
+#'
 #' @examples
+#' # Example 1: Basic usage
 #' # Assuming 'pop1', 'pop2', and 'pop3' are valid Population objects
 #' combined_pop <- join_pops(pop1, pop2, pop3)
 #' print(combined_pop)
+#'
+#' # Example 2: Using c() to combine inputs
+#' combined_pop2 <- join_pops(c(pop1, pop2, pop3))
+#'
+#' # Example 3: Using a list
+#' pops_list <- list(pop1, pop2, pop3)
+#' combined_pop3 <- join_pops(pops_list)
 join_pops <- function(...) {
-	pops <- list(...)
-	if(length(pops) < 2) {
+	# Collect the raw input arguments
+	pops_raw <- list(...)
+	
+	# Flatten the input: allow c(pop1, pop2), list(pop1, pop2), etc.
+	pops <- unlist(pops_raw, recursive = TRUE)
+	
+	# Check that at least two populations were provided
+	if (length(pops) < 2) {
 		stop("Error: At least two Population objects are required.")
 	}
 	
+	# ---- Class check for Population objects ----
+	for(i in seq_along(pops)) {
+		if (!inherits(pops[[i]], "Population")) {
+			stop(sprintf(
+				"Error: All arguments must be Population objects (argument %d is not).",
+				i
+			))
+		}
+	}
+	
+	# Use the first population as the base
 	combined_pop <- pops[[1]]
 	
+	# Sequentially merge all populations
 	for(i in 2:length(pops)) {
 		combined_pop <- .Call('_BitBreedingSim_joinPop', combined_pop, pops[[i]])
 	}
 	
+	# Set class of the result
 	class(combined_pop) <- "Population"
 	return(combined_pop)
 }

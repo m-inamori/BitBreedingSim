@@ -7,17 +7,38 @@
 join_pops(...)
 }
 \arguments{
-\item{...}{External pointers to Population objects.}
+\item{...}{Population objects or collections (list/vector) of Population objects.}
 }
 \value{
-An external pointer to a new Population object
-containing the combined individuals.
+A new Population object containing all individuals from
+the provided populations.
 }
 \description{
-Join multiple Population objects
+This function takes two or more Population objects and merges them
+into a single Population. Inputs may be passed as separate arguments,
+as a vector (e.g., \code{c(pop1, pop2)}), or as a list.
+}
+\details{
+Inputs are flattened so that the following forms are equivalent:
+\itemize{
+\item \code{join_pops(pop1, pop2, pop3)}
+\item \code{join_pops(c(pop1, pop2, pop3))}
+\item \code{join_pops(list(pop1, pop2, pop3))}
+\item \code{do.call(join_pops, list(pop1, pop2, pop3))}
+}
+
+All elements are checked to ensure they inherit from the "Population" class.
 }
 \examples{
+# Example 1: Basic usage
 # Assuming 'pop1', 'pop2', and 'pop3' are valid Population objects
 combined_pop <- join_pops(pop1, pop2, pop3)
 print(combined_pop)
+
+# Example 2: Using c() to combine inputs
+combined_pop2 <- join_pops(c(pop1, pop2, pop3))
+
+# Example 3: Using a list
+pops_list <- list(pop1, pop2, pop3)
+combined_pop3 <- join_pops(pops_list)
 }
