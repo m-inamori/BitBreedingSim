@@ -185,9 +185,7 @@ const ChromMap *Map::create_chrom_map_lines_from_df(Rcpp::DataFrame df,
 	std::transform(cMs.begin(), cMs.end(), morgans.begin(),
 									[](double cm) { return cm / 100; });
 	
-	ChromMapLines* chrom_map = new ChromMapLines(name, morgans, positions);
-	Rcpp::XPtr<ChromMapLines>	ptr(chrom_map, true);
-	return ptr;
+	return new ChromMapLines(name, morgans, positions);
 }
 
 Map *Map::create_map_from_list(Rcpp::List chrom_maps) {
