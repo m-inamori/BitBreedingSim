@@ -4,12 +4,22 @@ Fast breeding simulator package for R
 
 ## Install
 
+Before building the package, make sure you have the required R packages installed.
+
+You can install `Rcpp` from CRAN using the following R command:
+
+```r
+install.packages("Rcpp")
 ```
-$ cd R_package
-$ ./configure
-$ make clean
-$ make
-$ make install
+
+Then, build and install the package:
+
+```bash
+cd R_package
+./configure
+make clean
+make
+make install
 ```
 
 ## Usage
