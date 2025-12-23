@@ -198,6 +198,7 @@ public:
 	static std::vector<Pair> make_pairs_randomly(std::size_t num_inds,
 												const Population& mothers,
 												const Population& fathers,
+												bool allow_selfing,
 												std::mt19937& engine);
 	static std::vector<Pair> make_pairs_by_table(
 										const std::vector<Triplet>& table,
@@ -205,7 +206,8 @@ public:
 										const Population& fathers);
 	static Population *cross_randomly(const Population& mothers,
 								const Population& fathers, const BaseInfo *info,
-								const std::vector<std::string>& names, int T);
+								const std::vector<std::string>& names,
+								bool allow_selfing, int T);
 	static Population *cross_by_table(const std::vector<Triplet>& table,
 						const Population& mothers, const Population& fathers,
 						const BaseInfo *info,

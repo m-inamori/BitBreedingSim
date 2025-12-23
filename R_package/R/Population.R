@@ -291,6 +291,10 @@ generate_names <- function(name_base, num_inds) {
 #' You can specify either `name_base` and `num_inds` or provide 
 #' a complete `names` vector for the offspring.
 #'
+#' If `allow_selfing = FALSE`, the function prevents selfing (i.e., crossing between 
+#' two individuals with the same name). If both populations contain only one individual 
+#' with the same name, the function will raise an error.
+#'
 #' @param mat_pop A Population object representing the maternal parents.
 #'                This should be an object created using the relevant Population functions in the package.
 #' @param pat_pop A Population object representing the paternal parents.
@@ -302,9 +306,13 @@ generate_names <- function(name_base, num_inds) {
 #' @param name_base Optional. A character string used as the base name for generating individual names. 
 #'                  For example, if `name_base = "p"` and `num_inds = 3`, the generated names will be 
 #'                  `c("p1", "p2", "p3")`. This parameter must be used in combination with `num_inds`.
+#' @param allow_selfing Logical. If `FALSE`, selfing (crossing between individuals with the same name) is not allowed.
+#'                      Defaults to `TRUE`.
 #' @param num_threads Optional. A positive integer representing the number of threads to use.
 #'                    If not specified or set to 0, the maximum number of available threads is used.
+#'
 #' @return A Population object with offspring individuals.
+#'
 #' @examples
 #' # Example using name_base and num_inds
 #' new_population <- cross_randomly(mothers, fathers, num_inds = 100, name_base = "offspring_")
@@ -313,11 +321,15 @@ generate_names <- function(name_base, num_inds) {
 #' names_vector <- c("child1", "child2", "child3")
 #' new_population <- cross_randomly(mothers, fathers, names = names_vector)
 #'
+#' # Disallow selfing
+#' new_population <- cross_randomly(mothers, fathers, num_inds = 10, name_base = "child_", allow_selfing = FALSE)
+#'
 #' # Summary of the new Population object
 #' summary(new_population)
 #' @export
 cross_randomly <- function(mat_pop, pat_pop, names = NULL,
-							num_inds = NULL, name_base = NULL, num_threads = 0) {
+							num_inds = NULL, name_base = NULL,
+							allow_selfing = TRUE, num_threads = 0) {
 	if(is.null(name_base) == is.null(names)) {
 		stop("Error: Either 'name_base' or 'names' must be specified, but not both.")
 	}
@@ -331,6 +343,16 @@ cross_randomly <- function(mat_pop, pat_pop, names = NULL,
 													length(names), num_inds_value),
 					  "'num_inds' will be ignored."))
 	}
+	# Prevent invalid mating: selfing is disallowed,
+	# but both populations contain only one identical individual
+	df_mats <- get_individual_names(mat_pop)
+	num_mats <- dim(df_mats)[1]
+	df_pats <- get_individual_names(pat_pop)
+	num_pats <- dim(df_pats)[1]
+	if(!allow_selfing && num_mats == 1 && num_pats == 1 && df_mats[1, 1] == df_pats[1, 1]) {
+		stop("Selfing is disallowed, but both populations contain the same single individual.")
+	}
+	
 	if(num_threads < 1) {
 		num_threads <- parallel::detectCores()
 	}
@@ -341,7 +363,7 @@ cross_randomly <- function(mat_pop, pat_pop, names = NULL,
 		names <- paste0(name_base, 1:num_inds)
 	}
 	pop <- .Call('_BitBreedingSim_crossPopsRandomly',
-									mat_pop, pat_pop, names, num_threads)
+							mat_pop, pat_pop, names, allow_selfing, num_threads)
 	class(pop) <- "Population"
 	return(pop)
 }

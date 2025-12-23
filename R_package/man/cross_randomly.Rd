@@ -10,6 +10,7 @@ cross_randomly(
   names = NULL,
   num_inds = NULL,
   name_base = NULL,
+  allow_selfing = TRUE,
   num_threads = 0
 )
 }
@@ -30,6 +31,9 @@ Required if \code{name_base} is specified.}
 For example, if \code{name_base = "p"} and \code{num_inds = 3}, the generated names will be
 \code{c("p1", "p2", "p3")}. This parameter must be used in combination with \code{num_inds}.}
 
+\item{allow_selfing}{Logical. If \code{FALSE}, selfing (crossing between individuals with the same name) is not allowed.
+Defaults to \code{TRUE}.}
+
 \item{num_threads}{Optional. A positive integer representing the number of threads to use.
 If not specified or set to 0, the maximum number of available threads is used.}
 }
@@ -44,6 +48,11 @@ For each offspring, a parent is randomly selected from each Population
 You can specify either \code{name_base} and \code{num_inds} or provide
 a complete \code{names} vector for the offspring.
 }
+\details{
+If \code{allow_selfing = FALSE}, the function prevents selfing (i.e., crossing between
+two individuals with the same name). If both populations contain only one individual
+with the same name, the function will raise an error.
+}
 \examples{
 # Example using name_base and num_inds
 new_population <- cross_randomly(mothers, fathers, num_inds = 100, name_base = "offspring_")
@@ -51,6 +60,9 @@ new_population <- cross_randomly(mothers, fathers, num_inds = 100, name_base = "
 # Example using predefined names
 names_vector <- c("child1", "child2", "child3")
 new_population <- cross_randomly(mothers, fathers, names = names_vector)
+
+# Disallow selfing
+new_population <- cross_randomly(mothers, fathers, num_inds = 10, name_base = "child_", allow_selfing = FALSE)
 
 # Summary of the new Population object
 summary(new_population)

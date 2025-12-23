@@ -97,8 +97,8 @@ setSampleNames <- function(names_, pop_ptr) {
     invisible(.Call(`_BitBreedingSim_setSampleNames`, names_, pop_ptr))
 }
 
-crossPopsRandomly <- function(mothers, fathers, names, T) {
-    .Call(`_BitBreedingSim_crossPopsRandomly`, mothers, fathers, names, T)
+crossPopsRandomly <- function(mothers, fathers, names, allow_selfing, T) {
+    .Call(`_BitBreedingSim_crossPopsRandomly`, mothers, fathers, names, allow_selfing, T)
 }
 
 crossPopsByTable <- function(df, mothers, fathers, names, T) {

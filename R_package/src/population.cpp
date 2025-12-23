@@ -306,17 +306,23 @@ Population *Population::create_from_HaploArray(
 }
 
 vector<Population::Pair> Population::make_pairs_randomly(size_t num_inds,
-												const Population& mothers,
-												const Population& fathers,
-												std::mt19937& engine) {
+													const Population& mothers,
+													const Population& fathers,
+													bool allow_selfing,
+													std::mt19937& engine) {
 	std::uniform_int_distribution<size_t>	dist1(0, mothers.num_inds()-1);
 	std::uniform_int_distribution<size_t>	dist2(0, fathers.num_inds()-1);
-	
 	vector<Pair>	pairs(num_inds);
-	for(size_t i = 0; i < num_inds; ++i) {
+	size_t	i = 0;
+	while(i < num_inds) {
 		const size_t	mother_index = dist1(engine);
 		const size_t	father_index = dist2(engine);
-		pairs[i] = make_pair(mother_index, father_index);
+		// Determine selfing based on identical names
+		if(allow_selfing || mothers.get_name(mother_index) !=
+							fathers.get_name(father_index)) {
+			pairs[i] = make_pair(mother_index, father_index);
+			i += 1;
+		}
 	}
 	return pairs;
 }
@@ -366,10 +372,12 @@ void Population::set_names(const vector<string>& names_) {
 Population *Population::cross_randomly(const Population& mothers,
 										const Population& fathers,
 										const BaseInfo *info,
-										const vector<string>& names, int T) {
+										const vector<string>& names,
+										bool allow_selfing, int T) {
 	std::mt19937&	engine = info->get_random_engine();
 	const size_t	num_inds = names.size();
-	const auto	pairs = make_pairs_randomly(num_inds, mothers, fathers, engine);
+	const auto	pairs = make_pairs_randomly(num_inds, mothers, fathers,
+														allow_selfing, engine);
 	return cross(pairs, mothers, fathers, info, names, engine, T);
 }
 
@@ -745,15 +753,16 @@ void setSampleNames(const CharacterVector& names_, SEXP pop_ptr) {
 }
 
 // [[Rcpp::export]]
-SEXP crossPopsRandomly(SEXP mothers, SEXP fathers,
-							Rcpp::CharacterVector names, int T) {
+SEXP crossPopsRandomly(SEXP mothers, SEXP fathers, Rcpp::CharacterVector names,
+													bool allow_selfing, int T) {
 	const vector<string>	names_cpp = Rcpp::as<vector<string>>(names);
 	Rcpp::XPtr<Population> mothers_cpp(mothers);
 	Rcpp::XPtr<Population> fathers_cpp(fathers);
 	const BaseInfo	*info = mothers_cpp.get()->get_info();
 	auto	*pop = Population::cross_randomly(*mothers_cpp.get(),
 												*fathers_cpp.get(),
-												info, names_cpp, T);
+												info, names_cpp,
+												allow_selfing, T);
 	Rcpp::XPtr<Population> ptr(pop, true);
 	ptr.attr("class") = "Population";
 	return ptr;
