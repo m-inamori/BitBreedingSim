@@ -87,8 +87,8 @@ create_base_info <- function(positions=NULL, num_markers=1000, bp=100000000,
 	
 	# create default marker positions
 	if(is.null(positions)) {
-		step <- (bp - 1) %/% (num_markers - 1)	# common difference
-		first_term <- bp - (num_markers - 1) * step
+		step <- bp %/% num_markers	# common difference
+		first_term <- step
 		
 		# Generate the arithmetic sequence as natural numbers
 		position <- seq(from = first_term, to = bp, by = step)

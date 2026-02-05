@@ -10,6 +10,7 @@ cross_randomly(
   names = NULL,
   num_inds = NULL,
   name_base = NULL,
+  start_index = 1,
   allow_selfing = TRUE,
   num_threads = 0
 )
@@ -30,6 +31,13 @@ Required if \code{name_base} is specified.}
 \item{name_base}{Optional. A character string used as the base name for generating individual names.
 For example, if \code{name_base = "p"} and \code{num_inds = 3}, the generated names will be
 \code{c("p1", "p2", "p3")}. This parameter must be used in combination with \code{num_inds}.}
+
+\item{start_index}{Optional. A positive integer specifying the starting index
+used when generating offspring names from \code{name_base}.
+For example, if \code{name_base = "child_"}, \code{num_inds = 3}, and
+\code{start_index = 5}, the generated names will be
+\code{c("child_5", "child_6", "child_7")}.
+This parameter is ignored when \code{names} is provided.}
 
 \item{allow_selfing}{Logical. If \code{FALSE}, selfing (crossing between individuals with the same name) is not allowed.
 Defaults to \code{TRUE}.}

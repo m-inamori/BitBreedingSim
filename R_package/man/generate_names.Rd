@@ -4,13 +4,16 @@
 \alias{generate_names}
 \title{Generate names for individuals based on a base name and number of individuals}
 \usage{
-generate_names(name_base, num_inds)
+generate_names(name_base, num_inds, start_index)
 }
 \arguments{
 \item{name_base}{A character string used as the base for generating names.
 For example, \code{name_base = "p"} will generate names like \verb{"p1", "p2", ...}.}
 
 \item{num_inds}{A positive integer indicating the number of names to generate.}
+
+\item{start_index}{A positive integer specifying the starting index for numbering.
+For example, \code{start_index = 5} will generate names like \verb{"p5", "p6", ...}.}
 }
 \value{
 A character vector of generated names.

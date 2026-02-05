@@ -259,14 +259,16 @@ set_individual_names <- function(names, pop) {
 #' to generate names in the format `name_base1`, `name_base2`, ..., up to the total number.
 #'
 #' @param name_base A character string used as the base for generating names. 
-#'                  For example, `name_base = "p"` will generate names like `"p1", "p2", ...`.
+#'   For example, `name_base = "p"` will generate names like `"p1", "p2", ...`.
 #' @param num_inds A positive integer indicating the number of names to generate.
+#' @param start_index Optional. A positive integer specifying the starting index for numbering.
+#'   For example, `start_index = 5` will generate names like `"p5", "p6", ...`.
 #' @return A character vector of generated names.
 #' @examples
 #' # Generate 3 names with base "p"
 #' generated_names <- generate_names("p", 3)
 #' print(generated_names) # Output: "p1", "p2", "p3"
-generate_names <- function(name_base, num_inds) {
+generate_names <- function(name_base, num_inds, start_index=1) {
 	# Check inputs
 	if(is.null(name_base) || !is.character(name_base)) {
 		stop("Error: 'name_base' must be a single character string.")
@@ -279,7 +281,7 @@ generate_names <- function(name_base, num_inds) {
 	}
 	
     # Generate names
-    return(paste0(name_base, 1:num_inds))
+    return(paste0(name_base, start_index:(start_index+num_inds-1)))
 }
 
 #' Cross Population randomly
@@ -304,8 +306,14 @@ generate_names <- function(name_base, num_inds) {
 #' @param num_inds Optional. A positive integer representing the number of offspring. 
 #'                 Required if `name_base` is specified.
 #' @param name_base Optional. A character string used as the base name for generating individual names. 
-#'                  For example, if `name_base = "p"` and `num_inds = 3`, the generated names will be 
+#'                 For example, if `name_base = "p"` and `num_inds = 3`, the generated names will be 
 #'                  `c("p1", "p2", "p3")`. This parameter must be used in combination with `num_inds`.
+#' @param start_index Optional. A positive integer specifying the starting index
+#'                 used when generating offspring names from `name_base`.
+#'                 For example, if `name_base = "child_"`, `num_inds = 3`, and
+#'                 `start_index = 5`, the generated names will be
+#'                 `c("child_5", "child_6", "child_7")`.
+#'                 This parameter is ignored when `names` is provided.
 #' @param allow_selfing Logical. If `FALSE`, selfing (crossing between individuals with the same name) is not allowed.
 #'                      Defaults to `TRUE`.
 #' @param num_threads Optional. A positive integer representing the number of threads to use.
@@ -329,12 +337,21 @@ generate_names <- function(name_base, num_inds) {
 #' @export
 cross_randomly <- function(mat_pop, pat_pop, names = NULL,
 							num_inds = NULL, name_base = NULL,
+							start_index = 1,
 							allow_selfing = TRUE, num_threads = 0) {
 	if(is.null(name_base) == is.null(names)) {
 		stop("Error: Either 'name_base' or 'names' must be specified, but not both.")
 	}
-	if(is.null(names)) {
-		names <- generate_names(name_base, num_inds)
+	# Check start_index
+	if (is.null(names)) {
+		if (is.null(start_index) ||
+			!is.numeric(start_index) ||
+			length(start_index) != 1 ||
+			start_index <= 0 ||
+			start_index %% 1 != 0) {
+			stop("Error: 'start_index' must be a single positive integer.")
+		}
+		names <- generate_names(name_base, num_inds, start_index)
 	}
 	# Check names length vs num_inds and handle mismatch
 	if(!is.null(names) && !is.null(num_inds) && length(names) != num_inds) {
