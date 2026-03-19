@@ -9,8 +9,8 @@ using namespace std;
 
 //////////////////// TraitADMulti ////////////////////
 
-double TraitADMulti::phenotype(size_t ind_index, const Population& pop,
-												std::mt19937& engine) const {
+double TraitADMulti::genetypic_value(size_t ind_index,
+										const Population& pop) const {
 	double	value = mean;
 	for(size_t i = 0; i < num_loci(); ++i) {
 		const size_t	chr_index = loci[i].first;
@@ -21,8 +21,13 @@ double TraitADMulti::phenotype(size_t ind_index, const Population& pop,
 		else
 			value += gt * additive_effects[i] - dominant_effects[i] / 2;
 	}
+	return value;
+}
+
+double TraitADMulti::phenotype(size_t ind_index, const Population& pop,
+												std::mt19937& engine) const {
 	std::normal_distribution<> dist(0.0, error_std_dev);
-	return value + dist(engine);
+	return genetypic_value(ind_index, pop) + dist(engine);
 }
 
 double TraitADMulti::calc_var() const {

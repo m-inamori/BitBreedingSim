@@ -148,7 +148,7 @@ void BaseInfo::add_AD(const std::string& name, double mean, double H2,
 ///// misc /////
 
 vector<double> BaseInfo::compute_phenotypes(const Population& pop,
-												size_t trait_index) const {
+													size_t trait_index) const {
 	vector<double>	phenotypes(pop.num_inds());
 	const Trait	*trait = traits[trait_index];
 	for(size_t i = 0; i < pop.num_inds(); ++i) {

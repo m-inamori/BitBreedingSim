@@ -121,6 +121,10 @@ getNumMarkersPop <- function(pop) {
     .Call(`_BitBreedingSim_getNumMarkersPop`, pop)
 }
 
+getGenetypicValuesCpp <- function(pop, i) {
+    .Call(`_BitBreedingSim_getGenetypicValuesCpp`, pop, i)
+}
+
 getPhenotypesCpp <- function(pop, i) {
     .Call(`_BitBreedingSim_getPhenotypesCpp`, pop, i)
 }

@@ -31,6 +31,7 @@ public:
 	const std::string get_type() const {
 		return "Additive and Dominant Effect";
 	}
+	double genetypic_value(std::size_t ind_index, const Population& pop) const;
 	double phenotype(std::size_t ind_index, const Population& pop,
 												std::mt19937& engine) const;
 	double get_mean() const { return mean; }

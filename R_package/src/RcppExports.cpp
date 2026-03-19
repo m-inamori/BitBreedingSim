@@ -382,6 +382,18 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// getGenetypicValuesCpp
+SEXP getGenetypicValuesCpp(SEXP pop, int i);
+RcppExport SEXP _BitBreedingSim_getGenetypicValuesCpp(SEXP popSEXP, SEXP iSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type pop(popSEXP);
+    Rcpp::traits::input_parameter< int >::type i(iSEXP);
+    rcpp_result_gen = Rcpp::wrap(getGenetypicValuesCpp(pop, i));
+    return rcpp_result_gen;
+END_RCPP
+}
 // getPhenotypesCpp
 SEXP getPhenotypesCpp(SEXP pop, int i);
 RcppExport SEXP _BitBreedingSim_getPhenotypesCpp(SEXP popSEXP, SEXP iSEXP) {
@@ -540,6 +552,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_BitBreedingSim_getNumInds", (DL_FUNC) &_BitBreedingSim_getNumInds, 1},
     {"_BitBreedingSim_getNumChromsPop", (DL_FUNC) &_BitBreedingSim_getNumChromsPop, 1},
     {"_BitBreedingSim_getNumMarkersPop", (DL_FUNC) &_BitBreedingSim_getNumMarkersPop, 1},
+    {"_BitBreedingSim_getGenetypicValuesCpp", (DL_FUNC) &_BitBreedingSim_getGenetypicValuesCpp, 2},
     {"_BitBreedingSim_getPhenotypesCpp", (DL_FUNC) &_BitBreedingSim_getPhenotypesCpp, 2},
     {"_BitBreedingSim_selectPop", (DL_FUNC) &_BitBreedingSim_selectPop, 2},
     {"_BitBreedingSim_removePopByIndices", (DL_FUNC) &_BitBreedingSim_removePopByIndices, 2},

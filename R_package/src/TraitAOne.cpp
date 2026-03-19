@@ -8,11 +8,16 @@ using namespace std;
 
 //////////////////// TraitAOne ////////////////////
 
+double TraitAOne::genetypic_value(size_t ind_index,
+										const Population& pop) const {
+	const int	gt = pop.get_int_genotype(chr_index, marker_index, ind_index);
+	return gt * additive_effect + mean;
+}
+
 double TraitAOne::phenotype(size_t ind_index, const Population& pop,
 												std::mt19937& engine) const {
-	const int	gt = pop.get_int_genotype(chr_index, marker_index, ind_index);
 	std::normal_distribution<> dist(0.0, error_std_dev);
-	return gt * additive_effect + mean + dist(engine);
+	return genetypic_value(ind_index, pop) + dist(engine);
 }
 
 double TraitAOne::calc_var() const {

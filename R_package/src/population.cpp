@@ -260,6 +260,15 @@ vector<vector<double>> Population::compute_phenotypes(const BaseInfo *info,
 	return phenotypes;
 }
 
+vector<double> Population::get_genetypic_values(size_t i) const {
+	const size_t	num_inds = names.size();
+	vector<double>	genetypic_values(num_inds);
+	for(size_t k = 0; k < num_inds; ++k) {
+		genetypic_values[k] = traits[i]->genetypic_value(k, *this);
+	}
+	return genetypic_values;
+}
+
 Population *Population::create_origins(const BaseInfo *info,
 										const vector<double>& gratio,
 										const vector<string>& names) {
@@ -825,6 +834,14 @@ int getNumChromsPop(SEXP pop) {
 int getNumMarkersPop(SEXP pop) {
 	Rcpp::XPtr<Population> pop_cpp(pop);
 	return static_cast<int>(pop_cpp.get()->num_markers());
+}
+
+// [[Rcpp::export]]
+SEXP getGenetypicValuesCpp(SEXP pop, int i) {
+	Rcpp::XPtr<Population> pop_cpp(pop);
+	const auto	values = pop_cpp.get()->get_genetypic_values(i-1);
+	NumericVector rvalues(values.begin(), values.end());
+	return rvalues;
 }
 
 // [[Rcpp::export]]

@@ -588,6 +588,33 @@ get_pop_info <- function(pop) {
 				num_markers = num_markers))
 }
 
+#' Get genetypic values from a Population object
+#'
+#' @param pop An external pointer to a Population object.
+#' @param i An integer index representing the trait for which genetypic values
+#'        are to be retrieved. The index should be between 1
+#'        and the total number of traits available in the Population object.
+#' @return A vector of genetypic values.
+#' @export
+#' @examples
+#' # Assuming 'pop' is a valid Population object and trait index 1 is valid
+#' genetypic_values <- get_genetypic_values(pop, 1)
+#' print(genetypic_values)
+get_genetypic_values <- function(pop, i) {
+	if(!inherits(pop, "Population")) {
+		stop("Error: pop is not a BaseInfo object.")
+	}
+	
+	pop_list <- .Call('_BitBreedingSim_getPopulationInfo', pop)
+	num_traits <- pop_list$num_traits
+	cat("i :", i, "num_traits :", num_traits, "\n")
+	if(i < 1 || i > num_traits) {
+		stop(paste("Index out of bounds: i should be between 1 and",
+												num_traits, "but got", i))
+	}
+	.Call('_BitBreedingSim_getGenetypicValuesCpp', pop, i)
+}
+
 #' Get phenotypes from a Population object
 #'
 #' @param pop An external pointer to a Population object.

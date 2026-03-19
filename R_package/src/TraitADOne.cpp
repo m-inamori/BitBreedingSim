@@ -8,14 +8,19 @@ using namespace std;
 
 //////////////////// TraitADOne ////////////////////
 
+double TraitADOne::genetypic_value(size_t ind_index,
+										const Population& pop) const {
+	const int	gt = pop.get_int_genotype(chr_index, marker_index, ind_index);
+	if(gt == 0)
+		return dominant_effect / 2 + mean;
+	else
+		return gt * additive_effect + mean - dominant_effect / 2;
+}
+
 double TraitADOne::phenotype(size_t ind_index, const Population& pop,
 												std::mt19937& engine) const {
-	const int	gt = pop.get_int_genotype(chr_index, marker_index, ind_index);
 	std::normal_distribution<> dist(0.0, error_std_dev);
-	if(gt == 0)
-		return dominant_effect / 2 + mean + dist(engine);
-	else
-		return gt * additive_effect + mean - dominant_effect / 2 + dist(engine);
+	return genetypic_value(ind_index, pop) + dist(engine);
 }
 
 double TraitADOne::calc_var() const {

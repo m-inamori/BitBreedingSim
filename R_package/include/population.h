@@ -121,6 +121,7 @@ private:
 	const std::vector<std::string>	mats;
 	const std::vector<std::string>	pats;
 	std::vector<std::vector<double>>	phenotypes;
+	std::vector<std::vector<double>>	genetypic_values;
 	std::vector<const Trait *>	traits;
 	
 public:
@@ -172,6 +173,7 @@ public:
 	void set_names(const std::vector<std::string>& names_);
 	std::vector<std::vector<double>> compute_phenotypes(const BaseInfo *ifno,
 														std::mt19937 &engine);
+	std::vector<double> get_genetypic_values(std::size_t i) const;
 	std::vector<double> get_phenotypes(std::size_t i) const {
 		return phenotypes[i];
 	}

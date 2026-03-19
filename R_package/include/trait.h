@@ -33,6 +33,8 @@ public:
 	Rcpp::List get_info() const;
 	
 	virtual const std::string get_type() const = 0;
+	virtual double genetypic_value(std::size_t ind_index,
+									const Population& pop) const = 0;
 	virtual double phenotype(std::size_t ind_index, const Population& pop,
 											std::mt19937& engine) const = 0;
 	virtual double get_mean() const = 0;
