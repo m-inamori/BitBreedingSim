@@ -2,25 +2,54 @@
 
 Fast breeding simulator package for R
 
-## Install
+## Installation
 
-Before building the package, make sure you have the required R packages installed.
+Install the package directly from GitHub.
 
-You can install `Rcpp` from CRAN using the following R command:
+```r
+install.packages("remotes")  # if not already installed
+remotes::install_github("m-inamori/BitBreedingSim", subdir = "R_package")
+```
+
+Alternatively, if you use `pak`:
+
+```r
+install.packages("pak")  # if not already installed
+pak::pkg_install("m-inamori/BitBreedingSim/R_package")
+```
+
+## Building from source
+
+Clone the repository and install the package using the standard R tools.
+
+```bash
+git clone https://github.com/m-inamori/BitBreedingSim.git
+cd BitBreedingSim/R_package
+R CMD INSTALL .
+```
+## Install (Windows)
+
+On Windows, building from source requires Rtools.
+
+1. Install Rtools (matching your R version)
+2. Confirm availability:
+
+```r
+Sys.which("make")
+```
+
+3. Install dependencies:
 
 ```r
 install.packages("Rcpp")
 ```
 
-Then, build and install the package:
+4. Install the package:
 
-```bash
-cd R_package
-./configure
-make clean
-make
-make install
+```r
+install.packages("path/to/BitBreedingSim/R_package", repos = NULL, type = "source")
 ```
+
 
 ## Usage
 

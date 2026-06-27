@@ -1,9 +1,9 @@
 #include <random>
 #include <cmath>
 #include "../include/trait.h"
-#include "../include/traitAOne.h"
-#include "../include/traitADOne.h"
-#include "../include/traitAMulti.h"
+#include "../include/TraitAOne.h"
+#include "../include/TraitADOne.h"
+#include "../include/TraitAMulti.h"
 #include "../include/TraitADMulti.h"
 #include "../include/BaseInfo.h"
 #include "../include/population.h"
